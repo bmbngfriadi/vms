@@ -1,22 +1,16 @@
-# Build Stage
+# ---------- build ----------
 FROM node:20-alpine AS build
-
-RUN apk add --no-cache git
-
 WORKDIR /app
-
-COPY package*.json ./
+COPY package.json ./
 RUN npm install
-
 COPY . .
 RUN npm run build
 
-# Production Nginx Stage
+# ---------- serve ----------
 FROM nginx:alpine
-
+RUN apk add --no-cache openssl
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+COPY docker-entrypoint.sh /docker-entrypoint.d/40-vms.sh
+RUN chmod +x /docker-entrypoint.d/40-vms.sh
+EXPOSE 80 443

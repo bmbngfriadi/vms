@@ -1,0 +1,349 @@
+import React, { useEffect, useState } from 'react';
+import {
+  RefreshCw,
+  Power,
+  Send,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Plus,
+  Trash2,
+  QrCode
+} from 'lucide-react';
+import { endpoints, errMsg, fmtDateTime } from '../lib/api.js';
+import { useAuth } from '../lib/auth.jsx';
+
+export default function WhatsApp() {
+  const { user } = useAuth();
+  const isAdmin = user.role === 'ADMIN';
+
+  const [status, setStatus] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [recipients, setRecipients] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [testPhone, setTestPhone] = useState('');
+  const [testMsg, setTestMsg] = useState('Tes koneksi WhatsApp dari Visitor Management System.');
+  const [testResult, setTestResult] = useState(null);
+  const [newRecipient, setNewRecipient] = useState({ name: '', phone: '', title: '' });
+
+  const loadStatus = () =>
+    endpoints
+      .waStatus()
+      .then(setStatus)
+      .catch((e) => setError(errMsg(e, 'Gagal memuat status WhatsApp')));
+
+  const loadAll = () => {
+    loadStatus();
+    endpoints.waLogs().then(setLogs).catch(() => {});
+    endpoints.recipients().then(setRecipients).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadAll();
+    const id = setInterval(loadStatus, 6000);
+    return () => clearInterval(id);
+  }, []);
+
+  const reconnect = async () => {
+    setBusy(true);
+    try {
+      await endpoints.waReconnect();
+      await loadStatus();
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const logout = async () => {
+    if (!window.confirm('Putuskan sesi WhatsApp? Anda harus scan QR ulang untuk menghubungkan kembali.'))
+      return;
+    setBusy(true);
+    try {
+      await endpoints.waLogout();
+      await loadStatus();
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendTest = async (e) => {
+    e.preventDefault();
+    setTestResult(null);
+    setBusy(true);
+    try {
+      await endpoints.waTest(testPhone, testMsg);
+      setTestResult({ ok: true, msg: 'Pesan uji berhasil dikirim.' });
+      endpoints.waLogs().then(setLogs);
+    } catch (err) {
+      setTestResult({ ok: false, msg: errMsg(err, 'Gagal mengirim pesan uji') });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addRecipient = async (e) => {
+    e.preventDefault();
+    try {
+      await endpoints.addRecipient(newRecipient);
+      setNewRecipient({ name: '', phone: '', title: '' });
+      endpoints.recipients().then(setRecipients);
+    } catch (err) {
+      alert(errMsg(err));
+    }
+  };
+
+  const removeRecipient = async (id) => {
+    if (!window.confirm('Hapus penerima ini?')) return;
+    try {
+      await endpoints.deleteRecipient(id);
+      endpoints.recipients().then(setRecipients);
+    } catch (err) {
+      alert(errMsg(err));
+    }
+  };
+
+  const connected = status?.connected;
+  const STATUS_LABEL = {
+    CONNECTED: 'Terhubung',
+    QR: 'Menunggu Scan QR',
+    CONNECTING: 'Menghubungkan…',
+    DISCONNECTED: 'Terputus'
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-lg font-semibold text-slate-900">WhatsApp Gateway</h1>
+        <p className="text-sm text-slate-500">
+          Koneksi perangkat WhatsApp untuk pengiriman barcode dan notifikasi otomatis.
+        </p>
+      </div>
+
+      {error && <div className="card p-4 text-sm text-red-600">{error}</div>}
+
+      <div className="grid lg:grid-cols-3 gap-5 items-start">
+        <div className="card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-800">Status Koneksi</h2>
+            <span
+              className={`badge ${
+                connected ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {connected ? 'Terhubung' : STATUS_LABEL[status?.status] || 'Memuat'}
+            </span>
+          </div>
+
+          {connected ? (
+            <div className="mt-4 flex items-start gap-2">
+              <CheckCircle2 className="text-emerald-600 mt-0.5" size={17} />
+              <div>
+                <div className="text-sm text-slate-700">Perangkat aktif</div>
+                <div className="font-mono text-xs text-slate-500 mt-0.5">{status?.phone || '-'}</div>
+              </div>
+            </div>
+          ) : status?.qrDataUrl ? (
+            <div className="mt-4 text-center">
+              <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                Buka WhatsApp di HP → Perangkat Tertaut → Tautkan Perangkat, lalu scan QR ini.
+              </p>
+              <img
+                src={status.qrDataUrl}
+                alt="QR WhatsApp"
+                className="mx-auto w-52 h-52 border border-slate-200 rounded"
+              />
+              <p className="text-[11px] text-slate-400 mt-2">
+                QR diperbarui otomatis setiap ±20 detik.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-start gap-2 text-sm text-slate-600">
+              <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={16} />
+              <p className="text-xs leading-relaxed">
+                {status?.lastError
+                  ? `Koneksi terputus: ${status.lastError}`
+                  : 'Menunggu QR dari server…'}
+              </p>
+            </div>
+          )}
+
+          {isAdmin && (
+            <div className="flex gap-2 mt-4">
+              <button className="btn-ghost flex-1 text-xs" onClick={reconnect} disabled={busy}>
+                {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {connected ? 'Muat ulang' : 'Muat ulang QR'}
+              </button>
+              {connected && (
+                <button className="btn-danger text-xs" onClick={logout} disabled={busy}>
+                  <Power size={14} /> Putuskan
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="card p-5 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-slate-800">Penerima Notifikasi Management</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Nomor-nomor ini menerima laporan setiap tamu masuk dan keluar.
+          </p>
+
+          <div className="mt-4 space-y-2">
+            {recipients.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2"
+              >
+                <div>
+                  <div className="text-sm text-slate-800">{r.name}</div>
+                  <div className="text-[11px] text-slate-500">
+                    {r.title ? `${r.title} · ` : ''}
+                    {r.phone}
+                  </div>
+                </div>
+                {isAdmin && (
+                  <button
+                    className="text-slate-400 hover:text-red-600 p-1"
+                    onClick={() => removeRecipient(r.id)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {recipients.length === 0 && (
+              <p className="text-xs text-slate-400 py-2">Belum ada penerima terdaftar.</p>
+            )}
+          </div>
+
+          {isAdmin && (
+            <form onSubmit={addRecipient} className="mt-4 grid sm:grid-cols-4 gap-2">
+              <input
+                className="input sm:col-span-1"
+                placeholder="Nama"
+                value={newRecipient.name}
+                onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
+                required
+              />
+              <input
+                className="input"
+                placeholder="62812xxxxxxx"
+                value={newRecipient.phone}
+                onChange={(e) => setNewRecipient({ ...newRecipient, phone: e.target.value })}
+                required
+              />
+              <input
+                className="input"
+                placeholder="Jabatan"
+                value={newRecipient.title}
+                onChange={(e) => setNewRecipient({ ...newRecipient, title: e.target.value })}
+              />
+              <button className="btn-primary" type="submit">
+                <Plus size={15} /> Tambah
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {isAdmin && (
+        <div className="card p-5">
+          <h2 className="text-sm font-semibold text-slate-800">Kirim Pesan Uji</h2>
+          <form onSubmit={sendTest} className="mt-3 grid sm:grid-cols-4 gap-2">
+            <input
+              className="input"
+              placeholder="Nomor tujuan (0812…)"
+              value={testPhone}
+              onChange={(e) => setTestPhone(e.target.value)}
+              required
+            />
+            <input
+              className="input sm:col-span-2"
+              value={testMsg}
+              onChange={(e) => setTestMsg(e.target.value)}
+            />
+            <button className="btn-primary" type="submit" disabled={busy}>
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Kirim
+            </button>
+          </form>
+          {testResult && (
+            <p className={`text-xs mt-2 ${testResult.ok ? 'text-emerald-600' : 'text-red-600'}`}>
+              {testResult.msg}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-800">Riwayat Pengiriman</h2>
+          <button
+            className="text-xs text-brand-600 hover:underline"
+            onClick={() => endpoints.waLogs().then(setLogs)}
+          >
+            Muat ulang
+          </button>
+        </div>
+        <div className="overflow-x-auto max-h-[420px]">
+          <table className="w-full">
+            <thead className="bg-slate-50 sticky top-0">
+              <tr>
+                <th className="th">Waktu</th>
+                <th className="th">Tipe</th>
+                <th className="th">Penerima</th>
+                <th className="th">Status</th>
+                <th className="th">Keterangan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {logs.map((l) => (
+                <tr key={l.id}>
+                  <td className="td text-xs text-slate-600 whitespace-nowrap">{fmtDateTime(l.createdAt)}</td>
+                  <td className="td text-xs">{l.type}</td>
+                  <td className="td text-xs font-mono">{l.recipient}</td>
+                  <td className="td">
+                    <span
+                      className={`badge ${
+                        l.status === 'SENT'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : l.status === 'FAILED'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {l.status}
+                    </span>
+                  </td>
+                  <td className="td text-xs text-slate-500 max-w-[280px] truncate">
+                    {l.error || l.message?.slice(0, 80)}
+                  </td>
+                </tr>
+              ))}
+              {logs.length === 0 && (
+                <tr>
+                  <td className="td text-center py-8 text-slate-400" colSpan={5}>
+                    Belum ada riwayat pengiriman.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card p-4 flex gap-3 text-xs text-slate-500">
+        <QrCode size={16} className="shrink-0 mt-0.5 text-slate-400" />
+        <p className="leading-relaxed">
+          Notifikasi otomatis dikirim saat tamu check-in (barcode check-out ke tamu, info ke PIC dan
+          management) dan saat check-out (konfirmasi ke tamu, PIC, dan management). Pastikan sesi
+          WhatsApp selalu terhubung.
+        </p>
+      </div>
+    </div>
+  );
+}

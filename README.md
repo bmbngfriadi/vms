@@ -1,261 +1,295 @@
-# VISITOR MANAGEMENT SYSTEM (VMS)
-## PT CEMINDO GEMILANG TBK – PLANT BATAM
+# Visitor Management System (VMS)
 
-Aplikasi Visitor Management System (VMS) berbasis web modern, tangguh, dan aman untuk mendata dan mengelola seluruh tamu yang berkunjung ke **PT Cemindo Gemilang Tbk – Plant Batam**.
+**PT Cemindo Gemilang Tbk — Plant Batam**
 
-Sistem ini digunakan oleh **Security**, seluruh **Department**, **PIC / Tuan Rumah**, dan **Management** untuk mengelola proses pendaftaran tamu tanpa janji (*Walk-In*), janji temu (*Pre-Registration*), validasi gerbang, *Check-in*, *Check-out*, pemantauan *Emergency Muster Headcount*, *Overstay Alert*, *Visitor Blacklist*, serta laporan rekapitulasi audit kunjungan.
+Sistem pendataan tamu berbasis barcode untuk kawasan pabrik. Tamu mendaftar sendiri atau
+didaftarkan oleh PIC, menerima barcode, dan Security memvalidasi masuk/keluar dengan kamera HP.
+Setiap transisi check-in dan check-out mengirim notifikasi WhatsApp ke tamu, PIC, dan management.
 
 ---
 
-## 🏗️ 1. Arsitektur Layanan & Kontainer Docker (Tahap 14)
+## 1. Alur Sistem
 
-Aplikasi dibangun dengan arsitektur modular multi-kontainer menggunakan **Docker Compose** yang terdiri dari 7 layanan terisolasi:
+### A. Tamu tanpa janji (Walk-In)
 
-```mermaid
-flowchart TD
-    Client["Browser / Smartphone (Security, Tamu, PIC, Mgmt)"]
-    Nginx["1. vms-nginx (Port 80/443 Reverse Proxy & Gateway)"]
-    Frontend["2. vms-frontend (React + Vite SPA)"]
-    Backend["3. vms-backend (Node.js & Express REST API)"]
-    Worker["4. vms-worker (BullMQ Background Notification Consumer)"]
-    WAService["5. vms-whatsapp-service (@whiskeysockets/baileys Gateway)"]
-    Redis["6. vms-redis (Redis 7 Message Broker & Cache)"]
-    Postgres["7. vms-postgres (PostgreSQL 15 Relational DB - Internal Network)"]
-
-    Client -->|HTTP / HTTPS| Nginx
-    Nginx -->|Proxy Root & /visitor/| Frontend
-    Nginx -->|Proxy /api/| Backend
-    Backend -->|Prisma ORM ACID| Postgres
-    Backend -->|Enqueue Jobs| Redis
-    Backend -->|Proxy Baileys Status| WAService
-    Worker -->|Consume Queue| Redis
-    Worker -->|Audit Delivery Logs| Postgres
-    Worker -->|Send Text & QR| WAService
-    WAService -->|Baileys Protocol| WhatsAppNet["WhatsApp Official Servers"]
+```
+Tamu tiba di gerbang
+   │  scan QR gerbang / buka /register
+   ▼
+Isi formulir: nama, no. WhatsApp, perusahaan, departemen (dropdown), PIC (isi manual), keperluan
+   │  submit
+   ▼
+Sistem membuat kunjungan (status: MENUNGGU VALIDASI) + barcode CHECK-IN
+   │
+   ├─► Barcode tampil di HP tamu (/pass/<token>)
+   └─► Barcode + tautan dikirim ke WhatsApp tamu
+   ▼
+Security scan barcode tamu dengan kamera HP
+   │
+   ▼
+Security konfirmasi ke PIC, lalu memilih nama PIC di sistem (PIC sudah punya no. WhatsApp)
+   │  tombol "Validasi & Check-In"
+   ▼
+Status: DI DALAM
+   ├─► WhatsApp ke TAMU   : barcode baru untuk CHECK-OUT
+   ├─► WhatsApp ke PIC    : "tamu Anda telah tiba"
+   └─► WhatsApp ke MGMT   : laporan tamu masuk
+   ▼
+Saat pulang: tamu menunjukkan barcode check-out → Security scan → "Konfirmasi Check-Out"
+   ▼
+Status: SELESAI
+   ├─► WhatsApp ke TAMU   : konfirmasi keluar + durasi
+   ├─► WhatsApp ke PIC    : tamu telah keluar
+   └─► WhatsApp ke MGMT   : laporan tamu keluar
 ```
 
-### Rincian 7 Kontainer Layanan:
-1. **`vms-frontend`**: Single Page Application (React 18, Vite, Tailwind CSS, Lucide Icons, Bilingual English/Indonesian, No AI slops).
-2. **`vms-backend`**: REST API Server (Node.js, Express, Prisma ORM, Helmet, Rate Limiters, JWT, bcrypt).
-3. **`vms-postgres`**: Database relasional PostgreSQL 15. **Hanya dapat diakses melalui internal Docker Network**, tidak diekspos ke internet publik demi keamanan data industri.
-4. **`vms-whatsapp-service`**: Microservice mandiri Baileys `@whiskeysockets/baileys` untuk mengelola koneksi socket WhatsApp, pairing QR, dan pengiriman pesan/tiket QR.
-5. **`vms-redis`**: In-memory database Redis 7 untuk penampung antrean notifikasi BullMQ.
-6. **`vms-worker`**: Worker mandiri BullMQ untuk memproses pengiriman notifikasi WhatsApp secara asinkron tanpa memperlambat proses Check-In & Check-Out di pos gerbang.
-7. **`vms-nginx`**: Master Reverse Proxy Gateway yang menyatukan seluruh layanan, menangani SSL/TLS HTTPS, proteksi *security headers*, serta routing subpath `/visitor` dan subdomain.
+### B. Tamu dengan janji (Pre-Registered)
 
----
-
-## 📊 2. Struktur Database Relasional PostgreSQL & Prisma (Tahap 13)
-
-Database menggunakan **UUID v4** sebagai *primary key* pada seluruh tabel dan memisahkan identitas profil tamu dari transaksi kunjungan agar riwayat kunjungan masa lalu tetap tersimpan utuh ketika tamu yang sama datang kembali.
-
-### Daftar Tabel Utama:
-* `users`: Akun pengguna internal (Admin, Security, PIC Karyawan, Management).
-* `roles`: Master peran sistem (`ADMIN`, `SECURITY`, `HOST_PIC`, `MANAGEMENT`).
-* `departments`: 9 Departemen resmi Plant Batam (`HRGA`, `IT`, `Production`, `Maintenance`, `Quality Control`, `Logistic`, `Finance`, `Procurement`, `SHE`).
-* `visitors`: Data profil identitas tamu (`fullName`, `identityNumber`, `phoneNumber`, `company`, `email`).
-* `visits`: Transaksi kunjungan tamu (`id`, `visitor_id`, `visit_number`, `department_id`, `pic_user_id`, `visit_type`, `purpose`, `scheduled_date`, `expected_arrival_time`, `status`, `created_by`, `check_in_at`, `check_in_by`, `check_out_at`, `check_out_by`, `visitor_badge_number`, `vehicle_plate_number`, `created_at`, `updated_at`).
-* `qr_tokens`: Penyimpanan token QR unik sekali pakai (`token`, `token_hash` SHA-256, `type`: `CHECK_IN`/`CHECK_OUT`, `is_used`, `expires_at`).
-* `visit_logs`: Audit trail setiap transisi status kunjungan (`SUBMITTED`, `APPROVED`, `CHECKED_IN`, `CHECKED_OUT`, `REJECTED`, `CANCELLED`).
-* `notification_logs`: Riwayat pengiriman WhatsApp dengan `idempotency_key`, status, retry count, dan pesan error.
-* `management_recipients`: Daftar kontak pejabat Management penerima notifikasi eksekutif kedatangan/kepulangan tamu.
-* `whatsapp_sessions`: Penyimpanan status koneksi dan metadata sesi Baileys.
-* `system_settings`: Pengaturan dinamis aplikasi (`overstay_hours`, `require_ktp_walkin`, `max_active_visitors_daily`).
-* `visitor_blacklists`: Daftar hitam personil bermasalah / pelanggaran K3 Golden Rules.
-* `notification_templates`: 10 format pesan notifikasi dinamis dengan placeholder variabel.
-* `activity_logs`: Audit trail keamanan seluruh aktivitas perubahan data di sistem.
-
-### Status Kunjungan (`VisitStatus`):
-* `PENDING_VALIDATION`: Tamu Walk-In telah mendaftar, menunggu validasi petugas di pos gerbang.
-* `APPROVED`: Janji temu telah dibuat dan disetujui, siap divalidasi saat hari H kedatangan.
-* `CHECKED_IN`: Tamu telah diverifikasi Security dan aktif berada di dalam kawasan pabrik (*On-Site*).
-* `CHECKED_OUT`: Tamu telah keluar pabrik, pass kunjungan dinonaktifkan permanen.
-* `REJECTED`: Permohonan kunjungan ditolak oleh Security atau PIC.
-* `CANCELLED`: Kunjungan dibatalkan sebelum tamu Check-In.
-* `EXPIRED`: Tiket QR kedaluwarsa karena melewati batas tanggal yang ditentukan.
-
-> [!IMPORTANT]
-> Seluruh transaksi **Check-In** dan **Check-Out** diproses menggunakan **Database Transaction (`prisma.$transaction`)** untuk menjamin konsistensi ACID dan mencegah data ganda akibat verifikasi bersamaan.
-
----
-
-## 🔒 3. Keamanan Aplikasi (Tahap 15)
-
-1. **Proteksi Password**: Disimpan menggunakan algoritma `bcryptjs` dengan *salt rounds* 10.
-2. **Autentikasi JWT**: Token JWT memiliki masa berlaku (*expiration*) yang dapat dikonfigurasi (`JWT_EXPIRES_IN=24h`).
-3. **Otorisasi Role-Based (RBAC)**: Setiap endpoint API dilindungi middleware `authenticateToken` dan `requireRole`.
-4. **Isolasi Database**: Port PostgreSQL `5432` **tidak diekspos ke internet publik**, melainkan hanya dapat diakses melalui jaringan internal Docker `vms_internal`.
-5. **Proteksi Header & Injeksi**:
-   * Dilengkapi `helmet` untuk menonaktifkan header berbahaya dan mencegah serangan clickjacking.
-   * Pencegahan SQL Injection otomatis melalui *parameterized queries* Prisma ORM.
-6. **Perlindungan Privasi Tamu (PII Protection)**: NIK / nomor identitas KTP otomatis dimasking (`2171******01`) untuk pengguna non-privilese (hanya Admin & Security yang dapat melihat nomor lengkap).
-7. **Rate Limiting**:
-   * Form Walk-In publik: maksimal 30 submit per 15 menit per IP.
-   * Scanner QR: maksimal 60 scan per menit per IP.
-   * Autentikasi Login: maksimal 20 percobaan per 15 menit per IP.
-   * Global API: maksimal 1000 request per 15 menit per IP.
-8. **Keamanan Sesi WhatsApp**: Kredensial Baileys disimpan terisolasi dalam Docker Volume permanen `vms_wa_auth:/app/baileys_auth` dan tidak bocor ke publik.
-9. **Single-Use QR Token**: Token QR menggunakan kode acak kriptografis dengan pencocokan hash SHA-256. Begitu Check-Out diproses, token langsung berstatus `isUsed: true` dan ditolak jika dipindai kembali.
-
----
-
-## 🚀 4. Panduan Instalasi & Menjalankan Aplikasi
-
-Aplikasi dirancang agar dapat dijalankan di **Windows (Docker Desktop)** saat pengembangan, dan dipindahkan ke **Ubuntu Server** tanpa perlu mengubah kode sumber aplikasi.
-
-### A. Prasyarat Sistem
-* **Windows**: Docker Desktop dengan WSL2 backend aktif.
-* **Ubuntu Server**: Docker Engine versi 24+ dan Docker Compose Plugin (`docker compose`).
-* Port yang diperlukan:
-  * Port `80` (HTTP Gateway Nginx)
-  * Port `443` (HTTPS Gateway Nginx)
-
----
-
-### B. Langkah Instalasi di Windows (Docker Desktop)
-
-1. **Buka Terminal / PowerShell di folder proyek:**
-   ```powershell
-   cd d:\dev\vms
-   ```
-
-2. **Siapkan file Environment Variables:**
-   Salin file `.env.example` menjadi `.env`:
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-   *(Secara default, file `.env` lokal sudah siap pakai untuk pengujian)*.
-
-3. **Jalankan seluruh layanan menggunakan Docker Compose:**
-   ```powershell
-   docker compose up -d --build
-   ```
-
-4. **Periksa status kontainer:**
-   ```powershell
-   docker compose ps
-   ```
-   Pastikan ketujuh kontainer berstatus `healthy` atau `Up`:
-   * `vms-postgres`
-   * `vms-redis`
-   * `vms-whatsapp-service`
-   * `vms-worker`
-   * `vms-backend`
-   * `vms-frontend`
-   * `vms-nginx`
-
-5. **Akses Aplikasi melalui Browser:**
-   * **Portal VMS / Login:** [http://localhost](http://localhost) (atau [http://localhost:5173](http://localhost:5173))
-   * **Pendaftaran Mandiri Tamu (Walk-In):** [http://localhost/visitor/register](http://localhost/visitor/register)
-   * **Health Check API Backend:** [http://localhost/api/health](http://localhost/api/health)
-   * **Health Check Nginx:** [http://localhost/nginx-health](http://localhost/nginx-health)
-
----
-
-### C. Langkah Deployment di Ubuntu Server (Produksi)
-
-1. **Clone repository atau salin source code ke server:**
-   ```bash
-   sudo mkdir -p /opt/vms
-   cd /opt/vms
-   # Salin seluruh file proyek ke /opt/vms
-   ```
-
-2. **Buat file `.env` produksi:**
-   ```bash
-   cp .env.example .env
-   nano .env
-   ```
-   *Ubah nilai `POSTGRES_PASSWORD` dan `JWT_SECRET` dengan string acak yang kuat.*
-
-3. **Jalankan kontainer di latar belakang:**
-   ```bash
-   sudo docker compose up -d --build
-   ```
-
-4. **Konfigurasi SSL / HTTPS (Let's Encrypt / Certbot):**
-   * Pasang sertifikat SSL untuk domain Anda (misal `vms.cg-plantbatam.com`):
-     ```bash
-     sudo apt install -y certbot
-     sudo certbot certonly --standalone -d vms.cg-plantbatam.com
-     ```
-   * Salin template konfigurasi SSL yang sudah disiapkan:
-     ```bash
-     sudo cp nginx/conf.d/ssl.conf.template nginx/conf.d/ssl.conf
-     ```
-   * Muat ulang Nginx:
-     ```bash
-     sudo docker compose exec vms-nginx nginx -s reload
-     ```
-
----
-
-## 🌐 5. Konfigurasi Deployment: Subpath `/visitor` dan Subdomain
-
-Nginx telah dikonfigurasi siap pakai untuk mendukung 2 metode akses:
-
-### Opsi 1: Menggunakan Subdomain Khusus (Rekomendasi)
-* **URL Aplikasi:** `https://vms.cg-plantbatam.com/`
-* **URL Form Tamu:** `https://vms.cg-plantbatam.com/visitor/register`
-
-### Opsi 2: Menggunakan Subpath pada Domain Utama
-* **URL Aplikasi:** `https://cg-plantbatam.com/visitor/`
-* Seluruh permintaan ke path `^~ /visitor/` otomatis diteruskan oleh Nginx ke frontend Single Page Application secara transparan tanpa mengubah struktur routing React.
-
----
-
-## 🔑 6. Akun Pengguna Bawaan (Pre-Seeded Accounts)
-
-Gunakan akun berikut untuk pengujian sesuai hak akses (*tersedia fitur 1-Klik Isi Cepat di halaman Login*):
-
-| Role | Email | Password | Penanggung Jawab / Posisi |
-| :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@cemindo.com` | `admin123` | Administrator Sistem (Akses Penuh) |
-| **Danru Security** | `security.agus@cemindo.com` | `security123` | Agus Pratama (Komandan Regu Security) |
-| **Security Gate 1** | `security.bambang@cemindo.com` | `security123` | Bambang Sugiarto (Petugas Pos Gerbang 1) |
-| **Security Gate 2** | `security.rian@cemindo.com` | `security123` | Rian Hidayat (Petugas Pos Gerbang 2) |
-| **PIC Production** | `pic.production@cemindo.com` | `pic123` | Budi Santoso (Host Departemen Produksi) |
-| **PIC IT** | `pic.it@cemindo.com` | `pic123` | Ahmad Fauzi (Host Departemen IT) |
-| **PIC HRGA** | `pic.hrga@cemindo.com` | `pic123` | Siti Rahmawati (Host Departemen HRGA) |
-| **PIC SHE** | `pic.she@cemindo.com` | `pic123` | Hendra Gunawan (Host Departemen SHE/Safety) |
-| **Management** | `management.wahyu@cemindo.com` | `management123` | Ir. Wahyu Hidayat (Plant General Manager) |
-
----
-
-## 💾 7. Manajemen Backup & Restore Data
-
-### Backup Database PostgreSQL:
-```bash
-docker exec -t vms-postgres pg_dump -U vms_user -d vms_batam > vms_backup_$(date +%Y%m%d_%H%M%S).sql
+```
+PIC login → menu Data Kunjungan → "Buat Janji Temu"
+   │  isi data tamu + tanggal + keperluan
+   ▼
+Sistem membuat kunjungan (status: TERJADWAL) + barcode CHECK-IN
+   │
+   └─► Barcode + undangan dikirim ke WhatsApp tamu
+   ▼
+Tamu tiba → tunjukkan barcode → Security scan → validasi → Check-In
+   ▼
+(alur selanjutnya sama dengan Walk-In)
 ```
 
-### Restore Database PostgreSQL:
-```bash
-cat vms_backup_YYYYMMDD_HHMMSS.sql | docker exec -i vms-postgres psql -U vms_user -d vms_batam
+### Aturan barcode
+
+| Aturan | Keterangan |
+| :--- | :--- |
+| Satu barcode satu fungsi | Barcode check-in tidak bisa dipakai untuk check-out |
+| Sekali pakai | Setelah dipakai, barcode ditandai `is_used` dan ditolak bila dipindai ulang |
+| Barcode baru saat masuk | Check-in otomatis menerbitkan barcode check-out |
+| Akses pass lewat token acak | URL pass memakai token 32 karakter, bukan nomor kunjungan yang bisa ditebak |
+
+---
+
+## 2. Tech Stack
+
+| Lapisan | Teknologi |
+| :--- | :--- |
+| Frontend | React 18, Vite 5, Tailwind CSS 3, React Router 6, Axios, html5-qrcode (kamera HP) |
+| Backend | Node.js 20, Express 4, Prisma 5, JWT, bcrypt |
+| Database | PostgreSQL 15 (Docker, tidak diekspos ke host) |
+| WhatsApp | `@whiskeysockets/baileys` — terpasang langsung di backend, tanpa gateway pihak ketiga |
+| Reverse proxy | Nginx (serve SPA + proxy `/api`) |
+| Kontainer | Docker Compose — **3 service**: `postgres`, `backend`, `app` |
+
+Tidak ada Redis, tidak ada worker terpisah, tidak ada message broker. Antrian notifikasi berjalan
+in-process dengan retry otomatis dan pencatatan ke tabel `notification_logs`.
+
+---
+
+## 3. Struktur Proyek
+
+```
+vms/
+├── docker-compose.yml
+├── .env                        # konfigurasi (jangan di-commit)
+├── backend/
+│   ├── Dockerfile
+│   ├── docker-entrypoint.sh    # prisma db push + seed
+│   ├── prisma/
+│   │   ├── schema.prisma       # 8 tabel
+│   │   └── seed.js
+│   └── src/
+│       ├── index.js            # bootstrap express
+│       ├── db.js
+│       ├── middleware/auth.js  # JWT + role gate
+│       ├── routes/
+│       │   ├── auth.js         # login, me
+│       │   ├── master.js       # departemen, PIC, user
+│       │   ├── visits.js       # inti: register, scan, check-in/out
+│       │   └── wa.js           # status gateway, penerima management, log
+│       └── wa/
+│           ├── client.js       # socket Baileys + auto reconnect
+│           ├── messages.js     # 8 template pesan
+│           └── notify.js       # antrian + retry + log DB
+└── frontend/
+    ├── Dockerfile
+    ├── nginx.conf
+    └── src/
+        ├── pages/
+        │   ├── Login.jsx
+        │   ├── Register.jsx    # form tamu (publik)
+        │   ├── Pass.jsx        # halaman barcode tamu (publik)
+        │   ├── Scan.jsx        # kamera security
+        │   ├── Dashboard.jsx
+        │   ├── Visits.jsx
+        │   ├── Reports.jsx
+        │   ├── Master.jsx
+        │   └── WhatsApp.jsx
+        ├── components/
+        └── lib/
 ```
 
-### Backup Sesi WhatsApp (Docker Volume):
-Sesi WhatsApp tersimpan permanen di volume `vms_wa_auth`. Sesi ini tidak akan terhapus meskipun kontainer dimatikan, dihapus, atau dibuat ulang (*recreate*).
+---
+
+## 4. Model Data (8 tabel)
+
+| Tabel | Fungsi |
+| :--- | :--- |
+| `departments` | Master departemen tujuan |
+| `users` | Akun internal: ADMIN, SECURITY, PIC, MANAGEMENT (PIC wajib punya nomor WhatsApp) |
+| `visitors` | Profil identitas tamu (dipisah dari transaksi agar riwayat tetap utuh) |
+| `visits` | Transaksi kunjungan: tipe, status, PIC, jadwal, badge, kendaraan, waktu masuk/keluar |
+| `qr_tokens` | Barcode: token unik, tipe CHECK_IN / CHECK_OUT, status pakai |
+| `notification_logs` | Audit setiap pengiriman WhatsApp (status, error, jumlah percobaan) |
+| `management_recipients` | Nomor WhatsApp pimpinan penerima laporan otomatis |
+| `settings` | Konfigurasi umum |
+
+### Status kunjungan
+
+`WAITING_VALIDATION` → `CHECKED_IN` → `CHECKED_OUT`
+Cabang: `APPROVED` (janji temu terjadwal), `REJECTED` (ditolak security), `CANCELLED` (dibatalkan PIC).
+
+---
+
+## 5. Hak Akses
+
+| Role | Kemampuan |
+| :--- | :--- |
+| **ADMIN** | Semua fitur: master data, WhatsApp, laporan, scan, buat janji temu untuk PIC mana pun |
+| **SECURITY** | Scan barcode, validasi check-in/out, tolak tamu, lihat data & laporan |
+| **PIC** | Buat janji temu untuk tamunya sendiri, lihat kunjungannya, batalkan janji |
+| **MANAGEMENT** | Dashboard, data kunjungan (read-only), laporan, log WhatsApp |
+
+PIC hanya melihat kunjungan miliknya. Nomor WhatsApp & NIK tamu hanya terlihat oleh ADMIN dan SECURITY.
+
+---
+
+## 6. Menjalankan Sistem
+
+### Prasyarat
+Docker Desktop / Docker Engine + Docker Compose.
+
+### Langkah
 
 ```bash
-docker run --rm -v vms_wa_auth:/data -v $(pwd):/backup alpine tar czf /backup/wa_session_backup.tar.gz -C /data .
+cd vms
+cp .env.example .env      # lalu edit nilainya
+docker compose up -d --build
+```
+
+Akses:
+
+| Halaman | URL |
+| :--- | :--- |
+| Aplikasi internal | `http://localhost` |
+| Form tamu (publik) | `http://localhost/register` |
+| Halaman barcode tamu | `http://localhost/pass/<token>` |
+| Health check API | `http://localhost/api/health` |
+
+### Wajib diubah di `.env`
+
+```env
+POSTGRES_PASSWORD=...          # password database
+JWT_SECRET=...                 # minimal 24 karakter, acak
+PUBLIC_APP_URL=https://...     # alamat yang bisa dibuka dari HP tamu
+```
+
+> `PUBLIC_APP_URL` dipakai untuk menyusun tautan barcode di pesan WhatsApp. Kalau diisi
+> `localhost`, tautan tidak akan bisa dibuka dari HP tamu. Isi dengan IP server atau domain.
+
+### Akun awal
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| Administrator | `admin@cemindo.com` | `admin123` |
+| Security | `security.agus@cemindo.com` | `security123` |
+| Security | `security.bambang@cemindo.com` | `security123` |
+| PIC Production | `pic.production@cemindo.com` | `pic123` |
+| PIC IT | `pic.it@cemindo.com` | `pic123` |
+| PIC HRGA | `pic.hrga@cemindo.com` | `pic123` |
+| PIC SHE | `pic.she@cemindo.com` | `pic123` |
+| PIC Logistic | `pic.logistic@cemindo.com` | `pic123` |
+| Management | `management@cemindo.com` | `management123` |
+
+**Ganti seluruh password default sebelum sistem dipakai produksi.**
+
+---
+
+## 7. Menghubungkan WhatsApp
+
+1. Login sebagai ADMIN → menu **WhatsApp**.
+2. Tunggu QR muncul di panel Status Koneksi (biasanya < 20 detik).
+3. Di HP yang akan menjadi gateway: **WhatsApp → Pengaturan → Perangkat Tertaut → Tautkan Perangkat**.
+4. Scan QR di layar.
+5. Status berubah menjadi **Terhubung** dan nomor perangkat tampil.
+
+Sesi tersimpan di volume `vms_wa_auth`, jadi tetap tersambung setelah container restart.
+Gunakan tombol **Kirim Pesan Uji** untuk memverifikasi pengiriman.
+
+> Gunakan nomor khusus (bukan nomor pribadi) untuk gateway. Satu nomor hanya boleh tertaut ke satu sesi.
+
+---
+
+## 8. Catatan Kamera & HTTPS
+
+Browser hanya mengizinkan akses kamera pada **HTTPS** atau `localhost`. Karena Security memakai
+kamera HP, aplikasi sudah menyediakan port **443 dengan sertifikat self-signed** yang dibuat
+otomatis saat container pertama kali jalan.
+
+- Akses lewat `https://<ip-server>` → browser menampilkan peringatan sertifikat → pilih
+  **Advanced → Proceed** (sekali saja per perangkat).
+- Untuk produksi, ganti dengan sertifikat resmi (Let's Encrypt) dengan menaruh `vms.crt` dan
+  `vms.key` di volume `/etc/nginx/certs`.
+- Bila kamera tetap tidak bisa diakses, halaman Scan menyediakan **input kode manual** sebagai
+  cadangan.
+
+---
+
+## 9. Pengujian
+
+Tersedia smoke test end-to-end yang menguji seluruh alur lewat HTTP API:
+
+```bash
+node scripts/smoke-test.mjs
+```
+
+Mencakup: login & otorisasi role, registrasi walk-in, penerbitan barcode, scan, check-in
+(termasuk penolakan check-in ganda), check-out, alur janji temu, penolakan tamu, dashboard,
+export CSV, dan pemastian seluruh jenis notifikasi terpicu. Hasil yang diharapkan: **60 lulus, 0 gagal**.
+
+> Catatan: pada lingkungan yang memblokir `github.com`, dependensi `libsignal` milik Baileys
+> diarahkan ke paket npm resmi lewat blok `overrides` di `backend/package.json`. Jangan hapus
+> blok tersebut.
+
+---
+
+## 10. Operasional
+
+```bash
+# Lihat log
+docker compose logs -f backend
+
+# Restart
+docker compose restart backend
+
+# Backup database
+docker exec vms-postgres pg_dump -U vms_user -d vms_batam > backup_$(date +%F).sql
+
+# Restore
+cat backup_2026-11-06.sql | docker exec -i vms-postgres psql -U vms_user -d vms_batam
+
+# Backup sesi WhatsApp
+docker run --rm -v vms_vms_wa_auth:/data -v "$PWD":/backup alpine tar czf /backup/wa_auth.tar.gz -C /data .
 ```
 
 ---
 
-## 📋 8. Checklist Verifikasi Standar K3 & Operasional
+## 11. Pemecahan Masalah
 
-- [x] **Walk-In Self-Registration**: Tamu mendaftar tanpa login via QR pos masuk.
-- [x] **Pre-Registration**: PIC mendaftarkan janji temu dan mengirim tiket QR ke WhatsApp tamu.
-- [x] **Security Camera QR Scanner**: Mendukung pemilihan kamera depan atau belakang HP.
-- [x] **Single-Use QR Enforcement**: QR Check-In tidak dapat dipakai untuk Check-Out; QR Check-Out hangus permanen setelah Check-Out.
-- [x] **Direct Baileys WhatsApp Gateway**: Tanpa gateway berbayar pihak ketiga (Fonnte/Twilio).
-- [x] **10 Template Notifikasi Otomatis**: Pesan tersusun rapi dengan informasi dinamis.
-- [x] **Management Recipient Alerts**: Jajaran pimpinan menerima ringkasan otomatis saat tamu tiba & pulang.
-- [x] **Dashboard Multi-Role**: Desain industrial bebas AI slops dengan grafik 14 hari dan statistik per departemen.
-- [x] **Laporan & Export Excel**: 14 kolom lengkap dengan filter multi-kriteria.
-- [x] **Emergency Visitor Roll-Call**: Headcount real-time evakuasi darurat muster point K3.
-- [x] **Overstay Alert**: Deteksi tamu yang berada di pabrik melebihi batas waktu (default 8 jam).
-- [x] **Visitor Blacklist**: Pemblokiran otomatis terhadap tamu bermasalah di pintu masuk.
-- [x] **Modular 7-Service Docker Architecture**: Nginx, Frontend, Backend, WhatsApp Service, Worker, Redis, Postgres.
-- [x] **Enterprise Security**: Helmet, Rate Limiter, PII Masking, Internal Postgres Network, Transaction ACID Check-in/Check-out.
+| Gejala | Penyebab & solusi |
+| :--- | :--- |
+| QR WhatsApp tidak muncul | Cek `docker compose logs backend`. Pastikan container punya akses internet. Coba tombol **Hubungkan** |
+| Pesan gagal terkirim | Buka menu WhatsApp → Riwayat Pengiriman, lihat kolom Keterangan. Pastikan status **Terhubung** |
+| Tautan barcode di WA tidak bisa dibuka | `PUBLIC_APP_URL` masih `localhost`. Isi dengan IP/domain server lalu `docker compose up -d` |
+| Kamera tidak aktif | Halaman harus dibuka via HTTPS (bukan HTTP) dan izin kamera diberikan |
+| Login gagal setelah ganti `.env` | `JWT_SECRET` berubah → semua token lama tidak valid. Login ulang |
+| Data hilang setelah `docker compose down -v` | Perintah `-v` menghapus volume. Gunakan `docker compose down` tanpa `-v` |

@@ -1,22 +1,21 @@
 FROM node:20-alpine
 
-# Install OpenSSL for Prisma, libc compatibility, curl, git, and build tools
-RUN apk add --no-cache openssl libc6-compat curl git python3 make g++
+RUN apk add --no-cache openssl libc6-compat curl git
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY package.json ./
+RUN npm install --omit=dev && npm install prisma@5.22.0 --no-save
 
-COPY prisma ./prisma/
+COPY prisma ./prisma
 RUN npx prisma generate
 
-COPY . .
+COPY src ./src
+COPY docker-entrypoint.sh ./
 
-# Convert line endings to LF if written on Windows
 RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
 
 EXPOSE 5000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["npm", "start"]
+CMD ["node", "src/index.js"]

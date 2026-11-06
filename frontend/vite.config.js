@@ -12,6 +12,9 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    chunkSizeWarningLimit: 900
   }
 });
-

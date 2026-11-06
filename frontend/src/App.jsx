@@ -1,152 +1,90 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { LanguageProvider } from './i18n/LanguageContext';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import SecurityScanner from './pages/SecurityScanner';
-import VisitorManagement from './pages/VisitorManagement';
-import Reports from './pages/Reports';
-import WhatsAppSettings from './pages/WhatsAppSettings';
-import PublicGuestRegister from './pages/PublicGuestRegister';
-import PublicPassView from './pages/PublicPassView';
-import MasterDepartments from './pages/MasterDepartments';
-import MasterEmployees from './pages/MasterEmployees';
-import ActivityLogs from './pages/ActivityLogs';
-import VisitorBlacklist from './pages/VisitorBlacklist';
+import { AuthProvider, useAuth } from './lib/auth.jsx';
+import Shell from './components/Shell.jsx';
+import Login from './pages/Login.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Scan from './pages/Scan.jsx';
+import Visits from './pages/Visits.jsx';
+import Reports from './pages/Reports.jsx';
+import Master from './pages/Master.jsx';
+import WhatsApp from './pages/WhatsApp.jsx';
+import Register from './pages/Register.jsx';
+import Pass from './pages/Pass.jsx';
 
-function ProtectedLayout({ children, allowedRoles }) {
-  const { user, isAuthenticated, loading } = useAuth();
+function Guard({ roles, children }) {
+  const { user, loading } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white text-xs">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mr-3"></div>
-        <span>Loading PT Cemindo Gemilang VMS...</span>
+      <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">
+        Memuat…
       </div>
     );
   }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    return <Navigate to="/" replace />;
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  return children;
 }
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Access Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/visitor/register" element={<PublicGuestRegister />} />
-            <Route path="/register" element={<PublicGuestRegister />} />
-            <Route path="/guest" element={<PublicGuestRegister />} />
-            <Route path="/pass/:code" element={<PublicPassView />} />
-            <Route path="/visitor/pass/:code" element={<PublicPassView />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Publik */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/pass/:token" element={<Pass />} />
 
-            {/* Protected Operations Routes */}
+          {/* Internal */}
+          <Route
+            element={
+              <Guard>
+                <Shell />
+              </Guard>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
             <Route
-              path="/"
+              path="/scan"
               element={
-                <ProtectedLayout>
-                  <Dashboard />
-                </ProtectedLayout>
+                <Guard roles={['ADMIN', 'SECURITY']}>
+                  <Scan />
+                </Guard>
               }
             />
-            <Route
-              path="/scanner"
-              element={
-                <ProtectedLayout allowedRoles={['ADMIN', 'SECURITY']}>
-                  <SecurityScanner />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/visitors"
-              element={
-                <ProtectedLayout>
-                  <VisitorManagement />
-                </ProtectedLayout>
-              }
-            />
+            <Route path="/visits" element={<Visits />} />
             <Route
               path="/reports"
               element={
-                <ProtectedLayout>
+                <Guard roles={['ADMIN', 'SECURITY', 'MANAGEMENT']}>
                   <Reports />
-                </ProtectedLayout>
+                </Guard>
               }
             />
             <Route
-              path="/blacklist"
+              path="/master"
               element={
-                <ProtectedLayout allowedRoles={['ADMIN', 'SECURITY', 'MANAGEMENT']}>
-                  <VisitorBlacklist />
-                </ProtectedLayout>
-              }
-            />
-
-            {/* Master Data Routes (Admin Only) */}
-            <Route
-              path="/master/departments"
-              element={
-                <ProtectedLayout allowedRoles={['ADMIN']}>
-                  <MasterDepartments />
-                </ProtectedLayout>
-              }
-            />
-            <Route
-              path="/master/employees"
-              element={
-                <ProtectedLayout allowedRoles={['ADMIN']}>
-                  <MasterEmployees />
-                </ProtectedLayout>
+                <Guard roles={['ADMIN']}>
+                  <Master />
+                </Guard>
               }
             />
             <Route
               path="/whatsapp"
               element={
-                <ProtectedLayout allowedRoles={['ADMIN']}>
-                  <WhatsAppSettings />
-                </ProtectedLayout>
+                <Guard roles={['ADMIN', 'MANAGEMENT']}>
+                  <WhatsApp />
+                </Guard>
               }
             />
-            <Route
-              path="/activity-logs"
-              element={
-                <ProtectedLayout allowedRoles={['ADMIN', 'MANAGEMENT']}>
-                  <ActivityLogs />
-                </ProtectedLayout>
-              }
-            />
+          </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
