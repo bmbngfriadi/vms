@@ -1,0 +1,21 @@
+{
+  "name": "vms-worker",
+  "version": "1.0.0",
+  "description": "Background BullMQ Queue Worker for WhatsApp Notifications - PT Cemindo Gemilang Tbk",
+  "main": "src/worker.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/worker.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "axios": "^1.7.7",
+    "bullmq": "^5.8.0",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}
+

@@ -1,0 +1,365 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================================================
+// ENUMS
+// ==============================================================================
+
+enum UserRole {
+  ADMIN
+  SECURITY
+  HOST_PIC
+  MANAGEMENT
+}
+
+enum VisitStatus {
+  PENDING_VALIDATION
+  APPROVED
+  CHECKED_IN
+  CHECKED_OUT
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+// ==============================================================================
+// 1. ROLES & PERMISSIONS (Tahap 13)
+// ==============================================================================
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // ADMIN, SECURITY, HOST_PIC, MANAGEMENT
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+// ==============================================================================
+// 2. MASTER DEPARTMENTS (Tahap 13)
+// ==============================================================================
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique // e.g. HRGA, IT, PROD, MAINT, QC, LOG, FIN, PROC, SHE
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  users       User[]
+  visits      Visit[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([isActive])
+  @@map("departments")
+}
+
+// ==============================================================================
+// 3. USERS & EMPLOYEES (Tahap 13)
+// ==============================================================================
+
+model User {
+  id                 String              @id @default(uuid())
+  employeeId         String?             @unique @map("employee_id")
+  name               String
+  email              String              @unique
+  phone              String?             // International format: 62812xxxxxxxx
+  password           String
+  roleId             String?             @map("role_id")
+  roleRef            Role?               @relation(fields: [roleId], references: [id])
+  role               UserRole            @default(HOST_PIC)
+  isActive           Boolean             @default(true) @map("is_active")
+  canReceiveVisits   Boolean             @default(true) @map("can_receive_visits")
+  departmentId       String?             @map("department_id")
+  department         Department?         @relation(fields: [departmentId], references: [id])
+  
+  // Relations to Visits
+  visitsHosted       Visit[]             @relation("HostVisits")
+  createdVisits      Visit[]             @relation("CreatedByVisits")
+  checkInsRecorded   Visit[]             @relation("SecurityCheckIns")
+  checkOutsRecorded  Visit[]             @relation("SecurityCheckOuts")
+  
+  // System logs
+  activityLogs       ActivityLog[]
+  visitLogs          VisitLog[]
+  blacklistEntries   VisitorBlacklist[]
+  
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([employeeId])
+  @@index([role])
+  @@index([departmentId])
+  @@map("users")
+}
+
+// ==============================================================================
+// 4. VISITORS (Identitas Profil Tamu Terpisah dari Kunjungan) (Tahap 13)
+// ==============================================================================
+
+model Visitor {
+  id             String    @id @default(uuid())
+  fullName       String    @map("full_name")
+  identityNumber String?   @map("identity_number") // NIK KTP / SIM / Paspor
+  phoneNumber    String    @map("phone_number")    // 62812xxxx
+  email          String?
+  company        String
+  notes          String?
+  visits         Visit[]
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([phoneNumber])
+  @@index([identityNumber])
+  @@index([fullName])
+  @@index([company])
+  @@map("visitors")
+}
+
+// ==============================================================================
+// 5. VISITS (Transaksi Kunjungan Tamu) (Tahap 13)
+// ==============================================================================
+
+model Visit {
+  id                  String             @id @default(uuid())
+  visitorId           String             @map("visitor_id")
+  visitor             Visitor            @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  visitNumber         String             @unique @map("visit_number") // e.g. VMS-202611-1234
+  departmentId        String             @map("department_id")
+  department          Department         @relation(fields: [departmentId], references: [id])
+  picUserId           String?            @map("pic_user_id")
+  picUser             User?              @relation("HostVisits", fields: [picUserId], references: [id])
+  hostNameManual      String?            @map("host_name_manual")
+  visitType           String             @default("WALK_IN") @map("visit_type") // WALK_IN or PRE_REGISTERED
+  purpose             String
+  scheduledDate       DateTime           @map("scheduled_date")
+  expectedArrivalTime String?            @map("expected_arrival_time") // e.g. "09:00"
+  status              VisitStatus        @default(PENDING_VALIDATION)
+  createdById         String?            @map("created_by")
+  createdByUser       User?              @relation("CreatedByVisits", fields: [createdById], references: [id])
+  checkInAt           DateTime?          @map("check_in_at")
+  checkInById         String?            @map("check_in_by")
+  checkInByUser       User?              @relation("SecurityCheckIns", fields: [checkInById], references: [id])
+  checkOutAt          DateTime?          @map("check_out_at")
+  checkOutById        String?            @map("check_out_by")
+  checkOutByUser      User?              @relation("SecurityCheckOuts", fields: [checkOutById], references: [id])
+  
+  // Badge & Vehicle Tracking
+  visitorBadgeNumber  String?            @map("visitor_badge_number")
+  vehicleType         String?            @default("NONE") @map("vehicle_type")
+  vehiclePlateNumber  String?            @map("vehicle_plate_number")
+  numberOfVisitors    Int                @default(1) @map("number_of_visitors")
+  safetyInductionAgreed Boolean          @default(true) @map("safety_induction_agreed")
+  rejectionReason     String?            @map("rejection_reason")
+  cancellationReason  String?            @map("cancellation_reason")
+  cancelledAt         DateTime?          @map("cancelled_at")
+  notes               String?
+  
+  // Relations
+  qrTokens            QrToken[]
+  visitLogs           VisitLog[]
+  notificationLogs    NotificationLog[]
+  
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  @@index([visitNumber])
+  @@index([visitorId])
+  @@index([departmentId])
+  @@index([picUserId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([checkInAt])
+  @@index([checkOutAt])
+  @@index([createdAt])
+  @@map("visits")
+}
+
+// ==============================================================================
+// 6. QR TOKENS (Tahap 13: Single-Use Security Token & Hashing)
+// ==============================================================================
+
+model QrToken {
+  id         String    @id @default(uuid())
+  visitId    String    @map("visit_id")
+  visit      Visit     @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  token      String    @unique // Secure random token
+  tokenHash  String    @unique @map("token_hash") // SHA-256 hash for secure matching
+  type       String    // CHECK_IN or CHECK_OUT
+  isUsed     Boolean   @default(false) @map("is_used")
+  usedAt     DateTime? @map("used_at")
+  expiresAt  DateTime? @map("expires_at")
+  qrDataUrl  String?   @map("qr_data_url") @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([tokenHash])
+  @@index([visitId])
+  @@index([type])
+  @@index([isUsed])
+  @@map("qr_tokens")
+}
+
+// ==============================================================================
+// 7. VISIT LOGS (Tahap 13: Audit Perubahan Kunjungan)
+// ==============================================================================
+
+model VisitLog {
+  id            String   @id @default(uuid())
+  visitId       String   @map("visit_id")
+  visit         Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  action        String   // SUBMITTED, APPROVED, CHECKED_IN, CHECKED_OUT, REJECTED, CANCELLED, EXPIRED
+  performedById String?  @map("performed_by_id")
+  performedBy   User?    @relation(fields: [performedById], references: [id])
+  notes         String?  @db.Text
+  ipAddress     String?  @map("ip_address")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([visitId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("visit_logs")
+}
+
+// ==============================================================================
+// 8. NOTIFICATION LOGS (Tahap 13: Log Pengiriman WhatsApp)
+// ==============================================================================
+
+model NotificationLog {
+  id             String   @id @default(uuid())
+  idempotencyKey String?  @unique @map("idempotency_key")
+  recipient      String
+  message        String   @db.Text
+  type           String   // WALK_IN_ALERT, CHECK_IN_PASS, CHECK_OUT_NOTICE, MANAGEMENT_ALERT
+  status         String   @default("PENDING") // PENDING, SENT, FAILED
+  response       String?  @db.Text
+  retryCount     Int      @default(0) @map("retry_count")
+  lastError      String?  @map("last_error") @db.Text
+  visitId        String?  @map("visit_id")
+  visit          Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([idempotencyKey])
+  @@index([recipient])
+  @@index([status])
+  @@index([visitId])
+  @@map("notification_logs")
+}
+
+// ==============================================================================
+// 9. MANAGEMENT RECIPIENTS (Tahap 13: Penerima Notifikasi Management)
+// ==============================================================================
+
+model ManagementRecipient {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String   // International format: 62812xxxxxxxx
+  title       String?  // e.g. "Plant Manager", "GM Operations", "SHE Manager"
+  department  String?  // e.g. "Management", "Operations", "SHE"
+  isActive    Boolean  @default(true) @map("is_active")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("management_recipients")
+}
+
+// ==============================================================================
+// 10. WHATSAPP SESSIONS (Tahap 13: Session & State Baileys)
+// ==============================================================================
+
+model WhatsAppSession {
+  id          String    @id @default(uuid())
+  sessionId   String    @unique @default("primary") @map("session_id")
+  phoneNumber String?   @map("phone_number")
+  status      String    @default("DISCONNECTED") // CONNECTED, CONNECTING, DISCONNECTED, SCAN_QR
+  connectedAt DateTime? @map("connected_at")
+  qrCode      String?   @map("qr_code") @db.Text
+  lastSeen    DateTime? @map("last_seen")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("whatsapp_sessions")
+}
+
+// ==============================================================================
+// 11. SYSTEM SETTINGS (Tahap 13: Konfigurasi Dinamis Aplikasi)
+// ==============================================================================
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// ==============================================================================
+// 12. VISITOR BLACKLIST (Tahap 12 & 13: Pencegahan Akses K3)
+// ==============================================================================
+
+model VisitorBlacklist {
+  id             String   @id @default(uuid())
+  fullName       String   @map("full_name")
+  identityNumber String?  @map("identity_number")
+  phoneNumber    String?  @map("phone_number")
+  company        String?
+  reason         String   @db.Text
+  isActive       Boolean  @default(true) @map("is_active")
+  createdById    String?  @map("created_by_id")
+  createdBy      User?    @relation(fields: [createdById], references: [id])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([fullName])
+  @@index([identityNumber])
+  @@index([phoneNumber])
+  @@map("visitor_blacklists")
+}
+
+// ==============================================================================
+// 13. NOTIFICATION TEMPLATES (Tahap 13: Template Dinamis Notifikasi)
+// ==============================================================================
+
+model NotificationTemplate {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  category     String
+  description  String?
+  templateBody String   @map("template_body") @db.Text
+  isQrImage    Boolean  @default(false) @map("is_qr_image")
+  isActive     Boolean  @default(true) @map("is_active")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_templates")
+}
+
+// ==============================================================================
+// 14. ACTIVITY LOGS (Tahap 13: Audit Trail Keamanan Sistem)
+// ==============================================================================
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  description String   @db.Text
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
