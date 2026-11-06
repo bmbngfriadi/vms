@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Shell from './components/Shell.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -32,7 +33,8 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           {/* Publik */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -83,7 +85,8 @@ export default function App() {
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   );

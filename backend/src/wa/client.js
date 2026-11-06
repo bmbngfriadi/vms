@@ -15,12 +15,21 @@ export const wa = {
   qrDataUrl: null,
   qrRaw: null,
   phone: null,
-  lastError: null,
-  started: false
+  lastError: null
 };
 
+/**
+ * Hanya boleh ada SATU socket aktif. Setiap socket diberi nomor generasi;
+ * event dari socket lama diabaikan agar tidak memicu koneksi ganda
+ * (penyebab error 440 "Stream Errored (conflict)").
+ */
+let generation = 0;
 let reconnectTimer = null;
 let reconnectAttempt = 0;
+let opening = false;
+
+const RECONNECT_BASE_MS = 3000;
+const RECONNECT_MAX_MS = 60000;
 
 export function normalizePhone(input) {
   if (!input) return null;
@@ -48,88 +57,181 @@ async function setQr(qr) {
   }
 }
 
+function clearReconnectTimer() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+
+/** Lepas semua listener lalu tutup socket, supaya penutupan tidak memicu reconnect. */
+function teardownSocket(sock) {
+  if (!sock) return;
+  try {
+    sock.ev.removeAllListeners('connection.update');
+  } catch {
+    /* ignore */
+  }
+  try {
+    sock.ev.removeAllListeners('creds.update');
+  } catch {
+    /* ignore */
+  }
+  try {
+    sock.end(undefined);
+  } catch {
+    /* ignore */
+  }
+}
+
+function scheduleReconnect(reason) {
+  if (reconnectTimer) return;
+  const attempt = reconnectAttempt;
+  reconnectAttempt = Math.min(reconnectAttempt + 1, 10);
+  const delay = Math.min(RECONNECT_MAX_MS, RECONNECT_BASE_MS * 2 ** Math.min(attempt, 4));
+  console.warn(`[WA] Menjadwalkan sambung ulang dalam ${Math.round(delay / 1000)}s — ${reason}`);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    startWhatsApp().catch((e) => console.error('[WA] Reconnect gagal:', e.message));
+  }, delay);
+}
+
 export async function startWhatsApp() {
-  if (wa.started && wa.sock) return;
-  wa.started = true;
-  wa.status = 'CONNECTING';
+  if (opening || wa.sock) return;
+  opening = true;
+  const gen = ++generation;
 
-  const { state, saveCreds } = await useMultiFileAuthState(AUTH_PATH);
-  const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: undefined }));
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState(AUTH_PATH);
+    const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: undefined }));
 
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    logger,
-    printQRInTerminal: false,
-    browser: ['VMS Cemindo Batam', 'Chrome', '1.0.0'],
-    syncFullHistory: false,
-    markOnlineOnConnect: false
-  });
+    // Dibatalkan (mis. logout/restart) selama menunggu state
+    if (gen !== generation) return;
 
-  wa.sock = sock;
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      logger,
+      printQRInTerminal: false,
+      browser: ['VMS Cemindo Batam', 'Chrome', '1.0.0'],
+      syncFullHistory: false,
+      markOnlineOnConnect: false
+    });
 
-  sock.ev.on('creds.update', saveCreds);
+    wa.sock = sock;
+    wa.status = 'CONNECTING';
 
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    sock.ev.on('creds.update', saveCreds);
+    sock.ev.on('connection.update', (update) => {
+      handleUpdate(update, gen, sock).catch((e) => console.error('[WA] update error:', e.message));
+    });
+  } catch (err) {
+    wa.status = 'DISCONNECTED';
+    wa.lastError = err.message;
+    scheduleReconnect('gagal membuka koneksi');
+  } finally {
+    opening = false;
+  }
+}
 
-    if (qr) await setQr(qr);
+async function handleUpdate(update, gen, sock) {
+  // Abaikan event dari socket yang sudah tidak berlaku
+  if (gen !== generation) return;
 
-    if (connection === 'open') {
-      wa.status = 'CONNECTED';
+  const { connection, lastDisconnect, qr } = update;
+
+  if (qr) await setQr(qr);
+
+  if (connection === 'open') {
+    wa.status = 'CONNECTED';
+    wa.qrDataUrl = null;
+    wa.qrRaw = null;
+    wa.lastError = null;
+    reconnectAttempt = 0;
+    wa.phone = sock.user?.id ? String(sock.user.id).split(':')[0].split('@')[0] : null;
+    console.log(`[WA] Terhubung sebagai ${wa.phone}`);
+    return;
+  }
+
+  if (connection === 'close') {
+    const code = lastDisconnect?.error?.output?.statusCode;
+    const loggedOut = code === DisconnectReason.loggedOut;
+
+    teardownSocket(sock);
+    if (wa.sock === sock) wa.sock = null;
+    wa.phone = null;
+
+    if (loggedOut) {
+      wa.status = 'DISCONNECTED';
       wa.qrDataUrl = null;
-      wa.qrRaw = null;
-      wa.lastError = null;
-      reconnectAttempt = 0;
-      wa.phone = sock.user?.id ? sock.user.id.split(':')[0].split('@')[0] : null;
-      console.log(`[WA] Connected as ${wa.phone}`);
+      wa.lastError = 'Sesi WhatsApp telah dihentikan. Scan QR untuk menghubungkan kembali.';
+      console.warn('[WA] Logged out — perlu scan QR ulang');
+      return;
     }
 
-    if (connection === 'close') {
-      const code = lastDisconnect?.error?.output?.statusCode;
-      const loggedOut = code === DisconnectReason.loggedOut;
-      wa.status = loggedOut ? 'DISCONNECTED' : 'CONNECTING';
-      wa.phone = null;
-      wa.lastError = lastDisconnect?.error?.message || String(code || 'closed');
-      console.warn(`[WA] Connection closed (${code || 'unknown'}). loggedOut=${loggedOut}`);
-
-      if (!loggedOut) {
-        const delay = Math.min(30000, 2000 * 2 ** Math.min(reconnectAttempt++, 4));
-        clearTimeout(reconnectTimer);
-        reconnectTimer = setTimeout(() => {
-          wa.sock = null;
-          wa.started = false;
-          startWhatsApp().catch((e) => console.error('[WA] Reconnect failed:', e.message));
-        }, delay);
-      }
+    wa.status = 'CONNECTING';
+    if (code === 440) {
+      // Beri jeda lebih panjang: sesi lama di server butuh waktu dilepas
+      reconnectAttempt = Math.max(reconnectAttempt, 2);
+      wa.lastError = 'Sesi bentrok: sesi WhatsApp ini sedang dipakai proses lain.';
+    } else if (code === 428) {
+      wa.lastError = 'Koneksi ditutup oleh server, mencoba menyambung ulang…';
+    } else {
+      wa.lastError = lastDisconnect?.error?.message || `Koneksi ditutup (${code ?? 'tidak diketahui'})`;
     }
-  });
+
+    console.warn(`[WA] Koneksi terputus (${code ?? 'unknown'})`);
+    scheduleReconnect(wa.lastError);
+  }
+}
+
+/** Restart manual: tutup socket lama, beri jeda agar server melepas sesi, lalu buka satu socket baru. */
+export async function restartWhatsApp() {
+  clearReconnectTimer();
+  reconnectAttempt = 0;
+  generation += 1; // batalkan seluruh handler socket lama
+
+  const old = wa.sock;
+  wa.sock = null;
+  teardownSocket(old);
+
+  wa.status = 'CONNECTING';
+  wa.qrDataUrl = null;
+  wa.lastError = null;
+
+  await new Promise((r) => setTimeout(r, 2000));
+  await startWhatsApp();
 }
 
 export async function logoutWhatsApp() {
+  clearReconnectTimer();
+  reconnectAttempt = 0;
+  generation += 1;
+
+  const old = wa.sock;
+  wa.sock = null;
+
   try {
-    if (wa.sock) await wa.sock.logout();
+    if (old) await old.logout();
   } catch {
     /* ignore */
   }
-  wa.sock = null;
-  wa.started = false;
+  teardownSocket(old);
+
   wa.status = 'DISCONNECTED';
   wa.qrDataUrl = null;
+  wa.qrRaw = null;
   wa.phone = null;
+  wa.lastError = null;
 }
 
-export async function restartWhatsApp() {
-  clearTimeout(reconnectTimer);
-  try {
-    if (wa.sock) wa.sock.end(undefined);
-  } catch {
-    /* ignore */
-  }
-  wa.sock = null;
-  wa.started = false;
-  wa.status = 'CONNECTING';
+/** Dipakai tombol "Muat ulang QR": hanya menyambung bila memang sedang tidak terhubung. */
+export async function reconnectIfNeeded() {
+  if (wa.status === 'CONNECTED' || wa.sock) return false;
+  clearReconnectTimer();
+  reconnectAttempt = 0;
   await startWhatsApp();
+  return true;
 }
 
 function assertConnected() {

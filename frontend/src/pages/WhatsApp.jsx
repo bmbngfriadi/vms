@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   RefreshCw,
+  RotateCcw,
   Power,
   Send,
   Loader2,
@@ -47,8 +48,23 @@ export default function WhatsApp() {
 
   const reconnect = async () => {
     setBusy(true);
+    setError('');
     try {
       await endpoints.waReconnect();
+      await loadStatus();
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const hardRestart = async () => {
+    if (!window.confirm('Tutup sesi WhatsApp saat ini lalu sambungkan ulang?')) return;
+    setBusy(true);
+    setError('');
+    try {
+      await endpoints.waRestart();
       await loadStatus();
     } catch (err) {
       setError(errMsg(err));
@@ -173,11 +189,22 @@ export default function WhatsApp() {
           )}
 
           {isAdmin && (
-            <div className="flex gap-2 mt-4">
-              <button className="btn-ghost flex-1 text-xs" onClick={reconnect} disabled={busy}>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <button
+                className="btn-ghost flex-1 text-xs"
+                onClick={connected ? loadStatus : reconnect}
+                disabled={busy}
+              >
                 {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 {connected ? 'Muat ulang' : 'Muat ulang QR'}
               </button>
+
+              {!connected && status?.lastError && (
+                <button className="btn-ghost text-xs" onClick={hardRestart} disabled={busy}>
+                  <RotateCcw size={14} /> Sambung ulang
+                </button>
+              )}
+
               {connected && (
                 <button className="btn-danger text-xs" onClick={logout} disabled={busy}>
                   <Power size={14} /> Putuskan

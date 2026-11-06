@@ -287,7 +287,9 @@ docker run --rm -v vms_vms_wa_auth:/data -v "$PWD":/backup alpine tar czf /backu
 
 | Gejala | Penyebab & solusi |
 | :--- | :--- |
-| QR WhatsApp tidak muncul | Cek `docker compose logs backend`. Pastikan container punya akses internet. Coba tombol **Hubungkan** |
+| QR WhatsApp tidak muncul | Cek `docker compose logs backend`. Pastikan container punya akses internet. Coba tombol **Muat ulang QR** |
+| Status berkedip "Menghubungkan…" terus | Terjadi bila satu sesi dipakai dua koneksi (error 440). Gateway kini hanya memakai satu socket; bila masih macet, klik **Sambung ulang**, atau **Putuskan** lalu scan QR lagi |
+| Halaman putih setelah update aplikasi | `index.html` sudah `no-cache`, tetapi perangkat yang masih menyimpan versi lama perlu hard refresh sekali (Ctrl+Shift+R) |
 | Pesan gagal terkirim | Buka menu WhatsApp → Riwayat Pengiriman, lihat kolom Keterangan. Pastikan status **Terhubung** |
 | Tautan barcode di WA tidak bisa dibuka | `PUBLIC_APP_URL` masih `localhost`. Isi dengan IP/domain server lalu `docker compose up -d` |
 | Kamera tidak aktif | Halaman harus dibuka via HTTPS (bukan HTTP) dan izin kamera diberikan |

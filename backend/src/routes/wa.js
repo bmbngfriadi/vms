@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from '../db.js';
 import { authenticate, allow } from '../middleware/auth.js';
-import { wa, restartWhatsApp, logoutWhatsApp, sendText } from '../wa/client.js';
+import { wa, restartWhatsApp, logoutWhatsApp, reconnectIfNeeded, sendText } from '../wa/client.js';
 import { notify } from '../wa/notify.js';
 
 const router = express.Router();
@@ -17,6 +17,13 @@ router.get('/status', authenticate, (_req, res) => {
 });
 
 router.post('/reconnect', authenticate, allow(['ADMIN']), async (_req, res) => {
+  // Aman dipanggil berulang: hanya menyambung bila memang belum terhubung
+  const started = await reconnectIfNeeded();
+  res.json({ ok: true, status: wa.status, started });
+});
+
+router.post('/restart', authenticate, allow(['ADMIN']), async (_req, res) => {
+  // Paksa tutup sesi lalu sambung ulang (untuk kondisi macet)
   await restartWhatsApp();
   res.json({ ok: true, status: wa.status });
 });

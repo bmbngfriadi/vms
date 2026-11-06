@@ -51,6 +51,7 @@ export const endpoints = {
 
   waStatus: () => api.get('/wa/status').then((r) => r.data),
   waReconnect: () => api.post('/wa/reconnect').then((r) => r.data),
+  waRestart: () => api.post('/wa/restart').then((r) => r.data),
   waLogout: () => api.post('/wa/logout').then((r) => r.data),
   waTest: (phone, message) => api.post('/wa/test', { phone, message }).then((r) => r.data),
   waLogs: () => api.get('/wa/logs').then((r) => r.data),

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ScanLine,
@@ -13,6 +13,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../lib/auth.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'SECURITY', 'PIC', 'MANAGEMENT'] },
@@ -26,6 +27,7 @@ const NAV = [
 export default function Shell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
 
   const items = NAV.filter((n) => n.roles.includes(user?.role));
@@ -132,7 +134,9 @@ export default function Shell() {
         </header>
 
         <main className="flex-1 p-4 lg:p-6 max-w-[1400px] w-full mx-auto">
-          <Outlet />
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
