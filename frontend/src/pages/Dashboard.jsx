@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Users, LogOut, CalendarDays, ScanLine } from 'lucide-react';
 import { endpoints, fmtTime, errMsg } from '../lib/api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useAuth } from '../lib/auth.jsx';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
@@ -44,10 +45,33 @@ export default function Dashboard() {
             Ringkasan aktivitas tamu{user?.role === 'PIC' ? ' yang Anda terima' : ' hari ini'}
           </p>
         </div>
-        {['ADMIN', 'SECURITY'].includes(user?.role) && (
-          <Link to="/scan" className="btn-primary">
-            <ScanLine size={16} /> Scan Barcode
-          </Link>
+        {['ADMIN', 'SECURITY'].includes(user?.role) ? (
+          <div className="flex items-center gap-2">
+            <Link to="/scan" className="btn-primary">
+              <ScanLine size={16} /> Scan Barcode
+            </Link>
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              title="Keluar dari sistem"
+            >
+              <LogOut size={16} /> Keluar
+            </button>
+          </div>
+        ) : (
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            title="Keluar dari sistem"
+          >
+            <LogOut size={16} /> Keluar
+          </button>
         )}
       </div>
 
@@ -158,7 +182,7 @@ function Stat({ icon: Icon, label, value, tone }) {
   const tones = {
     amber: 'bg-amber-50 text-amber-600',
     emerald: 'bg-emerald-50 text-emerald-600',
-    slate: 'bg-slate-100 text-slate-600',
+    slate: 'bg-stone-100 text-stone-600',
     red: 'bg-brand-100 text-brand-600'
   };
   return (

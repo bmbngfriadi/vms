@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, QrCode, ArrowRight, Loader2 } from 'lucide-react';
+import { CheckCircle2, QrCode, ArrowRight, Loader2, LogIn } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 
 const EMPTY = {
@@ -100,12 +100,17 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-slate-100 py-6 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-6 flex items-center gap-3">
-          <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
-          <div>
-            <div className="text-sm font-semibold text-slate-900">PT CEMINDO GEMILANG Tbk</div>
-            <div className="text-xs text-slate-500">Plant Batam · Pendaftaran Tamu</div>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-slate-900 truncate">PT CEMINDO GEMILANG Tbk</div>
+              <div className="text-xs text-slate-500">Plant Batam · Pendaftaran Tamu</div>
+            </div>
           </div>
+          <a href="/login" className="btn-ghost text-xs shrink-0">
+            <LogIn size={14} /> Masuk
+          </a>
         </div>
 
         <div className="card">
