@@ -55,7 +55,10 @@ function Departments() {
       .then(setRows)
       .catch((e) => setError(errMsg(e)));
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -170,7 +173,10 @@ function Users() {
     endpoints.departments().then(setDepartments).catch(() => {});
   };
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-4">

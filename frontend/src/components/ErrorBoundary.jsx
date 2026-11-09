@@ -7,7 +7,7 @@ import { AlertTriangle, RotateCcw } from 'lucide-react';
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, stack: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -15,6 +15,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
+    this.setState({ stack: info?.componentStack });
     console.error('[UI Error]', error, info?.componentStack);
   }
 
@@ -29,8 +30,9 @@ export default class ErrorBoundary extends React.Component {
           <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
             Terjadi kesalahan saat menampilkan halaman ini. Muat ulang halaman untuk melanjutkan.
           </p>
-          <pre className="mt-3 text-[11px] text-left bg-slate-50 border border-slate-200 rounded p-2.5 overflow-auto max-h-24 text-slate-500">
+          <pre className="mt-3 text-[11px] text-left bg-slate-50 border border-slate-200 rounded p-2.5 overflow-auto max-h-32 text-slate-500">
             {String(this.state.error?.message || this.state.error)}
+            {this.state.stack && `\n\n${this.state.stack}`}
           </pre>
           <button className="btn-primary w-full mt-4" onClick={() => window.location.reload()}>
             <RotateCcw size={15} /> Muat ulang halaman

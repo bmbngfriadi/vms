@@ -63,9 +63,9 @@ export default function Pass() {
         title: 'Barcode Check-Out'
       }
     : {
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        icon: 'text-blue-600',
+        bg: 'bg-brand-50',
+        border: 'border-brand-200',
+        icon: 'text-brand-600',
         title: 'Barcode Check-In'
       };
 
