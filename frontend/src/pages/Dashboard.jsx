@@ -55,7 +55,7 @@ export default function Dashboard() {
         <Stat icon={Clock} label="Menunggu Validasi" value={data.waiting} tone="amber" />
         <Stat icon={Users} label="Di Dalam Area" value={data.onsite} tone="emerald" />
         <Stat icon={LogOut} label="Keluar Hari Ini" value={data.checkedOutToday} tone="slate" />
-        <Stat icon={CalendarDays} label="Total Hari Ini" value={data.todayTotal} tone="blue" />
+        <Stat icon={CalendarDays} label="Total Hari Ini" value={data.todayTotal} tone="red" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
@@ -159,7 +159,7 @@ function Stat({ icon: Icon, label, value, tone }) {
     amber: 'bg-amber-50 text-amber-600',
     emerald: 'bg-emerald-50 text-emerald-600',
     slate: 'bg-slate-100 text-slate-600',
-    blue: 'bg-blue-50 text-blue-600'
+    red: 'bg-brand-100 text-brand-600'
   };
   return (
     <div className="card p-4">

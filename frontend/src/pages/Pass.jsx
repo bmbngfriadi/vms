@@ -36,8 +36,9 @@ export default function Pass() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="card p-6 max-w-sm text-center">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100">
+        <div className="card p-6 max-w-sm w-full text-center">
+          <img src="/logo.png" alt="Logo" className="h-10 mx-auto mb-4 opacity-80" />
           <AlertCircle className="mx-auto text-red-500" size={28} />
           <h1 className="mt-3 font-semibold text-slate-900">Pass tidak ditemukan</h1>
           <p className="text-sm text-slate-500 mt-1">{error}</p>
@@ -71,9 +72,12 @@ export default function Pass() {
   return (
     <div className="min-h-screen bg-slate-100 py-6 px-4">
       <div className="max-w-md mx-auto">
-        <div className="mb-4 text-center">
-          <div className="text-sm font-semibold text-slate-900">PT CEMINDO GEMILANG Tbk</div>
-          <div className="text-xs text-slate-500">Plant Batam · Visitor Pass</div>
+        <div className="mb-4 flex items-center justify-center gap-2">
+          <img src="/logo.png" alt="Logo" className="h-9 w-auto" />
+          <div className="text-left">
+            <div className="text-sm font-semibold text-slate-900 leading-tight">PT CEMINDO GEMILANG Tbk</div>
+            <div className="text-[11px] text-slate-500">Plant Batam · Visitor Pass</div>
+          </div>
         </div>
 
         <div className="card overflow-hidden">

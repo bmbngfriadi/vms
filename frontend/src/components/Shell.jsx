@@ -56,9 +56,14 @@ export default function Shell() {
   );
 
   const Brand = () => (
-    <div className="px-4 py-4 border-b border-white/10">
-      <div className="text-[13px] font-semibold text-white leading-tight">PT CEMINDO GEMILANG</div>
-      <div className="text-[11px] text-slate-400 mt-0.5">Visitor Management · Plant Batam</div>
+    <div className="px-4 py-4 border-b border-white/10 flex items-center gap-3">
+      <div className="bg-white rounded-md p-1.5 shrink-0">
+        <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-9 w-auto" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[13px] font-semibold text-white leading-tight">PT CEMINDO GEMILANG</div>
+        <div className="text-[11px] text-slate-400 mt-0.5">Visitor Management · Plant Batam</div>
+      </div>
     </div>
   );
 

@@ -52,6 +52,13 @@ export default function Register() {
     return (
       <div className="min-h-screen bg-slate-100 py-8 px-4">
         <div className="max-w-md mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <img src="/logo.png" alt="Logo" className="h-9 w-auto" />
+            <div className="text-left">
+              <div className="text-sm font-semibold text-slate-900 leading-tight">PT CEMINDO GEMILANG Tbk</div>
+              <div className="text-[11px] text-slate-500">Plant Batam · Visitor Pass</div>
+            </div>
+          </div>
           <div className="card p-6 text-center">
             <div className="mx-auto w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
               <CheckCircle2 className="text-emerald-600" size={26} />
@@ -93,9 +100,12 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-slate-100 py-6 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <div className="text-sm font-semibold text-slate-900">PT CEMINDO GEMILANG Tbk</div>
-          <div className="text-xs text-slate-500">Plant Batam · Pendaftaran Tamu</div>
+        <div className="mb-6 flex items-center gap-3">
+          <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+          <div>
+            <div className="text-sm font-semibold text-slate-900">PT CEMINDO GEMILANG Tbk</div>
+            <div className="text-xs text-slate-500">Plant Batam · Pendaftaran Tamu</div>
+          </div>
         </div>
 
         <div className="card">

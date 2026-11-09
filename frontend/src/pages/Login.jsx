@@ -32,8 +32,15 @@ export default function Login() {
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-slate-900 p-12">
         <div>
-          <div className="text-white font-semibold tracking-wide text-sm">PT CEMINDO GEMILANG Tbk</div>
-          <div className="text-slate-400 text-xs mt-1">Plant Batam</div>
+          <div className="flex items-center gap-3">
+            <div className="bg-white rounded-md p-1.5 shrink-0">
+              <img src="/logo.png" alt="Logo" className="h-14 w-auto" />
+            </div>
+            <div>
+              <div className="text-white font-semibold tracking-wide text-sm">PT CEMINDO GEMILANG Tbk</div>
+              <div className="text-slate-400 text-xs mt-1">Plant Batam</div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -60,6 +67,7 @@ export default function Login() {
       <div className="flex items-center justify-center p-6 bg-slate-50">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
+            <img src="/logo.png" alt="Logo" className="h-16 w-auto mx-auto mb-3" />
             <div className="text-sm font-semibold text-slate-900">PT CEMINDO GEMILANG Tbk</div>
             <div className="text-xs text-slate-500 mt-0.5">Visitor Management · Plant Batam</div>
           </div>
