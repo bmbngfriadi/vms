@@ -60,6 +60,7 @@ model User {
   visitsAsPic      Visit[]     @relation("VisitPic")
   visitsCheckedIn  Visit[]     @relation("VisitCheckIn")
   visitsCheckedOut Visit[]     @relation("VisitCheckOut")
+  featureOverrides UserFeature[]
 
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
@@ -173,4 +174,18 @@ model Setting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+/// Pengaturan hak fitur per user. Tidak ada baris = ikut bawaan role.
+model UserFeature {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  featureKey String   @map("feature_key")
+  enabled    Boolean  @default(true)
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, featureKey])
+  @@index([featureKey])
+  @@map("user_features")
 }

@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import prisma from '../db.js';
-import { signToken, authenticate } from '../middleware/auth.js';
+import { signToken, authenticate, featuresFor } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -21,7 +21,8 @@ const publicUser = (u) => ({
   phone: u.phone,
   role: u.role,
   department: u.department ? { id: u.department.id, name: u.department.name, code: u.department.code } : null,
-  canReceiveVisits: u.canReceiveVisits
+  canReceiveVisits: u.canReceiveVisits,
+  features: featuresFor(u)
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
@@ -33,7 +34,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email: String(email).trim().toLowerCase() },
-      include: { department: true }
+      include: { department: true, featureOverrides: true }
     });
 
     if (!user || !user.isActive) {

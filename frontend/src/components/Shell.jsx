@@ -12,18 +12,22 @@ import {
   X,
   ExternalLink,
   UserRound,
-  ChevronDown
+  ChevronDown,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useAuth } from '../lib/auth.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 
+// Menu ditentukan oleh hak fitur user (lihat backend/src/lib/features.js),
+// bukan daftar role yang di-hardcode di sini.
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'SECURITY', 'PIC', 'MANAGEMENT'] },
-  { to: '/scan', label: 'Scan Barcode', icon: ScanLine, roles: ['ADMIN', 'SECURITY'] },
-  { to: '/visits', label: 'Data Kunjungan', icon: Users, roles: ['ADMIN', 'SECURITY', 'PIC', 'MANAGEMENT'] },
-  { to: '/reports', label: 'Laporan', icon: FileText, roles: ['ADMIN', 'MANAGEMENT', 'SECURITY'] },
-  { to: '/master', label: 'Master Data', icon: Database, roles: ['ADMIN'] },
-  { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, roles: ['ADMIN', 'MANAGEMENT'] }
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
+  { to: '/scan', label: 'Scan Barcode', icon: ScanLine, feature: 'page.scan' },
+  { to: '/visits', label: 'Data Kunjungan', icon: Users, feature: 'page.visits' },
+  { to: '/reports', label: 'Laporan', icon: FileText, feature: 'page.reports' },
+  { to: '/master', label: 'Master Data', icon: Database, feature: 'page.master' },
+  { to: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, feature: 'page.whatsapp' },
+  { to: '/features', label: 'Manajemen Fitur', icon: SlidersHorizontal, feature: 'page.features' }
 ];
 
 function SidebarBrand() {
@@ -107,12 +111,12 @@ function SidebarFooter({ onLogout }) {
 }
 
 export default function Shell() {
-  const { user, logout } = useAuth();
+  const { user, logout, can } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
-  const items = NAV_ITEMS.filter((n) => n.roles.includes(user?.role));
+  const items = NAV_ITEMS.filter((n) => can(n.feature));
 
   const handleLogout = () => {
     logout();

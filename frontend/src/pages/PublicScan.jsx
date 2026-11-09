@@ -4,6 +4,7 @@ import { Camera, CameraOff, AlertTriangle, LogIn } from 'lucide-react';
 
 export default function PublicScan() {
   const scannerRef = useRef(null);
+  const startingRef = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState('');
 
@@ -11,13 +12,16 @@ export default function PublicScan() {
     const scanner = scannerRef.current;
     scannerRef.current = null;
     setScanning(false);
-    if (scanner) {
-      try {
-        await scanner.stop();
-        scanner.clear();
-      } catch {
-        /* scanner already stopped */
-      }
+    if (!scanner) return;
+    try {
+      await scanner.stop();
+    } catch {
+      /* scanner already stopped */
+    }
+    try {
+      scanner.clear();
+    } catch {
+      /* elemen sudah dibersihkan */
     }
   };
 
@@ -41,6 +45,8 @@ export default function PublicScan() {
   };
 
   const start = async () => {
+    if (startingRef.current || scannerRef.current) return;
+    startingRef.current = true;
     setError('');
     try {
       const scanner = new Html5Qrcode('public-qr-reader', { verbose: false });
@@ -53,9 +59,22 @@ export default function PublicScan() {
       );
       setScanning(true);
     } catch {
+      const scanner = scannerRef.current;
       scannerRef.current = null;
+      try {
+        await scanner?.stop();
+      } catch {
+        /* belum berjalan */
+      }
+      try {
+        scanner?.clear();
+      } catch {
+        /* tidak ada yang perlu dibersihkan */
+      }
       setScanning(false);
       setError('Kamera tidak dapat diakses. Buka halaman melalui HTTPS dan izinkan akses kamera.');
+    } finally {
+      startingRef.current = false;
     }
   };
 
@@ -85,16 +104,20 @@ export default function PublicScan() {
             Tidak perlu login. Arahkan kamera ke barcode tamu dan halaman pass akan terbuka otomatis.
           </p>
 
+          {/* html5-qrcode memiliki isi container ini sepenuhnya — jangan render
+              anak React di dalam #public-qr-reader (penyebab error removeChild). */}
           <div
-            id="public-qr-reader"
-            className={`mt-5 rounded-lg overflow-hidden bg-black ${
-              scanning ? '' : 'h-72 flex items-center justify-center'
+            className={`relative mt-5 rounded-lg overflow-hidden bg-black ${
+              scanning ? '' : 'h-72'
             }`}
           >
+            <div id="public-qr-reader" className="w-full" />
             {!scanning && (
-              <div className="text-center px-8 text-white/60">
-                <Camera size={34} className="mx-auto mb-3" />
-                <p className="text-sm">Kamera belum aktif</p>
+              <div className="absolute inset-0 flex items-center justify-center px-8 text-center text-white/60">
+                <div>
+                  <Camera size={34} className="mx-auto mb-3" />
+                  <p className="text-sm">Kamera belum aktif</p>
+                </div>
               </div>
             )}
           </div>

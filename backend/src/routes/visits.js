@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import QRCode from 'qrcode';
 import prisma from '../db.js';
-import { authenticate, allow } from '../middleware/auth.js';
+import { authenticate, allow, requireFeature } from '../middleware/auth.js';
 import { normalizePhone } from '../wa/client.js';
 import { notify } from '../wa/notify.js';
 import * as msg from '../wa/messages.js';
@@ -409,7 +409,7 @@ publicRouter.get('/pass/:token', async (req, res) => {
 // PIC / ADMIN: pendaftaran tamu dengan janji (pre-registration)
 // ============================================================
 
-router.post('/', authenticate, allow(['ADMIN', 'PIC']), async (req, res) => {
+router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat membuat janji temu'), async (req, res) => {
   try {
     const { fullName, phone, company, identityNumber, departmentId, picUserId, purpose, scheduledDate, expectedTime, numberOfVisitors, vehiclePlate } =
       req.body || {};
@@ -699,7 +699,7 @@ router.post('/:id/reject', authenticate, allow(['ADMIN', 'SECURITY']), async (re
 // PIC / ADMIN: batalkan janji sebelum tamu datang
 // ============================================================
 
-router.post('/:id/cancel', authenticate, allow(['ADMIN', 'PIC']), async (req, res) => {
+router.post('/:id/cancel', authenticate, requireFeature('visit.cancel', 'Anda tidak dapat membatalkan kunjungan'), async (req, res) => {
   try {
     const { reason } = req.body || {};
     const existing = await prisma.visit.findUnique({ where: { id: req.params.id } });
@@ -789,6 +789,159 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // ============================================================
+// ADMIN: edit & hapus kunjungan (hak diatur di Manajemen Fitur)
+// ============================================================
+
+const EDITABLE_STATUSES = [
+  'WAITING_VALIDATION',
+  'APPROVED',
+  'CHECKED_IN',
+  'CHECKED_OUT',
+  'REJECTED',
+  'CANCELLED'
+];
+
+router.patch(
+  '/:id',
+  authenticate,
+  requireFeature('visit.edit', 'Anda tidak dapat mengubah data kunjungan'),
+  async (req, res) => {
+    try {
+      const existing = await prisma.visit.findUnique({
+        where: { id: req.params.id },
+        include: { visitor: true }
+      });
+      if (!existing) return res.status(404).json({ error: 'Kunjungan tidak ditemukan' });
+
+      const b = req.body || {};
+      const visitorData = {};
+      const visitData = {};
+      const has = (k) => Object.prototype.hasOwnProperty.call(b, k);
+
+      if (has('fullName')) {
+        const name = String(b.fullName || '').trim();
+        if (!name) return res.status(400).json({ error: 'Nama tamu wajib diisi' });
+        visitorData.fullName = name;
+      }
+      if (has('company')) visitorData.company = b.company ? String(b.company).trim() : null;
+      if (has('identityNumber'))
+        visitorData.identityNumber = b.identityNumber ? String(b.identityNumber).trim() : null;
+      if (has('phone')) {
+        const cleanPhone = normalizePhone(b.phone);
+        if (!cleanPhone) return res.status(400).json({ error: 'Nomor WhatsApp tamu tidak valid' });
+        visitorData.phone = cleanPhone;
+      }
+
+      if (has('departmentId')) {
+        const dept = await prisma.department.findUnique({ where: { id: b.departmentId } });
+        if (!dept) return res.status(400).json({ error: 'Departemen tidak valid' });
+        visitData.departmentId = dept.id;
+      }
+
+      if (has('picUserId')) {
+        if (b.picUserId) {
+          const pic = await prisma.user.findUnique({ where: { id: b.picUserId } });
+          if (!pic) return res.status(400).json({ error: 'PIC tidak valid' });
+          visitData.picUserId = pic.id;
+          visitData.picNameManual = null;
+        } else {
+          visitData.picUserId = null;
+          visitData.picNameManual = b.picNameManual ? String(b.picNameManual).trim() : null;
+        }
+      } else if (has('picNameManual')) {
+        visitData.picNameManual = b.picNameManual ? String(b.picNameManual).trim() : null;
+      }
+
+      if (has('purpose')) {
+        const purpose = String(b.purpose || '').trim();
+        if (!purpose) return res.status(400).json({ error: 'Keperluan wajib diisi' });
+        visitData.purpose = purpose;
+      }
+      if (has('scheduledDate')) {
+        const when = new Date(b.scheduledDate);
+        if (Number.isNaN(when.getTime())) return res.status(400).json({ error: 'Tanggal tidak valid' });
+        visitData.scheduledDate = when;
+      }
+      if (has('expectedTime')) visitData.expectedTime = b.expectedTime || null;
+      if (has('numberOfVisitors')) {
+        const n = Number(b.numberOfVisitors);
+        visitData.numberOfVisitors = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+      }
+      if (has('vehiclePlate'))
+        visitData.vehiclePlate = b.vehiclePlate ? String(b.vehiclePlate).trim().toUpperCase() : null;
+      if (has('badgeNumber')) visitData.badgeNumber = b.badgeNumber ? String(b.badgeNumber).trim() : null;
+      if (has('note')) visitData.note = b.note ? String(b.note).trim() : null;
+      if (has('cancelReason'))
+        visitData.cancelReason = b.cancelReason ? String(b.cancelReason).trim() : null;
+
+      // Perubahan status ikut menjaga konsistensi timestamp check-in/out.
+      if (has('status') && b.status !== existing.status) {
+        if (!EDITABLE_STATUSES.includes(b.status)) {
+          return res.status(400).json({ error: 'Status tidak valid' });
+        }
+        visitData.status = b.status;
+        const now = new Date();
+        if (b.status === 'CHECKED_IN') {
+          visitData.checkInAt = existing.checkInAt || now;
+          visitData.checkInById = existing.checkInById || req.user.id;
+          visitData.checkOutAt = null;
+          visitData.checkOutById = null;
+        } else if (b.status === 'CHECKED_OUT') {
+          visitData.checkInAt = existing.checkInAt || now;
+          visitData.checkInById = existing.checkInById || req.user.id;
+          visitData.checkOutAt = existing.checkOutAt || now;
+          visitData.checkOutById = existing.checkOutById || req.user.id;
+        } else if (b.status === 'WAITING_VALIDATION' || b.status === 'APPROVED') {
+          visitData.checkInAt = null;
+          visitData.checkInById = null;
+          visitData.checkOutAt = null;
+          visitData.checkOutById = null;
+          visitData.cancelReason = null;
+        } else if (b.status === 'REJECTED' || b.status === 'CANCELLED') {
+          visitData.checkOutAt = existing.checkOutAt || null;
+        }
+      }
+
+      const [, visit] = await prisma.$transaction([
+        prisma.visitor.update({ where: { id: existing.visitorId }, data: visitorData }),
+        prisma.visit.update({
+          where: { id: existing.id },
+          data: visitData,
+          include: VISIT_INCLUDE
+        })
+      ]);
+
+      res.json(formatVisit(visit, req.user));
+    } catch (err) {
+      console.error('[Visits] update error:', err.message);
+      res.status(500).json({ error: 'Gagal menyimpan perubahan kunjungan' });
+    }
+  }
+);
+
+router.delete(
+  '/:id',
+  authenticate,
+  requireFeature('visit.delete', 'Anda tidak dapat menghapus data kunjungan'),
+  async (req, res) => {
+    try {
+      const visit = await prisma.visit.findUnique({
+        where: { id: req.params.id },
+        select: { id: true, visitNumber: true }
+      });
+      if (!visit) return res.status(404).json({ error: 'Kunjungan tidak ditemukan' });
+
+      // Token QR ikut terhapus (onDelete: Cascade), log notifikasi diset null.
+      await prisma.visit.delete({ where: { id: visit.id } });
+      res.json({ ok: true, id: visit.id, visitNumber: visit.visitNumber });
+    } catch (err) {
+      console.error('[Visits] delete error:', err.message);
+      res.status(500).json({ error: 'Gagal menghapus kunjungan' });
+    }
+  }
+);
+
+// ============================================================
 // DASHBOARD
 // ============================================================
 
@@ -847,7 +1000,7 @@ router.get('/stats/summary', authenticate, async (req, res) => {
 // EXPORT (CSV)
 // ============================================================
 
-router.get('/export/csv', authenticate, async (req, res) => {
+router.get('/export/csv', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), async (req, res) => {
   try {
     const { startDate, endDate, status } = req.query;
     const where = {};

@@ -41,6 +41,13 @@ export const endpoints = {
   checkOut: (id) => api.post(`/visits/${id}/check-out`).then((r) => r.data),
   reject: (id, reason) => api.post(`/visits/${id}/reject`, { reason }).then((r) => r.data),
   cancel: (id, reason) => api.post(`/visits/${id}/cancel`, { reason }).then((r) => r.data),
+  updateVisit: (id, payload) => api.patch(`/visits/${id}`, payload).then((r) => r.data),
+  deleteVisit: (id) => api.delete(`/visits/${id}`).then((r) => r.data),
+
+  featureCatalog: () => api.get('/features').then((r) => r.data),
+  featureUsers: () => api.get('/features/users').then((r) => r.data),
+  saveUserFeatures: (userId, overrides) =>
+    api.put(`/features/users/${userId}`, { overrides }).then((r) => r.data),
 
   departments: () => api.get('/master/departments').then((r) => r.data),
   createDepartment: (p) => api.post('/master/departments', p).then((r) => r.data),

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
+import VisitEditModal, { confirmDeleteVisit } from '../components/VisitEditModal.jsx';
+import { useAuth } from '../lib/auth.jsx';
 
 const firstOfMonth = () => {
   const d = new Date();
@@ -9,6 +11,11 @@ const firstOfMonth = () => {
 };
 
 export default function Reports() {
+  const { can } = useAuth();
+  const canEdit = can('visit.edit');
+  const canDelete = can('visit.delete');
+  const canExport = can('report.export');
+  const [editing, setEditing] = useState(null);
   const [startDate, setStartDate] = useState(firstOfMonth());
   const [endDate, setEndDate] = useState(todayISO());
   const [status, setStatus] = useState('ALL');
@@ -98,10 +105,12 @@ export default function Reports() {
           <button className="btn-ghost" onClick={load}>
             <FileText size={16} /> Terapkan
           </button>
-          <button className="btn-primary" onClick={download} disabled={downloading}>
-            {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            Unduh CSV
-          </button>
+          {canExport && (
+            <button className="btn-primary" onClick={download} disabled={downloading}>
+              {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              Unduh CSV
+            </button>
+          )}
         </div>
       </div>
 
@@ -130,19 +139,20 @@ export default function Reports() {
                 <th className="th">Masuk</th>
                 <th className="th">Keluar</th>
                 <th className="th">Durasi</th>
+                {(canEdit || canDelete) && <th className="th text-right">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && (
                 <tr>
-                  <td className="td text-center py-10 text-slate-400" colSpan={9}>
+                  <td className="td text-center py-10 text-slate-400" colSpan={canEdit || canDelete ? 10 : 9}>
                     <Loader2 className="animate-spin inline" size={16} />
                   </td>
                 </tr>
               )}
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td className="td text-center py-10 text-slate-400" colSpan={9}>
+                  <td className="td text-center py-10 text-slate-400" colSpan={canEdit || canDelete ? 10 : 9}>
                     Tidak ada data pada periode ini.
                   </td>
                 </tr>
@@ -165,12 +175,53 @@ export default function Reports() {
                         ? `${Math.floor(v.durationMinutes / 60)}j ${v.durationMinutes % 60}m`
                         : '-'}
                     </td>
+                    {(canEdit || canDelete) && (
+                      <td className="td">
+                        <div className="flex items-center justify-end gap-1">
+                          {canEdit && (
+                            <button
+                              className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-brand-600"
+                              title="Edit kunjungan"
+                              onClick={() => setEditing(v)}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              className="p-1.5 rounded text-slate-500 hover:bg-red-50 hover:text-red-600"
+                              title="Hapus kunjungan"
+                              onClick={async () => {
+                                try {
+                                  if (await confirmDeleteVisit(v)) {
+                                    setRows((list) => list.filter((r) => r.id !== v.id));
+                                  }
+                                } catch (err) {
+                                  alert(errMsg(err, 'Gagal menghapus kunjungan'));
+                                }
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {editing && (
+        <VisitEditModal
+          visit={editing}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+          onDeleted={(v) => setRows((list) => list.filter((r) => r.id !== v.id))}
+        />
+      )}
     </div>
   );
 }

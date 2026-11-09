@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { endpoints } from './api.js';
 
 const AuthCtx = createContext(null);
@@ -32,8 +32,22 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const refreshUser = () =>
+    endpoints
+      .me()
+      .then((d) => {
+        setUser(d.user);
+        return d.user;
+      })
+      .catch(() => null);
+
+  // Cek hak fitur user yang sedang login (diatur di halaman Manajemen Fitur).
+  const can = useCallback((key) => !!user?.features?.[key], [user]);
+
   return (
-    <AuthCtx.Provider value={{ user, loading, login, logout, isAuth: !!user }}>{children}</AuthCtx.Provider>
+    <AuthCtx.Provider value={{ user, loading, login, logout, can, refreshUser, isAuth: !!user }}>
+      {children}
+    </AuthCtx.Provider>
   );
 }
 

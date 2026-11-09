@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import prisma from '../db.js';
+import { resolveFeatures, overridesFromRows } from '../lib/features.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '12h';
@@ -12,6 +13,11 @@ export function signToken(user) {
   );
 }
 
+/** Peta hak fitur efektif untuk satu user (override per user > bawaan role). */
+export function featuresFor(user) {
+  return resolveFeatures(user.role, overridesFromRows(user.featureOverrides || []));
+}
+
 /** Attach req.user from the Bearer token. */
 export async function authenticate(req, res, next) {
   try {
@@ -22,13 +28,17 @@ export async function authenticate(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      include: { department: { select: { id: true, name: true, code: true } } }
+      include: {
+        department: { select: { id: true, name: true, code: true } },
+        featureOverrides: true
+      }
     });
 
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'Akun tidak aktif atau tidak ditemukan' });
     }
 
+    user.features = featuresFor(user);
     req.user = user;
     next();
   } catch {
@@ -43,6 +53,20 @@ export function allow(roles) {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Anda tidak memiliki akses untuk aksi ini' });
     }
+    next();
+  };
+}
+
+/**
+ * Gate berbasis fitur: requireFeature('visit.edit').
+ * Bawaan mengikuti role, tapi bisa diubah per user dari halaman Manajemen Fitur.
+ * Pasang setelah authenticate().
+ */
+export function requireFeature(key, message = 'Fitur ini tidak aktif untuk akun Anda') {
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Tidak terautentikasi' });
+    const enabled = req.user.features ? req.user.features[key] : false;
+    if (!enabled) return res.status(403).json({ error: message });
     next();
   };
 }

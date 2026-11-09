@@ -130,7 +130,7 @@ vms/
 
 ---
 
-## 4. Model Data (8 tabel)
+## 4. Model Data (9 tabel)
 
 | Tabel | Fungsi |
 | :--- | :--- |
@@ -142,6 +142,7 @@ vms/
 | `notification_logs` | Audit setiap pengiriman WhatsApp (status, error, jumlah percobaan) |
 | `management_recipients` | Nomor WhatsApp pimpinan penerima laporan otomatis |
 | `settings` | Konfigurasi umum |
+| `user_features` | Pengaturan hak fitur per user (tanpa baris = ikut bawaan role) |
 
 ### Status kunjungan
 
@@ -160,6 +161,28 @@ Cabang: `APPROVED` (janji temu terjadwal), `REJECTED` (ditolak security), `CANCE
 | **MANAGEMENT** | Dashboard, data kunjungan (read-only), laporan, log WhatsApp |
 
 PIC hanya melihat kunjungan miliknya. Nomor WhatsApp & NIK tamu hanya terlihat oleh ADMIN dan SECURITY.
+
+### Manajemen Fitur (per user)
+
+Selain role, hak akses diatur per fitur melalui halaman **Manajemen Fitur** (`/features`, hanya ADMIN).
+Halaman ini menampilkan seluruh user dan seluruh fitur dalam bentuk toggle; nilai bawaan mengikuti role,
+dan setiap user bisa diberi pengecualian (kebijakan "khusus") atau dikembalikan ke bawaan.
+
+- Registri fitur ada di satu tempat: `backend/src/lib/features.js`. Setiap entri baru di sana otomatis
+  muncul di halaman Manajemen Fitur tanpa mengubah UI (katalog dikirim lewat `GET /api/features`).
+- Halaman memakai kunci `page.*`, aksi memakai kunci domain (`visit.create`, `visit.edit`,
+  `visit.delete`, `visit.cancel`, `report.export`). Menu sidebar dan tombol mengikuti kunci ini,
+  dan server memvalidasi ulang lewat middleware `requireFeature()`.
+- `page.features` bersifat `locked`: tidak bisa dicabut dari halaman itu sendiri agar admin tidak terkunci.
+- Perubahan berlaku setelah user memuat ulang halaman atau login kembali.
+
+Endpoint:
+
+| Method | Path | Keterangan |
+| :--- | :--- | :--- |
+| GET | `/api/features` | Katalog fitur + hak efektif user yang login |
+| GET | `/api/features/users` | Matriks user × fitur (ADMIN) |
+| PUT | `/api/features/users/:userId` | Simpan override `{ overrides: { key: true/false/null } }` (ADMIN) |
 
 ---
 

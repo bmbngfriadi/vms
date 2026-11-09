@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Search, X, Loader2, CalendarPlus } from 'lucide-react';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
+import VisitEditModal, { confirmDeleteVisit } from '../components/VisitEditModal.jsx';
 import { useAuth } from '../lib/auth.jsx';
 
 const STATUSES = [
@@ -15,7 +16,10 @@ const STATUSES = [
 ];
 
 export default function Visits() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
+  const canCreate = can('visit.create');
+  const canEdit = can('visit.edit');
+  const canDelete = can('visit.delete');
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -27,6 +31,18 @@ export default function Visits() {
   const [error, setError] = useState('');
   const [detail, setDetail] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState(null);
+
+  const removeRow = async (v) => {
+    try {
+      if (await confirmDeleteVisit(v)) {
+        setDetail(null);
+        load();
+      }
+    } catch (err) {
+      alert(errMsg(err, 'Gagal menghapus kunjungan'));
+    }
+  };
 
   const load = useCallback(() => {
     setLoading(true);
@@ -54,7 +70,7 @@ export default function Visits() {
           <h1 className="text-lg font-semibold text-slate-900">Data Kunjungan</h1>
           <p className="text-sm text-slate-500">{total} kunjungan tercatat</p>
         </div>
-        {['ADMIN', 'PIC'].includes(user.role) && (
+        {canCreate && (
           <button className="btn-primary" onClick={() => setShowCreate(true)}>
             <CalendarPlus size={16} /> Buat Janji Temu
           </button>
@@ -127,19 +143,26 @@ export default function Visits() {
                 <th className="th">Status</th>
                 <th className="th">Masuk</th>
                 <th className="th">Keluar</th>
+                {(canEdit || canDelete) && <th className="th text-right">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && (
                 <tr>
-                  <td className="td text-center py-10 text-slate-400" colSpan={8}>
+                  <td
+                    className="td text-center py-10 text-slate-400"
+                    colSpan={canEdit || canDelete ? 9 : 8}
+                  >
                     <Loader2 className="animate-spin inline" size={16} />
                   </td>
                 </tr>
               )}
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td className="td text-center py-10 text-slate-400" colSpan={8}>
+                  <td
+                    className="td text-center py-10 text-slate-400"
+                    colSpan={canEdit || canDelete ? 9 : 8}
+                  >
                     Tidak ada data kunjungan.
                   </td>
                 </tr>
@@ -164,6 +187,36 @@ export default function Visits() {
                     </td>
                     <td className="td text-slate-600">{v.checkInAt ? fmtTime(v.checkInAt) : '-'}</td>
                     <td className="td text-slate-600">{v.checkOutAt ? fmtTime(v.checkOutAt) : '-'}</td>
+                    {(canEdit || canDelete) && (
+                      <td className="td">
+                        <div className="flex items-center justify-end gap-1">
+                          {canEdit && (
+                            <button
+                              className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-brand-600"
+                              title="Edit kunjungan"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditing(v);
+                              }}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              className="p-1.5 rounded text-slate-500 hover:bg-red-50 hover:text-red-600"
+                              title="Hapus kunjungan"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeRow(v);
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
             </tbody>
@@ -191,7 +244,28 @@ export default function Visits() {
         )}
       </div>
 
-      {detail && <DetailModal visit={detail} onClose={() => setDetail(null)} onChanged={load} />}
+      {detail && (
+        <DetailModal
+          visit={detail}
+          onClose={() => setDetail(null)}
+          onChanged={load}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onEdit={() => {
+            setEditing(detail);
+            setDetail(null);
+          }}
+          onDelete={() => removeRow(detail)}
+        />
+      )}
+      {editing && (
+        <VisitEditModal
+          visit={editing}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+          onDeleted={load}
+        />
+      )}
       {showCreate && (
         <CreateModal
           user={user}
@@ -206,10 +280,10 @@ export default function Visits() {
   );
 }
 
-function DetailModal({ visit, onClose, onChanged }) {
-  const { user } = useAuth();
+function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, onDelete }) {
+  const { can } = useAuth();
   const [busy, setBusy] = useState(false);
-  const canCancel = ['ADMIN', 'PIC'].includes(user.role) && ['WAITING_VALIDATION', 'APPROVED'].includes(visit.status);
+  const canCancel = can('visit.cancel') && ['WAITING_VALIDATION', 'APPROVED'].includes(visit.status);
 
   const cancel = async () => {
     const reason = window.prompt('Alasan pembatalan:', 'Dibatalkan oleh PIC');
@@ -257,13 +331,23 @@ function DetailModal({ visit, onClose, onChanged }) {
         {visit.cancelReason && <Row label="Alasan" value={visit.cancelReason} />}
       </div>
 
-      <div className="flex gap-2 mt-5">
-        <button className="btn-ghost flex-1" onClick={onClose}>
+      <div className="flex flex-wrap gap-2 mt-5">
+        <button className="btn-ghost" onClick={onClose}>
           Tutup
         </button>
+        {canDelete && (
+          <button className="btn-ghost text-red-600" onClick={onDelete}>
+            <Trash2 size={15} /> Hapus
+          </button>
+        )}
         {canCancel && (
-          <button className="btn-danger" onClick={cancel} disabled={busy}>
-            Batalkan Kunjungan
+          <button className="btn-ghost" onClick={cancel} disabled={busy}>
+            Batalkan
+          </button>
+        )}
+        {canEdit && (
+          <button className="btn-primary flex-1" onClick={onEdit}>
+            <Pencil size={15} /> Edit Kunjungan
           </button>
         )}
       </div>

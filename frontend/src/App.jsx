@@ -10,12 +10,29 @@ import Visits from './pages/Visits.jsx';
 import Reports from './pages/Reports.jsx';
 import Master from './pages/Master.jsx';
 import WhatsApp from './pages/WhatsApp.jsx';
+import Features from './pages/Features.jsx';
 import Register from './pages/Register.jsx';
 import Pass from './pages/Pass.jsx';
 import PublicScan from './pages/PublicScan.jsx';
 
-function Guard({ roles, children }) {
-  const { user, loading } = useAuth();
+function NoAccess() {
+  const { logout, user } = useAuth();
+  return (
+    <div className="card p-8 text-center max-w-md mx-auto">
+      <h2 className="text-sm font-semibold text-slate-800">Akses ditolak</h2>
+      <p className="text-sm text-slate-500 mt-1">
+        Akun {user?.name} tidak memiliki hak untuk membuka halaman ini. Hubungi administrator bila
+        menurut Anda ini keliru.
+      </p>
+      <button className="btn-ghost mt-4 mx-auto" onClick={logout}>
+        Keluar
+      </button>
+    </div>
+  );
+}
+
+function Guard({ feature, children }) {
+  const { user, loading, can } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -26,7 +43,7 @@ function Guard({ roles, children }) {
     );
   }
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (feature && !can(feature)) return <NoAccess />;
   return children;
 }
 
@@ -50,20 +67,36 @@ export default function App() {
               </Guard>
             }
           >
-            <Route path="/" element={<Dashboard />} />
+            {/* Hak halaman memakai fitur page.* — bisa diatur per user
+                di halaman Manajemen Fitur. */}
+            <Route
+              path="/"
+              element={
+                <Guard feature="page.dashboard">
+                  <Dashboard />
+                </Guard>
+              }
+            />
             <Route
               path="/scan"
               element={
-                <Guard roles={['ADMIN', 'SECURITY']}>
+                <Guard feature="page.scan">
                   <Scan />
                 </Guard>
               }
             />
-            <Route path="/visits" element={<Visits />} />
+            <Route
+              path="/visits"
+              element={
+                <Guard feature="page.visits">
+                  <Visits />
+                </Guard>
+              }
+            />
             <Route
               path="/reports"
               element={
-                <Guard roles={['ADMIN', 'SECURITY', 'MANAGEMENT']}>
+                <Guard feature="page.reports">
                   <Reports />
                 </Guard>
               }
@@ -71,7 +104,7 @@ export default function App() {
             <Route
               path="/master"
               element={
-                <Guard roles={['ADMIN']}>
+                <Guard feature="page.master">
                   <Master />
                 </Guard>
               }
@@ -79,8 +112,16 @@ export default function App() {
             <Route
               path="/whatsapp"
               element={
-                <Guard roles={['ADMIN', 'MANAGEMENT']}>
+                <Guard feature="page.whatsapp">
                   <WhatsApp />
+                </Guard>
+              }
+            />
+            <Route
+              path="/features"
+              element={
+                <Guard feature="page.features">
+                  <Features />
                 </Guard>
               }
             />

@@ -17,6 +17,7 @@ import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 
 export default function Scan() {
   const scannerRef = useRef(null);
+  const startingRef = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [code, setCode] = useState('');
   const [result, setResult] = useState(null);
@@ -33,13 +34,16 @@ export default function Scan() {
     const s = scannerRef.current;
     scannerRef.current = null;
     setScanning(false);
-    if (s) {
-      try {
-        await s.stop();
-        s.clear();
-      } catch {
-        /* ignore */
-      }
+    if (!s) return;
+    try {
+      await s.stop();
+    } catch {
+      /* scanner belum/tidak berjalan */
+    }
+    try {
+      s.clear();
+    } catch {
+      /* elemen sudah dibersihkan */
     }
   };
 
@@ -52,6 +56,10 @@ export default function Scan() {
   }, []);
 
   const startCamera = async () => {
+    // Cegah start ganda (double click / re-render) yang membuat dua instance scanner
+    // berebut container DOM yang sama.
+    if (startingRef.current || scannerRef.current) return;
+    startingRef.current = true;
     setError('');
     try {
       const scanner = new Html5Qrcode('qr-reader', { verbose: false });
@@ -67,11 +75,25 @@ export default function Scan() {
       );
       setScanning(true);
     } catch (err) {
+      const s = scannerRef.current;
+      scannerRef.current = null;
+      try {
+        await s?.stop();
+      } catch {
+        /* belum berjalan */
+      }
+      try {
+        s?.clear();
+      } catch {
+        /* tidak ada yang perlu dibersihkan */
+      }
       setScanning(false);
       setError(
         'Kamera tidak dapat diakses. Pastikan halaman dibuka via HTTPS dan izin kamera diberikan. ' +
           'Anda tetap dapat mengetik kode secara manual.'
       );
+    } finally {
+      startingRef.current = false;
     }
   };
 
@@ -204,16 +226,23 @@ export default function Scan() {
             )}
           </div>
 
+          {/* Container ini dimiliki penuh oleh html5-qrcode: library menyuntikkan &
+              mengosongkan isinya sendiri. Jangan pernah render anak React di dalam
+              #qr-reader — React akan mencoba removeChild pada node yang sudah
+              dihapus library dan memicu error "The node to be removed is not a
+              child of this node". Placeholder ditaruh sebagai overlay di luar. */}
           <div
-            id="qr-reader"
-            className={`w-full rounded-md overflow-hidden bg-black ${
-              scanning ? '' : 'h-52 flex items-center justify-center'
+            className={`relative w-full rounded-md overflow-hidden bg-black ${
+              scanning ? '' : 'h-52'
             }`}
           >
+            <div id="qr-reader" className="w-full" />
             {!scanning && (
-              <div className="text-center text-slate-500 text-xs px-6">
-                <Camera size={26} className="mx-auto mb-2 opacity-50" />
-                Kamera belum aktif. Tekan “Aktifkan Kamera”, lalu arahkan ke barcode tamu.
+              <div className="absolute inset-0 flex items-center justify-center text-center text-slate-400 text-xs px-6 pointer-events-none">
+                <div>
+                  <Camera size={26} className="mx-auto mb-2 opacity-50" />
+                  Kamera belum aktif. Tekan “Aktifkan Kamera”, lalu arahkan ke barcode tamu.
+                </div>
               </div>
             )}
           </div>
