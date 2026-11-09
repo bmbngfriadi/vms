@@ -30,7 +30,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col justify-between bg-slate-900 p-12">
+      <div className="hidden lg:flex flex-col justify-between bg-brand-500 p-12">
         <div>
           <div className="flex items-center gap-3">
             <div className="bg-white rounded-md p-1.5 shrink-0">
@@ -38,7 +38,7 @@ export default function Login() {
             </div>
             <div>
               <div className="text-white font-semibold tracking-wide text-sm">PT CEMINDO GEMILANG Tbk</div>
-              <div className="text-slate-400 text-xs mt-1">Plant Batam</div>
+              <div className="text-slate-300 text-xs mt-1">Plant Batam</div>
             </div>
           </div>
         </div>
@@ -49,17 +49,17 @@ export default function Login() {
             <br />
             System
           </h1>
-          <p className="mt-4 text-slate-400 text-sm max-w-sm leading-relaxed">
+          <p className="mt-4 text-white/75 text-sm max-w-sm leading-relaxed">
             Pendataan tamu, validasi gerbang, dan pencatatan keluar-masuk kawasan pabrik dalam satu alur
             terintegrasi.
           </p>
-          <div className="mt-8 flex items-center gap-2 text-xs text-slate-500">
+          <div className="mt-8 flex items-center gap-2 text-xs text-white/60">
             <ShieldCheck size={14} />
             Akses terbatas untuk personel berwenang
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-600">
+        <div className="text-[11px] text-white/60">
           © {new Date().getFullYear()} PT Cemindo Gemilang Tbk
         </div>
       </div>

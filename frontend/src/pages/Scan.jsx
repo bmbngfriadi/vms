@@ -206,7 +206,7 @@ export default function Scan() {
 
           <div
             id="qr-reader"
-            className={`w-full rounded-md overflow-hidden bg-slate-900 ${
+            className={`w-full rounded-md overflow-hidden bg-black ${
               scanning ? '' : 'h-52 flex items-center justify-center'
             }`}
           >

@@ -291,7 +291,7 @@ function UserModal({ user, departments, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-8 overflow-y-auto">
-      <div className="fixed inset-0 bg-slate-900/50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-lg w-full max-w-lg shadow-xl my-auto">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
           <h3 className="text-sm font-semibold text-slate-800">

@@ -10,7 +10,9 @@ import {
   LogOut,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  UserRound,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../lib/auth.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
@@ -26,13 +28,33 @@ const NAV_ITEMS = [
 
 function SidebarBrand() {
   return (
-    <div className="px-4 py-4 border-b border-white/10 flex items-center gap-3">
-      <div className="bg-white rounded-md p-1.5 shrink-0">
-        <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-9 w-auto" />
+    <div className="px-5 pt-5 pb-4">
+      <div className="flex items-center gap-2.5">
+        <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-9 w-auto shrink-0" />
+        <div className="min-w-0">
+          <div className="text-[12.5px] font-semibold text-slate-900 leading-tight">PT CEMINDO GEMILANG</div>
+          <div className="text-[10.5px] text-slate-500 mt-0.5">Visitor Management · Batam</div>
+        </div>
       </div>
-      <div className="min-w-0">
-        <div className="text-[13px] font-semibold text-white leading-tight">PT CEMINDO GEMILANG</div>
-        <div className="text-[11px] text-slate-400 mt-0.5">Visitor Management · Plant Batam</div>
+    </div>
+  );
+}
+
+function AccountCard({ user }) {
+  return (
+    <div className="px-3 pb-4">
+      <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 flex items-center gap-2.5 shadow-sm">
+        <div className="w-8 h-8 rounded-md bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+          <UserRound size={15} strokeWidth={1.9} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold text-slate-800 truncate leading-tight">{user?.name}</div>
+          <div className="text-[10.5px] text-slate-500 truncate mt-0.5">
+            {user?.role}
+            {user?.department ? ` · ${user.department.code}` : ''}
+          </div>
+        </div>
+        <ChevronDown size={14} className="text-slate-400 shrink-0" />
       </div>
     </div>
   );
@@ -40,7 +62,7 @@ function SidebarBrand() {
 
 function SidebarNav({ items, onNavigate }) {
   return (
-    <nav className="flex-1 px-2 py-4 space-y-0.5">
+    <nav className="flex-1 px-3 pb-3 space-y-1">
       {items.map((item) => (
         <NavLink
           key={item.to}
@@ -48,18 +70,39 @@ function SidebarNav({ items, onNavigate }) {
           end={item.to === '/'}
           onClick={onNavigate}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] transition-colors ${
               isActive
-                ? 'bg-white/10 text-white font-medium'
-                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                ? 'bg-brand-500 text-white font-semibold'
+                : 'text-slate-600 font-medium hover:bg-slate-200/70 hover:text-slate-900'
             }`
           }
         >
-          <item.icon size={17} strokeWidth={1.8} />
+          <item.icon size={17} strokeWidth={1.9} />
           {item.label}
         </NavLink>
       ))}
     </nav>
+  );
+}
+
+function SidebarFooter({ onLogout }) {
+  return (
+    <div className="px-3 py-3 border-t border-slate-200 space-y-1">
+      <a
+        href="/register"
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-[12.5px] font-medium text-slate-600 hover:bg-slate-200/70 hover:text-slate-900"
+      >
+        <ExternalLink size={15} strokeWidth={1.9} /> Form Tamu (Publik)
+      </a>
+      <button
+        onClick={onLogout}
+        className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-[12.5px] font-medium text-slate-600 hover:bg-red-50 hover:text-brand-600"
+      >
+        <LogOut size={15} strokeWidth={1.9} /> Keluar
+      </button>
+    </div>
   );
 }
 
@@ -71,36 +114,35 @@ export default function Shell() {
 
   const items = NAV_ITEMS.filter((n) => n.roles.includes(user?.role));
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen flex bg-slate-100">
       {/* Sidebar desktop */}
-      <aside className="hidden lg:flex w-60 shrink-0 bg-slate-900 flex-col">
+      <aside className="hidden lg:flex w-64 shrink-0 bg-slate-50 border-r border-slate-200 flex-col">
         <SidebarBrand />
+        <AccountCard user={user} />
         <SidebarNav items={items} />
-        <div className="p-3 border-t border-white/10">
-          <a
-            href="/register"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-white/5 hover:text-white"
-          >
-            <ExternalLink size={14} /> Form Tamu (Publik)
-          </a>
-        </div>
+        <SidebarFooter onLogout={handleLogout} />
       </aside>
 
       {/* Drawer mobile */}
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/60" onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-slate-900 flex flex-col">
-            <div className="flex items-center justify-between">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
+          <aside className="absolute left-0 top-0 h-full w-64 bg-slate-50 border-r border-slate-200 flex flex-col">
+            <div className="flex items-start justify-between">
               <SidebarBrand />
-              <button onClick={() => setOpen(false)} className="p-3 text-slate-400">
+              <button onClick={() => setOpen(false)} className="p-3 text-slate-500">
                 <X size={18} />
               </button>
             </div>
+            <AccountCard user={user} />
             <SidebarNav items={items} onNavigate={() => setOpen(false)} />
+            <SidebarFooter onLogout={handleLogout} />
           </aside>
         </div>
       )}
@@ -122,19 +164,13 @@ export default function Shell() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-right leading-tight">
+            <div className="text-right leading-tight lg:hidden">
               <div className="text-sm font-medium text-slate-800">{user?.name}</div>
-              <div className="text-[11px] text-slate-500">
-                {user?.role}
-                {user?.department ? ` · ${user.department.code}` : ''}
-              </div>
+              <div className="text-[11px] text-slate-500">{user?.role}</div>
             </div>
             <button
-              onClick={() => {
-                logout();
-                navigate('/login');
-              }}
-              className="p-2 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              onClick={handleLogout}
+              className="p-2 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden"
               title="Keluar"
             >
               <LogOut size={17} />
