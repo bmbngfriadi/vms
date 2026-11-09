@@ -8,7 +8,7 @@ const EMPTY = {
   company: '',
   identityNumber: '',
   departmentId: '',
-  picName: '',
+  picUserId: '',
   purpose: '',
   numberOfVisitors: 1,
   vehiclePlate: ''
@@ -17,6 +17,8 @@ const EMPTY = {
 export default function Register() {
   const [form, setForm] = useState(EMPTY);
   const [departments, setDepartments] = useState([]);
+  const [pics, setPics] = useState([]);
+  const [picsLoading, setPicsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
@@ -29,6 +31,21 @@ export default function Register() {
   }, []);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const selectDepartment = async (e) => {
+    const departmentId = e.target.value;
+    setForm((current) => ({ ...current, departmentId, picUserId: '' }));
+    setPics([]);
+    if (!departmentId) return;
+    setPicsLoading(true);
+    try {
+      setPics(await endpoints.publicPics(departmentId));
+    } catch {
+      setError('Gagal memuat daftar PIC. Silakan pilih departemen kembali.');
+    } finally {
+      setPicsLoading(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -162,7 +179,7 @@ export default function Register() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Departemen Tujuan *</label>
-                  <select className="input" value={form.departmentId} onChange={set('departmentId')} required>
+                  <select className="input" value={form.departmentId} onChange={selectDepartment} required>
                     <option value="">— Pilih departemen —</option>
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -173,13 +190,33 @@ export default function Register() {
                 </div>
                 <div>
                   <label className="label">PIC / Orang yang Dituju *</label>
-                  <input
+                  <select
                     className="input"
-                    value={form.picName}
-                    onChange={set('picName')}
-                    placeholder="Nama karyawan yang akan ditemui"
+                    value={form.picUserId}
+                    onChange={set('picUserId')}
+                    disabled={!form.departmentId || picsLoading}
                     required
-                  />
+                  >
+                    <option value="">
+                      {!form.departmentId
+                        ? '— Pilih departemen terlebih dahulu —'
+                        : picsLoading
+                        ? 'Memuat PIC…'
+                        : pics.length === 0
+                        ? '— Tidak ada PIC aktif —'
+                        : '— Pilih PIC —'}
+                    </option>
+                    {pics.map((pic) => (
+                      <option key={pic.id} value={pic.id}>
+                        {pic.name}
+                      </option>
+                    ))}
+                  </select>
+                  {form.departmentId && !picsLoading && pics.length === 0 && (
+                    <p className="text-[11px] text-brand-600 mt-1">
+                      Departemen ini belum memiliki PIC aktif. Hubungi petugas Security.
+                    </p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="label">Keperluan Kunjungan *</label>

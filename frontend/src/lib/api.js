@@ -27,6 +27,8 @@ export const endpoints = {
   me: () => api.get('/auth/me').then((r) => r.data),
 
   publicDepartments: () => api.get('/public/departments').then((r) => r.data),
+  publicPics: (departmentId) =>
+    api.get('/public/pics', { params: { departmentId } }).then((r) => r.data),
   publicRegister: (payload) => api.post('/public/register', payload).then((r) => r.data),
   publicPass: (token) => api.get(`/public/pass/${token}`).then((r) => r.data),
 
@@ -43,11 +45,13 @@ export const endpoints = {
   departments: () => api.get('/master/departments').then((r) => r.data),
   createDepartment: (p) => api.post('/master/departments', p).then((r) => r.data),
   updateDepartment: (id, p) => api.put(`/master/departments/${id}`, p).then((r) => r.data),
+  deleteDepartment: (id) => api.delete(`/master/departments/${id}`).then((r) => r.data),
   pics: (departmentId) =>
     api.get('/master/pics', { params: departmentId ? { departmentId } : {} }).then((r) => r.data),
   users: () => api.get('/master/users').then((r) => r.data),
   createUser: (p) => api.post('/master/users', p).then((r) => r.data),
   updateUser: (id, p) => api.put(`/master/users/${id}`, p).then((r) => r.data),
+  deleteUser: (id) => api.delete(`/master/users/${id}`).then((r) => r.data),
 
   waStatus: () => api.get('/wa/status').then((r) => r.data),
   waReconnect: () => api.post('/wa/reconnect').then((r) => r.data),

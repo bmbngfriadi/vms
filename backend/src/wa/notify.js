@@ -1,5 +1,5 @@
 import prisma from '../db.js';
-import { sendText, normalizePhone, wa } from './client.js';
+import { sendText, sendImage, normalizePhone, wa } from './client.js';
 
 /**
  * Antrian pengiriman WhatsApp sederhana (in-process, tanpa Redis/BullMQ).
@@ -48,7 +48,11 @@ async function drain() {
     while (attempt < MAX_ATTEMPTS && !sent) {
       attempt += 1;
       try {
-        await sendText(job.recipient, job.message);
+        if (job.imageBuffer) {
+          await sendImage(job.recipient, job.imageBuffer, job.message);
+        } else {
+          await sendText(job.recipient, job.message);
+        }
         sent = true;
       } catch (err) {
         lastError = err.message || String(err);
@@ -83,14 +87,14 @@ async function drain() {
 /**
  * Kirim pesan WhatsApp secara asinkron (tidak memblokir response HTTP).
  */
-export function notify({ visitId, recipient, type, message }) {
+export function notify({ visitId, recipient, type, message, imageBuffer }) {
   const phone = normalizePhone(recipient);
   if (!phone) {
     console.warn(`[Notify] Nomor tidak valid, pesan ${type} dilewati: ${recipient}`);
     return false;
   }
 
-  queue.push({ visitId, recipient: phone, type, message });
+  queue.push({ visitId, recipient: phone, type, message, imageBuffer });
   drain().catch((e) => console.error('[Notify] Queue error:', e.message));
   return true;
 }

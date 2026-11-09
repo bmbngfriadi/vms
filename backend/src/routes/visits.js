@@ -18,10 +18,23 @@ const APP_URL = (process.env.PUBLIC_APP_URL || 'http://localhost').replace(/\/$/
 // ============================================================
 
 const newToken = () => crypto.randomBytes(24).toString('base64url');
-const passUrl = (token) => `${APP_URL}/pass/${token}`;
+
+function requestBaseUrl(req) {
+  // Jika PUBLIC_APP_URL belum dikonfigurasi, pakai host yang sedang diakses
+  // (misalnya IP LAN server) agar QR dapat dibuka dari HP.
+  if (APP_URL && !/localhost|127\.0\.0\.1/i.test(APP_URL)) return APP_URL;
+  if (req?.get('host')) return `${req.protocol}://${req.get('host')}`;
+  return APP_URL;
+}
+
+const passUrl = (token, req = null) => `${requestBaseUrl(req)}/pass/${token}`;
 
 async function qrDataUrl(text) {
   return QRCode.toDataURL(text, { margin: 1, width: 480, errorCorrectionLevel: 'M' });
+}
+
+async function qrImageBuffer(text) {
+  return QRCode.toBuffer(text, { type: 'png', margin: 2, width: 720, errorCorrectionLevel: 'M' });
 }
 
 async function generateVisitNumber() {
@@ -97,7 +110,7 @@ async function managementRecipients() {
 }
 
 /** Susun seluruh notifikasi untuk sebuah kunjungan. */
-async function notifyCheckIn(visit) {
+async function notifyCheckIn(visit, req) {
   const guest = visit.visitor;
   const dept = visit.department?.name || '-';
   const picName = visit.picUser?.name || visit.picNameManual || '-';
@@ -112,8 +125,9 @@ async function notifyCheckIn(visit) {
         name: guest.fullName,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
-        passUrl: passUrl(outToken.token)
-      })
+        passUrl: passUrl(outToken.token, req)
+      }),
+      imageBuffer: await qrImageBuffer(passUrl(outToken.token, req))
     });
   }
 
@@ -220,6 +234,17 @@ publicRouter.get('/departments', async (_req, res) => {
   res.json(departments);
 });
 
+publicRouter.get('/pics', async (req, res) => {
+  const { departmentId } = req.query;
+  if (!departmentId) return res.json([]);
+  const pics = await prisma.user.findMany({
+    where: { departmentId, role: 'PIC', isActive: true, canReceiveVisits: true },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' }
+  });
+  res.json(pics);
+});
+
 // ============================================================
 // PUBLIC: pendaftaran tamu walk-in (tanpa janji)
 // ============================================================
@@ -234,10 +259,10 @@ const registerLimiter = rateLimit({
 
 publicRouter.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { fullName, phone, company, identityNumber, departmentId, picName, purpose, numberOfVisitors, vehiclePlate } =
+    const { fullName, phone, company, identityNumber, departmentId, picUserId, purpose, numberOfVisitors, vehiclePlate } =
       req.body || {};
 
-    if (!fullName || !phone || !departmentId || !picName || !purpose) {
+    if (!fullName || !phone || !departmentId || !picUserId || !purpose) {
       return res.status(400).json({ error: 'Nama, nomor WhatsApp, departemen, PIC, dan keperluan wajib diisi' });
     }
 
@@ -249,6 +274,13 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
     const dept = await prisma.department.findUnique({ where: { id: departmentId } });
     if (!dept || !dept.isActive) {
       return res.status(400).json({ error: 'Departemen tujuan tidak valid' });
+    }
+
+    const pic = await prisma.user.findFirst({
+      where: { id: picUserId, departmentId, role: 'PIC', isActive: true, canReceiveVisits: true }
+    });
+    if (!pic) {
+      return res.status(400).json({ error: 'PIC tidak valid atau tidak berada di departemen yang dipilih' });
     }
 
     let visitor = await prisma.visitor.findFirst({ where: { phone: cleanPhone } });
@@ -282,7 +314,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         visitType: 'WALK_IN',
         status: 'WAITING_VALIDATION',
         departmentId: dept.id,
-        picNameManual: picName.trim(),
+        picUserId: pic.id,
+        picNameManual: pic.name,
         purpose: purpose.trim(),
         scheduledDate: new Date(),
         numberOfVisitors: Number(numberOfVisitors) > 0 ? Number(numberOfVisitors) : 1,
@@ -292,8 +325,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       include: VISIT_INCLUDE
     });
 
-    const dataUrl = await qrDataUrl(token);
-    const url = passUrl(token);
+    const url = passUrl(token, req);
+    const dataUrl = await qrDataUrl(url);
 
     notify({
       visitId: visit.id,
@@ -304,7 +337,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         visitNumber: visit.visitNumber,
         department: dept.name,
         passUrl: url
-      })
+      }),
+      imageBuffer: await qrImageBuffer(url)
     });
 
     res.status(201).json({
@@ -361,7 +395,7 @@ publicRouter.get('/pass/:token', async (req, res) => {
       picName: visit.picUser?.name || visit.picNameManual,
       status: visit.status,
       action,
-      qrDataUrl: await qrDataUrl(current.token),
+      qrDataUrl: await qrDataUrl(passUrl(current.token)),
       checkInAt: visit.checkInAt,
       checkOutAt: visit.checkOutAt
     });
@@ -441,7 +475,7 @@ router.post('/', authenticate, allow(['ADMIN', 'PIC']), async (req, res) => {
       include: VISIT_INCLUDE
     });
 
-    const url = passUrl(token);
+    const url = passUrl(token, req);
     notify({
       visitId: visit.id,
       recipient: cleanPhone,
@@ -454,10 +488,11 @@ router.post('/', authenticate, allow(['ADMIN', 'PIC']), async (req, res) => {
         date: when,
         time: visit.expectedTime,
         passUrl: url
-      })
+      }),
+      imageBuffer: await qrImageBuffer(url)
     });
 
-    res.status(201).json({ ...formatVisit(visit, req.user), passUrl: url, qrDataUrl: await qrDataUrl(token) });
+    res.status(201).json({ ...formatVisit(visit, req.user), passUrl: url, qrDataUrl: await qrDataUrl(url) });
   } catch (err) {
     console.error('[PreRegister] error:', err);
     res.status(500).json({ error: 'Gagal membuat janji kunjungan' });
@@ -588,11 +623,11 @@ router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (
       });
     });
 
-    await notifyCheckIn(visit);
+    await notifyCheckIn(visit, req);
 
     res.json({
       ...formatVisit(visit, req.user),
-      guestPassUrl: passUrl(checkOutToken),
+      guestPassUrl: passUrl(checkOutToken, req),
       picNotified: pic.name
     });
   } catch (err) {

@@ -12,6 +12,7 @@ import Master from './pages/Master.jsx';
 import WhatsApp from './pages/WhatsApp.jsx';
 import Register from './pages/Register.jsx';
 import Pass from './pages/Pass.jsx';
+import PublicScan from './pages/PublicScan.jsx';
 
 function Guard({ roles, children }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/pass/:token" element={<Pass />} />
+          <Route path="/scan-public" element={<PublicScan />} />
 
           {/* Internal */}
           <Route

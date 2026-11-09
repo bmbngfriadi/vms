@@ -44,8 +44,30 @@ router.put('/departments/:id', authenticate, allow(['ADMIN']), async (req, res) 
       }
     });
     res.json(dept);
-  } catch {
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Nama atau kode departemen sudah dipakai' });
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Departemen tidak ditemukan' });
     res.status(500).json({ error: 'Gagal memperbarui departemen' });
+  }
+});
+
+router.delete('/departments/:id', authenticate, allow(['ADMIN']), async (req, res) => {
+  try {
+    const department = await prisma.department.findUnique({
+      where: { id: req.params.id },
+      include: { _count: { select: { users: true, visits: true } } }
+    });
+    if (!department) return res.status(404).json({ error: 'Departemen tidak ditemukan' });
+    if (department._count.users > 0 || department._count.visits > 0) {
+      return res.status(409).json({
+        error: `Departemen masih digunakan oleh ${department._count.users} pengguna dan ${department._count.visits} kunjungan. Pindahkan pengguna atau nonaktifkan departemen.`
+      });
+    }
+    await prisma.department.delete({ where: { id: department.id } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Master] delete department:', err.message);
+    res.status(500).json({ error: 'Gagal menghapus departemen' });
   }
 });
 
@@ -54,12 +76,14 @@ router.put('/departments/:id', authenticate, allow(['ADMIN']), async (req, res) 
 // ============================================================
 
 // Daftar PIC untuk dipilih Security saat validasi (punya nomor WhatsApp)
-router.get('/pics', authenticate, async (req, res) => {
+async function listPics(req, res) {
   const { departmentId } = req.query;
   const pics = await prisma.user.findMany({
     where: {
       isActive: true,
+      role: 'PIC',
       canReceiveVisits: true,
+      phone: { not: null },
       ...(departmentId ? { departmentId } : {})
     },
     select: {
@@ -72,7 +96,21 @@ router.get('/pics', authenticate, async (req, res) => {
     orderBy: { name: 'asc' }
   });
   res.json(pics);
+}
+
+// Publik untuk dropdown form tamu; data sensitif tidak disertakan.
+router.get('/pics/public', async (req, res) => {
+  const { departmentId } = req.query;
+  if (!departmentId) return res.json([]);
+  const pics = await prisma.user.findMany({
+    where: { isActive: true, canReceiveVisits: true, departmentId },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' }
+  });
+  res.json(pics);
 });
+
+router.get('/pics', authenticate, listPics);
 
 router.get('/users', authenticate, allow(['ADMIN']), async (req, res) => {
   const users = await prisma.user.findMany({
@@ -114,9 +152,10 @@ router.post('/users', authenticate, allow(['ADMIN']), async (req, res) => {
 
 router.put('/users/:id', authenticate, allow(['ADMIN']), async (req, res) => {
   try {
-    const { name, phone, role, departmentId, isActive, canReceiveVisits, password } = req.body || {};
+    const { name, email, phone, role, departmentId, isActive, canReceiveVisits, password } = req.body || {};
     const data = {
       ...(name ? { name: name.trim() } : {}),
+      ...(email ? { email: String(email).trim().toLowerCase() } : {}),
       ...(phone !== undefined ? { phone: phone ? String(phone).replace(/\D/g, '') : null } : {}),
       ...(role ? { role } : {}),
       ...(departmentId !== undefined ? { departmentId: departmentId || null } : {}),
@@ -132,8 +171,34 @@ router.put('/users/:id', authenticate, allow(['ADMIN']), async (req, res) => {
     });
     const { password: _p, ...safe } = user;
     res.json(safe);
-  } catch {
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Email sudah digunakan' });
+    if (err.code === 'P2025') return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     res.status(500).json({ error: 'Gagal memperbarui user' });
+  }
+});
+
+router.delete('/users/:id', authenticate, allow(['ADMIN']), async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ error: 'Akun yang sedang digunakan tidak dapat dihapus' });
+    }
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.visit.updateMany({
+        where: { picUserId: target.id },
+        data: { picUserId: null, picNameManual: target.name }
+      });
+      await tx.visit.updateMany({ where: { checkInById: target.id }, data: { checkInById: null } });
+      await tx.visit.updateMany({ where: { checkOutById: target.id }, data: { checkOutById: null } });
+      await tx.user.delete({ where: { id: target.id } });
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Master] delete user:', err.message);
+    res.status(500).json({ error: 'Gagal menghapus pengguna' });
   }
 });
 

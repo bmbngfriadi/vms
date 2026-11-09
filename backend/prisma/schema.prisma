@@ -93,7 +93,7 @@ model Visit {
   departmentId     String      @map("department_id")
   department       Department  @relation(fields: [departmentId], references: [id])
   picUserId        String?     @map("pic_user_id")
-  picUser          User?       @relation("VisitPic", fields: [picUserId], references: [id])
+  picUser          User?       @relation("VisitPic", fields: [picUserId], references: [id], onDelete: SetNull)
   picNameManual    String?     @map("pic_name_manual")
 
   purpose          String
@@ -106,10 +106,10 @@ model Visit {
 
   checkInAt        DateTime?   @map("check_in_at")
   checkInById      String?     @map("check_in_by_id")
-  checkInBy        User?       @relation("VisitCheckIn", fields: [checkInById], references: [id])
+  checkInBy        User?       @relation("VisitCheckIn", fields: [checkInById], references: [id], onDelete: SetNull)
   checkOutAt       DateTime?   @map("check_out_at")
   checkOutById     String?     @map("check_out_by_id")
-  checkOutBy       User?       @relation("VisitCheckOut", fields: [checkOutById], references: [id])
+  checkOutBy       User?       @relation("VisitCheckOut", fields: [checkOutById], references: [id], onDelete: SetNull)
   cancelReason     String?     @map("cancel_reason")
 
   tokens           QrToken[]

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Loader2, X, Pencil } from 'lucide-react';
+import { Plus, Loader2, X, Pencil, Trash2, Save } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 
 const ROLES = [
@@ -46,6 +46,7 @@ export default function Master() {
 function Departments() {
   const [rows, setRows] = useState([]);
   const [form, setForm] = useState({ name: '', code: '' });
+  const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -84,6 +85,30 @@ function Departments() {
     }
   };
 
+  const saveEdit = async () => {
+    if (!editing?.name || !editing?.code) return;
+    setBusy(true);
+    try {
+      await endpoints.updateDepartment(editing.id, { name: editing.name, code: editing.code });
+      setEditing(null);
+      load();
+    } catch (err) {
+      alert(errMsg(err, 'Gagal memperbarui departemen'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (d) => {
+    if (!window.confirm(`Hapus departemen ${d.name}?`)) return;
+    try {
+      await endpoints.deleteDepartment(d.id);
+      load();
+    } catch (err) {
+      alert(errMsg(err, 'Gagal menghapus departemen'));
+    }
+  };
+
   return (
     <div className="grid lg:grid-cols-3 gap-5 items-start">
       <div className="card p-5 lg:col-span-2 overflow-hidden">
@@ -100,8 +125,28 @@ function Departments() {
           <tbody className="divide-y divide-slate-100">
             {rows.map((d) => (
               <tr key={d.id}>
-                <td className="td font-medium text-slate-800">{d.name}</td>
-                <td className="td font-mono text-xs">{d.code}</td>
+                <td className="td font-medium text-slate-800">
+                  {editing?.id === d.id ? (
+                    <input
+                      className="input py-1.5"
+                      value={editing.name}
+                      onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    />
+                  ) : (
+                    d.name
+                  )}
+                </td>
+                <td className="td font-mono text-xs">
+                  {editing?.id === d.id ? (
+                    <input
+                      className="input py-1.5 font-mono"
+                      value={editing.code}
+                      onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })}
+                    />
+                  ) : (
+                    d.code
+                  )}
+                </td>
                 <td className="td text-slate-600">{d._count?.users ?? 0}</td>
                 <td className="td">
                   <span
@@ -112,10 +157,31 @@ function Departments() {
                     {d.isActive ? 'Aktif' : 'Nonaktif'}
                   </span>
                 </td>
-                <td className="td text-right">
-                  <button className="text-xs text-brand-600 hover:underline" onClick={() => toggle(d)}>
-                    {d.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                  </button>
+                <td className="td">
+                  <div className="flex items-center justify-end gap-2">
+                    {editing?.id === d.id ? (
+                      <>
+                        <button className="text-brand-600 p-1" onClick={saveEdit} title="Simpan" disabled={busy}>
+                          <Save size={15} />
+                        </button>
+                        <button className="text-slate-400 p-1" onClick={() => setEditing(null)} title="Batal">
+                          <X size={15} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="text-slate-500 hover:text-brand-600 p-1" onClick={() => setEditing({ ...d })} title="Edit">
+                          <Pencil size={15} />
+                        </button>
+                        <button className="text-slate-500 hover:text-red-600 p-1" onClick={() => remove(d)} title="Hapus">
+                          <Trash2 size={15} />
+                        </button>
+                        <button className="text-xs text-brand-600 hover:underline" onClick={() => toggle(d)}>
+                          {d.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -167,6 +233,7 @@ function Users() {
   const [departments, setDepartments] = useState([]);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = () => {
     endpoints.users().then(setRows).catch((e) => setError(errMsg(e)));
@@ -222,13 +289,22 @@ function Users() {
                     </span>
                   </td>
                   <td className="td text-right">
-                    <button
-                      className="text-slate-400 hover:text-brand-600"
-                      onClick={() => setEditing(u)}
-                      title="Edit"
-                    >
-                      <Pencil size={15} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        className="text-slate-400 hover:text-brand-600 p-1"
+                        onClick={() => setEditing(u)}
+                        title="Edit"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        className="text-slate-400 hover:text-red-600 p-1"
+                        onClick={() => setDeleteTarget(u)}
+                        title="Hapus"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -248,6 +324,52 @@ function Users() {
           }}
         />
       )}
+
+      {deleteTarget && (
+        <ConfirmDeleteUser
+          user={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ConfirmDeleteUser({ user, onClose, onDeleted }) {
+  const [busy, setBusy] = useState(false);
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await endpoints.deleteUser(user.id);
+      onDeleted();
+    } catch (err) {
+      alert(errMsg(err, 'Gagal menghapus pengguna'));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-lg w-full max-w-sm shadow-xl p-5">
+        <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
+          <Trash2 size={18} />
+        </div>
+        <h3 className="font-semibold text-slate-900">Hapus pengguna?</h3>
+        <p className="text-sm text-slate-500 mt-1">
+          Akun <strong>{user.name}</strong> akan dihapus. Riwayat kunjungan tetap tersimpan.
+        </p>
+        <div className="flex gap-2 mt-5">
+          <button className="btn-ghost flex-1" onClick={onClose}>Batal</button>
+          <button className="btn-danger flex-1" onClick={remove} disabled={busy}>
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} Hapus
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -314,7 +436,6 @@ function UserModal({ user, departments, onClose, onSaved }) {
               className="input"
               value={form.email}
               onChange={set('email')}
-              disabled={!isNew}
               required
             />
           </div>

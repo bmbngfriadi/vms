@@ -19,10 +19,11 @@ Pendaftaran kunjungan Anda ke *PT Cemindo Gemilang Tbk - Plant Batam* telah kami
 No. Kunjungan : ${visitNumber}
 Departemen    : ${department}
 
-*Tunjukkan barcode pada tautan berikut kepada petugas Security di pos gerbang untuk validasi:*
-${passUrl}
+*Tunjukkan gambar barcode yang terlampir kepada petugas Security di pos gerbang untuk validasi.*
 
-Barcode ini hanya dapat digunakan satu kali. Mohon jangan membagikan tautan ini kepada orang lain.
+Halaman pass (cadangan): ${passUrl}
+
+Barcode ini hanya dapat digunakan satu kali. Mohon jangan membagikannya kepada orang lain.
 
 _Pesan otomatis - Visitor Management System_`;
 }
@@ -43,8 +44,9 @@ Perkiraan Jam : ${time || '-'}
 Departemen    : ${department}
 PIC / Tuan Rumah : ${picName || '-'}
 
-*Tunjukkan barcode pada tautan berikut kepada petugas Security saat tiba:*
-${passUrl}
+*Tunjukkan gambar barcode yang terlampir kepada petugas Security saat tiba.*
+
+Halaman pass (cadangan): ${passUrl}
 
 Barcode hanya dapat digunakan satu kali.
 
@@ -62,8 +64,9 @@ Halo ${name},
 Kedatangan Anda telah divalidasi oleh petugas Security.
 Waktu masuk : ${fmtTime(checkInAt)} WIB
 
-*Simpan barcode berikut. Barcode ini WAJIB ditunjukkan saat Anda keluar dari area pabrik:*
-${passUrl}
+*Simpan gambar barcode yang terlampir. Barcode ini WAJIB ditunjukkan saat Anda keluar dari area pabrik.*
+
+Halaman pass (cadangan): ${passUrl}
 
 Pastikan Anda melakukan check-out sebelum meninggalkan kawasan.
 

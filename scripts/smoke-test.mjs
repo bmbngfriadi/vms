@@ -90,7 +90,7 @@ async function main() {
       company: 'PT Mitra Uji',
       identityNumber: '2171012345670001',
       departmentId: dept.id,
-      picName: 'Budi Santoso',
+      picUserId: picId,
       purpose: 'Uji fungsi sistem',
       numberOfVisitors: 2,
       vehiclePlate: 'bp 1234 xy'
@@ -109,7 +109,7 @@ async function main() {
       fullName: 'X',
       phone: '123',
       departmentId: dept.id,
-      picName: 'Y',
+      picUserId: picId,
       purpose: 'Z'
     }
   });
@@ -143,15 +143,11 @@ async function main() {
   const pics = await call('GET', `/master/pics?departmentId=${dept.id}`, { token: secToken });
   ok('Daftar PIC per departemen', pics.status === 200 && pics.data.length > 0);
 
-  const checkInNoPic = await call('POST', `/visits/${walkInId}/check-in`, {
-    token: secToken,
-    body: {}
-  });
-  ok('Check-in tanpa PIC ditolak', checkInNoPic.status === 400);
+  ok('PIC walk-in sudah dipilih dari form', scan1.data.visit.picUser?.id === picId);
 
   const checkIn = await call('POST', `/visits/${walkInId}/check-in`, {
     token: secToken,
-    body: { picUserId: picId, badgeNumber: 'B-0912' }
+    body: { badgeNumber: 'B-0912' }
   });
   ok('Check-in berhasil', checkIn.status === 200, JSON.stringify(checkIn.data).slice(0, 200));
   ok('Status menjadi CHECKED_IN', checkIn.data.status === 'CHECKED_IN');
@@ -226,7 +222,7 @@ async function main() {
       fullName: 'Tamu Ditolak',
       phone: '081233334444',
       departmentId: dept.id,
-      picName: 'Budi',
+      picUserId: picId,
       purpose: 'Uji tolak'
     }
   });
