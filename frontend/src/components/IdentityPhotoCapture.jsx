@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Upload,
-  RefreshCw,
   Trash2,
   CheckCircle2,
   AlertCircle,
@@ -11,6 +10,7 @@ import {
   SwitchCamera
 } from 'lucide-react';
 import { endpoints } from '../lib/api.js';
+import { useI18n } from '../lib/i18n.jsx';
 
 /**
  * Kompres gambar ke ukuran maksimal 1280px dan format JPEG quality 0.85
@@ -52,15 +52,16 @@ export default function IdentityPhotoCapture({
   value,
   onChange,
   onNikDetected,
-  label = 'Foto Identitas (KTP/SIM/Paspor) *',
+  label,
   required = true
 }) {
+  const { t } = useI18n();
   const [preview, setPreview] = useState(value || '');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrStatus, setOcrStatus] = useState(null); // { type: 'success'|'warn'|'error', msg: string, nik?: string }
   const [cameraOpen, setCameraOpen] = useState(false);
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' (belakang) atau 'user' (depan)
-  const [cameraError, setCameraError] = useState('');
+  const [, setCameraError] = useState('');
 
   const fileInputRef = useRef(null);
   const cameraFallbackInputRef = useRef(null);
@@ -163,7 +164,7 @@ export default function IdentityPhotoCapture({
       if (res && res.nik) {
         setOcrStatus({
           type: 'success',
-          msg: `NIK berhasil dibaca otomatis: ${res.nik}`,
+          msg: res.nik,
           nik: res.nik
         });
         if (onNikDetected) {
@@ -172,14 +173,14 @@ export default function IdentityPhotoCapture({
       } else {
         setOcrStatus({
           type: 'warn',
-          msg: 'Foto berhasil disimpan. NIK tidak terdeteksi otomatis, silakan periksa dan ketik nomor identitas Anda secara manual.'
+          msg: t('register.ocr_warn', 'Foto berhasil disimpan. Silakan periksa dan ketik nomor identitas Anda secara manual.')
         });
       }
     } catch (err) {
       console.warn('[OCR Client error]', err);
       setOcrStatus({
         type: 'warn',
-        msg: 'Foto berhasil disimpan. Silakan masukkan nomor identitas secara manual.'
+        msg: t('register.ocr_warn', 'Foto berhasil disimpan. Silakan periksa dan ketik nomor identitas Anda secara manual.')
       });
     } finally {
       setOcrLoading(false);
@@ -193,7 +194,7 @@ export default function IdentityPhotoCapture({
       const compressed = await compressImage(file);
       handleNewPhoto(compressed);
     } catch (err) {
-      alert('Gagal memproses file foto: ' + err.message);
+      alert('Error: ' + err.message);
     } finally {
       e.target.value = '';
     }
@@ -206,12 +207,16 @@ export default function IdentityPhotoCapture({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const displayLabel = label || t('register.identity_photo', 'Foto Identitas (KTP/SIM/Paspor) *');
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="label mb-0">{label}</label>
+        <label className="label mb-0">{displayLabel}</label>
         {required && !preview && (
-          <span className="text-[11px] font-semibold text-red-500">Wajib Diisi</span>
+          <span className="text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded">
+            {t('register.required_tag', 'Wajib Diisi')}
+          </span>
         )}
       </div>
 
@@ -223,7 +228,7 @@ export default function IdentityPhotoCapture({
         className="hidden"
         onChange={onFileChange}
       />
-      {/* Input kamera native tersembunyi (fallback) */}
+      {/* Input kamera native tersembunyi (fallback mobile browser) */}
       <input
         ref={cameraFallbackInputRef}
         type="file"
@@ -233,39 +238,39 @@ export default function IdentityPhotoCapture({
         onChange={onFileChange}
       />
 
-      {/* Jika BELUM ada foto: tampilkan 2 tombol terpisah */}
+      {/* Jika BELUM ada foto: tampilkan 2 tombol terpisah dengan desain modern mobile native */}
       {!preview ? (
-        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-4 bg-slate-50/70 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 sm:p-4 bg-slate-50/80 dark:bg-slate-900/60 transition-colors">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             {/* Tombol 1: Buka Kamera Langsung */}
             <button
               type="button"
               onClick={() => startCamera('environment')}
-              className="flex items-center justify-center gap-2.5 rounded-md bg-brand-500 text-white px-4 py-3 text-xs font-bold hover:bg-brand-600 active:bg-brand-700 shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 rounded-xl bg-brand-500 text-white px-4 py-3 sm:py-2.5 text-xs font-bold hover:bg-brand-600 active:scale-[0.98] shadow-sm transition-all text-center"
             >
               <Camera size={18} strokeWidth={2.2} />
-              <span>Buka Kamera Langsung</span>
+              <span>{t('register.photo_btn_camera', 'Buka Kamera Langsung')}</span>
             </button>
 
             {/* Tombol 2: Upload File / Galeri */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center gap-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-4 py-3 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-4 py-3 sm:py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-[0.98] shadow-sm transition-all text-center"
             >
               <Upload size={18} strokeWidth={2.2} className="text-slate-500 dark:text-slate-400" />
-              <span>Pilih dari File / Galeri</span>
+              <span>{t('register.photo_btn_file', 'Pilih dari File / Galeri')}</span>
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-500 text-center mt-3 leading-relaxed">
-            Foto KTP, SIM, atau Paspor asli yang jelas dan tidak buram. Sistem akan membaca nomor identitas secara otomatis.
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center mt-3 leading-relaxed">
+            {t('register.photo_hint', 'Foto KTP, SIM, atau Paspor asli yang jelas dan tidak buram. Sistem akan membaca nomor identitas secara otomatis.')}
           </p>
         </div>
       ) : (
         /* Jika SUDAH ada foto: tampilkan preview, kontrol aksi, dan status OCR */
-        <div className="card p-3 space-y-3 bg-white dark:bg-slate-900 shadow-sm border-slate-200 dark:border-slate-800">
-          <div className="relative rounded-md overflow-hidden bg-slate-900/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[140px] max-h-56">
+        <div className="card p-3 space-y-3 bg-white dark:bg-slate-900 shadow-sm border-slate-200 dark:border-slate-800 rounded-xl">
+          <div className="relative rounded-lg overflow-hidden bg-slate-900/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[140px] max-h-56">
             <img
               src={preview}
               alt="Foto Identitas"
@@ -275,28 +280,28 @@ export default function IdentityPhotoCapture({
 
           {/* Status Pembacaan NIK OCR */}
           {ocrLoading && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 text-xs text-brand-700 dark:text-brand-300 animate-pulse font-medium">
-              <Loader2 size={16} className="animate-spin text-brand-600 shrink-0" />
-              <span>Memindai dan membaca NIK dari foto KTP secara otomatis...</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 text-xs text-brand-700 dark:text-brand-300 animate-pulse font-medium">
+              <Loader2 size={16} className="animate-spin text-brand-600 dark:text-brand-400 shrink-0" />
+              <span>{t('register.ocr_scanning', 'Memindai dan membaca NIK dari foto KTP secara otomatis...')}</span>
             </div>
           )}
 
           {!ocrLoading && ocrStatus?.type === 'success' && (
-            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
-              <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
+              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
               <div className="leading-tight">
-                <span className="font-bold">NIK Terbaca Otomatis:</span>{' '}
+                <span className="font-bold">{t('register.ocr_success', 'NIK Terbaca Otomatis:')}</span>{' '}
                 <span className="font-mono font-bold tracking-wider">{ocrStatus.nik}</span>
-                <p className="text-[11px] text-emerald-700 mt-0.5">
-                  Nomor telah otomatis diisikan ke kolom No. Identitas di bawah. Silakan verifikasi/koreksi bila perlu.
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                  {t('register.ocr_success_hint', 'Nomor telah otomatis diisikan ke kolom No. Identitas di bawah. Silakan verifikasi/koreksi bila perlu.')}
                 </p>
               </div>
             </div>
           )}
 
           {!ocrLoading && ocrStatus?.type === 'warn' && (
-            <div className="flex items-start gap-2.5 px-3 py-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
-              <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
+              <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
               <span className="text-[11.5px] leading-tight">{ocrStatus.msg}</span>
             </div>
           )}
@@ -307,27 +312,30 @@ export default function IdentityPhotoCapture({
               <button
                 type="button"
                 onClick={() => startCamera('environment')}
-                className="btn-ghost text-xs px-2.5 py-1.5 inline-flex items-center gap-1.5"
-                title="Ambil foto ulang dengan kamera"
+                className="btn-ghost text-xs px-2.5 py-1.5 inline-flex items-center gap-1.5 rounded-lg"
+                title={t('register.retake_photo', 'Foto Ulang')}
               >
-                <Camera size={14} /> Foto Ulang
+                <Camera size={14} />
+                <span>{t('register.retake_photo', 'Foto Ulang')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="btn-ghost text-xs px-2.5 py-1.5 inline-flex items-center gap-1.5"
-                title="Pilih file lain dari galeri"
+                className="btn-ghost text-xs px-2.5 py-1.5 inline-flex items-center gap-1.5 rounded-lg"
+                title={t('register.change_file', 'Ganti File')}
               >
-                <Upload size={14} /> Ganti File
+                <Upload size={14} />
+                <span>{t('register.change_file', 'Ganti File')}</span>
               </button>
             </div>
 
             <button
               type="button"
               onClick={removePhoto}
-              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded inline-flex items-center gap-1 font-medium transition-colors"
+              className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 px-2 py-1.5 rounded-lg inline-flex items-center gap-1 font-medium transition-colors"
             >
-              <Trash2 size={14} /> Hapus
+              <Trash2 size={14} />
+              <span>{t('register.delete_photo', 'Hapus')}</span>
             </button>
           </div>
         </div>
@@ -335,27 +343,29 @@ export default function IdentityPhotoCapture({
 
       {/* Modal Kamera Interaktif Langsung */}
       {cameraOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="bg-slate-900 rounded-xl overflow-hidden shadow-2xl max-w-lg w-full border border-slate-800 flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-xs">
+          <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full border border-slate-800 flex flex-col max-h-[92vh]">
             {/* Header Modal Kamera */}
             <div className="px-4 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <Camera size={18} className="text-brand-400" />
-                <span className="text-xs font-bold uppercase tracking-wider">Arahkan KTP / Identitas</span>
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  {t('camera.modal_title', 'Arahkan KTP / Identitas')}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={switchCamera}
-                  className="p-1.5 rounded-md bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700"
-                  title="Ganti kamera depan / belakang"
+                  className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700"
+                  title={t('camera.switch_cam', 'Ganti kamera depan / belakang')}
                 >
                   <SwitchCamera size={16} />
                 </button>
                 <button
                   type="button"
                   onClick={stopCamera}
-                  className="p-1.5 rounded-md bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700"
+                  className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700"
                 >
                   <X size={16} />
                 </button>
@@ -373,34 +383,34 @@ export default function IdentityPhotoCapture({
               />
 
               {/* Garis Bingkai Pembantu KTP */}
-              <div className="absolute inset-x-6 inset-y-6 sm:inset-x-10 sm:inset-y-8 border-2 border-brand-400/80 rounded-lg pointer-events-none flex flex-col justify-between p-2 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
+              <div className="absolute inset-x-6 inset-y-6 sm:inset-x-10 sm:inset-y-8 border-2 border-brand-400/80 rounded-xl pointer-events-none flex flex-col justify-between p-2.5 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]">
                 <div className="flex justify-between text-[10px] text-brand-300 font-mono font-semibold uppercase">
-                  <span>KTP / SIM</span>
-                  <span>Posisi Rata</span>
+                  <span>{t('camera.guideline_title', 'KTP / SIM')}</span>
+                  <span>{t('camera.guideline_pos', 'Posisi Rata')}</span>
                 </div>
-                <div className="text-center text-[11px] text-white/90 bg-slate-900/80 py-1 px-3 rounded-full mx-auto backdrop-blur-xs font-medium">
-                  Pastikan tulisan NIK terlihat jelas & tidak silau
+                <div className="text-center text-[10.5px] sm:text-[11px] text-white/95 bg-slate-900/85 py-1 px-3 rounded-full mx-auto backdrop-blur-xs font-medium">
+                  {t('camera.guideline_hint', 'Pastikan tulisan NIK terlihat jelas & tidak silau')}
                 </div>
               </div>
             </div>
 
             {/* Footer Kontrol Pengambilan Foto */}
-            <div className="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
+            <div className="p-3 sm:p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={stopCamera}
-                className="btn-ghost text-xs text-slate-300 border-slate-700 bg-slate-800 hover:bg-slate-700 hover:text-white"
+                className="btn-ghost text-xs text-slate-300 border-slate-700 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-xl px-3 py-2"
               >
-                Batal
+                {t('camera.btn_cancel', 'Batal')}
               </button>
 
               <button
                 type="button"
                 onClick={capturePhoto}
-                className="btn-primary px-6 py-2.5 text-xs font-bold shadow-lg flex items-center gap-2"
+                className="btn-primary px-5 sm:px-6 py-2.5 text-xs font-bold shadow-lg flex items-center gap-2 rounded-xl"
               >
                 <Camera size={18} />
-                <span>Ambil Foto</span>
+                <span>{t('camera.btn_capture', 'Ambil Foto')}</span>
               </button>
 
               <button
@@ -409,9 +419,9 @@ export default function IdentityPhotoCapture({
                   stopCamera();
                   fileInputRef.current?.click();
                 }}
-                className="btn-ghost text-xs text-slate-300 border-slate-700 bg-slate-800 hover:bg-slate-700 hover:text-white"
+                className="btn-ghost text-xs text-slate-300 border-slate-700 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-xl px-3 py-2"
               >
-                Dari File
+                {t('camera.btn_file', 'Dari File')}
               </button>
             </div>
           </div>
@@ -420,4 +430,3 @@ export default function IdentityPhotoCapture({
     </div>
   );
 }
-
