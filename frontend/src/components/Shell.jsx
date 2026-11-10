@@ -8,7 +8,6 @@ import {
   Database,
   MessageCircle,
   LogOut,
-  Menu,
   X,
   ExternalLink,
   UserRound,
@@ -17,7 +16,8 @@ import {
   Moon,
   Globe,
   UserCheck,
-  Download
+  MoreHorizontal,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../lib/auth.jsx';
 import { useTheme } from '../lib/theme.jsx';
@@ -154,7 +154,7 @@ export default function Shell() {
   const { lang, toggleLang, t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
 
   const NAV_ITEMS = [
     { to: '/', label: 'Dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
@@ -169,14 +169,23 @@ export default function Shell() {
 
   const items = NAV_ITEMS.filter((n) => n.feature === 'always' || can(n.feature));
 
+  // Menu tambahan untuk Bottom Sheet Mobile (menu sekunder selain Home, Tamu, Laporan, Profil)
+  const secondaryMenuItems = [
+    ...(can('page.scan') ? [{ to: '/scan', label: t('nav.scan', 'Scan Barcode'), desc: 'Pindai barcode tamu kedatangan & kepulangan', icon: ScanLine }] : []),
+    ...(can('page.master') ? [{ to: '/master', label: t('nav.master', 'Master Data'), desc: 'Kelola departemen, pengguna & PIC internal', icon: Database }] : []),
+    ...(can('page.whatsapp') ? [{ to: '/whatsapp', label: t('nav.whatsapp', 'WhatsApp Gateway'), desc: 'Monitor sesi Baileys & riwayat pesan OTP', icon: MessageCircle }] : []),
+    ...(can('page.features') ? [{ to: '/features', label: t('nav.features', 'Manajemen Fitur'), desc: 'Role permissions & kontrol modul sistem', icon: SlidersHorizontal }] : [])
+  ];
+
   const handleLogout = () => {
+    setShowMoreSheet(false);
     logout();
     navigate('/login');
   };
 
   return (
     <div className="min-h-screen flex bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
-      {/* Sidebar Desktop */}
+      {/* Sidebar Desktop Saja (Hanya tampil di Desktop lg:flex, TIDAK ADA di Mobile) */}
       <aside className="hidden lg:flex w-64 shrink-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col fixed inset-y-0 z-30">
         <SidebarBrand />
         <AccountCard user={user} />
@@ -194,52 +203,26 @@ export default function Shell() {
       {/* Spacer desktop agar konten tidak tertutup sidebar fixed */}
       <div className="hidden lg:block w-64 shrink-0" />
 
-      {/* Drawer Mobile Slider */}
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-72 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between pr-2">
-              <SidebarBrand />
-              <button onClick={() => setOpen(false)} className="p-2 text-slate-500 hover:text-slate-800">
-                <X size={20} />
-              </button>
-            </div>
-            <AccountCard user={user} onNavigate={() => setOpen(false)} />
-            <SidebarNav items={items} onNavigate={() => setOpen(false)} t={t} />
-            <SidebarFooter
-              onLogout={handleLogout}
-              t={t}
-              lang={lang}
-              toggleLang={toggleLang}
-              isDark={isDark}
-              toggleTheme={toggleTheme}
-            />
-          </aside>
-        </div>
-      )}
-
       {/* Area Konten Utama */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Header Atas */}
-        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="lg:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md"
-              onClick={() => setOpen(true)}
-            >
-              <Menu size={20} />
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden sm:inline">
-                PT Cemindo Gemilang Tbk
+        {/* Header Atas (Tanpa hamburger button di mobile, tampilan native app) */}
+        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 lg:px-6 sticky top-0 z-20">
+          <div className="flex items-center gap-2.5">
+            {/* Logo untuk Mobile */}
+            <div className="lg:hidden bg-white dark:bg-slate-800 p-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
+              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-7 w-auto" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                PT Cemindo Gemilang
               </span>
-              <span className="text-[11px] text-slate-400 hidden md:inline">· Plant Batam</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                Visitor Management · Batam
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Quick Toggle Bahasa */}
             <button
               type="button"
@@ -265,26 +248,46 @@ export default function Shell() {
             <button
               type="button"
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="flex items-center gap-2 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
               title="Buka Profil"
             >
-              <div className="w-7 h-7 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs">
+              <div className="w-7 h-7 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs shadow-xs">
                 {user?.name?.charAt(0) || 'U'}
               </div>
             </button>
           </div>
         </header>
 
-        {/* Konten Halaman dengan padding bawah untuk Mobile Bottom Bar */}
-        <main className="flex-1 p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-20 lg:pb-6">
+        {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar */}
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-24 lg:pb-6">
           <ErrorBoundary key={location.pathname}>
             <Outlet />
           </ErrorBoundary>
         </main>
 
+        {/* ================= FLOATING ACTION BUTTON (FAB) SCAN ================= */}
+        {/* HANYA MUNCUL DI HALAMAN HOME ('/') PADA MOBILE VIEW (< lg) SESUAI PERMINTAAN USER */}
+        {location.pathname === '/' && can('page.scan') && (
+          <div className="lg:hidden fixed bottom-20 right-5 z-40 flex flex-col items-center">
+            <button
+              type="button"
+              onClick={() => navigate('/scan')}
+              className="w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-xl ring-4 ring-white dark:ring-slate-900 transition-transform duration-150"
+              title="Scan Barcode Tamu"
+              aria-label="Scan Barcode Tamu"
+            >
+              <ScanLine size={26} strokeWidth={2.4} />
+            </button>
+            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 mt-1 drop-shadow-xs">
+              Scan
+            </span>
+          </div>
+        )}
+
         {/* ================= NATIVE MOBILE BOTTOM BAR ================= */}
-        {/* Bar navigasi bawah bergaya aplikasi mobile native untuk operasional smartphone */}
+        {/* Menu Navigasi Bawah bergaya Native Mobile App tanpa sidebar drawer samping */}
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around py-1.5 px-2 shadow-lg">
+          {/* 1. Home / Dashboard */}
           <NavLink
             to="/"
             end
@@ -294,26 +297,11 @@ export default function Shell() {
               }`
             }
           >
-            <LayoutDashboard size={18} strokeWidth={2} />
+            <LayoutDashboard size={19} strokeWidth={2} />
             <span>Home</span>
           </NavLink>
 
-          {can('page.scan') && (
-            <NavLink
-              to="/scan"
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-                  isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
-                }`
-              }
-            >
-              <div className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md -mt-3 border-2 border-white dark:border-slate-900">
-                <ScanLine size={19} strokeWidth={2.3} />
-              </div>
-              <span className="mt-0.5">Scan</span>
-            </NavLink>
-          )}
-
+          {/* 2. Tamu / Kunjungan */}
           {can('page.visits') && (
             <NavLink
               to="/visits"
@@ -323,11 +311,27 @@ export default function Shell() {
                 }`
               }
             >
-              <Users size={18} strokeWidth={2} />
-              <span>Tamu</span>
+              <Users size={19} strokeWidth={2} />
+              <span>{t('nav.visits', 'Tamu')}</span>
             </NavLink>
           )}
 
+          {/* 3. Laporan */}
+          {can('page.reports') && (
+            <NavLink
+              to="/reports"
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
+                  isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+                }`
+              }
+            >
+              <FileText size={19} strokeWidth={2} />
+              <span>{t('nav.reports', 'Laporan')}</span>
+            </NavLink>
+          )}
+
+          {/* 4. Profil */}
           <NavLink
             to="/profile"
             className={({ isActive }) =>
@@ -336,19 +340,152 @@ export default function Shell() {
               }`
             }
           >
-            <UserRound size={18} strokeWidth={2} />
-            <span>Profil</span>
+            <UserCheck size={19} strokeWidth={2} />
+            <span>{t('nav.profile', 'Profil')}</span>
           </NavLink>
 
+          {/* 5. Menu Lainnya (Buka Native Bottom Sheet Modal) */}
           <button
             type="button"
-            onClick={() => setOpen(true)}
-            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold text-slate-500 dark:text-slate-400"
+            onClick={() => setShowMoreSheet(true)}
+            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
+              showMoreSheet ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+            }`}
           >
-            <Menu size={18} strokeWidth={2} />
+            <MoreHorizontal size={19} strokeWidth={2} />
             <span>Menu</span>
           </button>
         </nav>
+
+        {/* ================= NATIVE MOBILE BOTTOM SHEET ================= */}
+        {/* Seluruh menu sistem dapat diakses langsung dari Bottom Sheet tanpa sidebar samping */}
+        {showMoreSheet && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+              onClick={() => setShowMoreSheet(false)}
+            />
+
+            {/* Bottom Sheet Drawer */}
+            <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-slate-200 dark:border-slate-800 p-4 max-h-[85vh] overflow-y-auto">
+              {/* Drag Indicator Bar */}
+              <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
+
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                    {user?.name?.charAt(0) || 'U'}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      {user?.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {user?.role} {user?.department ? `· ${user.department.code}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMoreSheet(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-md"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Daftar Menu Sistem Lengkap */}
+              <div className="py-2 space-y-1">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-1">
+                  Menu Operasional & Administrasi
+                </div>
+
+                {secondaryMenuItems.map((item) => (
+                  <button
+                    key={item.to}
+                    type="button"
+                    onClick={() => {
+                      setShowMoreSheet(false);
+                      navigate(item.to);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
+                        <item.icon size={17} strokeWidth={2} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                          {item.label}
+                        </div>
+                        <div className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                          {item.desc}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-400" />
+                  </button>
+                ))}
+
+                <a
+                  href="/register"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShowMoreSheet(false)}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <ExternalLink size={17} strokeWidth={2} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                        {t('nav.register_guest', 'Form Registrasi Tamu')}
+                      </div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                        Buka formulir pendaftaran walk-in publik
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-400" />
+                </a>
+              </div>
+
+              {/* Pengaturan Cepat & Logout */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleLang}
+                    className="flex-1 py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-bold flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    <Globe size={15} />
+                    <span>{lang === 'id' ? 'Bahasa: Indonesia' : 'Language: English'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-bold flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+                    <span>{isDark ? 'Light' : 'Dark'}</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-2.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors"
+                >
+                  <LogOut size={16} strokeWidth={2} />
+                  <span>{t('nav.logout', 'Keluar dari Sistem')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
