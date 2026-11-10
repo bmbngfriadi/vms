@@ -36,6 +36,7 @@ export const endpoints = {
   me: () => api.get('/auth/me').then((r) => r.data),
 
   publicDepartments: () => api.get('/public/departments').then((r) => r.data),
+  publicWalkInQr: (url) => api.get('/public/walkin-qr', { params: { url } }).then((r) => r.data),
   publicPics: (departmentId) =>
     api.get('/public/pics', { params: { departmentId } }).then((r) => r.data),
   publicRegister: (payload) => api.post('/public/register', payload).then((r) => r.data),

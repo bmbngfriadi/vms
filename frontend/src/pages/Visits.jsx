@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet } from 'lucide-react';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
-import VisitEditModal, { confirmDeleteVisit } from '../components/VisitEditModal.jsx';
+import VisitEditModal from '../components/VisitEditModal.jsx';
+import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
+import WalkInQrModal from '../components/WalkInQrModal.jsx';
 import { useAuth } from '../lib/auth.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 const STATUSES = [
   ['ALL', 'Semua Status'],
@@ -19,6 +22,7 @@ const STATUSES = [
 export default function Visits() {
   const { user, can } = useAuth();
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const canCreate = can('visit.create');
   const canEdit = can('visit.edit');
   const canDelete = can('visit.delete');
@@ -36,15 +40,26 @@ export default function Visits() {
   const [detail, setDetail] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [previewPhoto, setPreviewPhoto] = useState(null);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const removeRow = async (v) => {
     try {
-      if (await confirmDeleteVisit(v)) {
-        setDetail(null);
-        load();
-      }
+      const ok = await confirm({
+        title: 'Hapus Kunjungan Tamu',
+        message: `Apakah Anda yakin ingin menghapus kunjungan ${v.visitNumber} (${v.visitorName})?\n\nData kunjungan dan token barcode-nya akan dihapus permanen dari sistem.`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal',
+        danger: true,
+        icon: 'trash'
+      });
+      if (!ok) return;
+
+      await endpoints.deleteVisit(v.id);
+      setDetail(null);
+      load();
     } catch (err) {
-      alert(errMsg(err, 'Gagal menghapus kunjungan'));
+      customAlert({ title: 'Gagal Menghapus', message: errMsg(err, 'Gagal menghapus kunjungan'), type: 'error' });
     }
   };
 
@@ -85,7 +100,7 @@ export default function Visits() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(errMsg(err, 'Gagal mengunduh Excel'));
+      customAlert({ title: 'Gagal Unduh', message: errMsg(err, 'Gagal mengunduh Excel'), type: 'error' });
     } finally {
       setExporting(false);
     }
@@ -103,6 +118,17 @@ export default function Visits() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Tombol QR Barcode Walk-In */}
+          <button
+            type="button"
+            className="btn-ghost font-bold text-brand-600 dark:text-brand-400"
+            onClick={() => setShowQrModal(true)}
+            title="Tampilkan & cetak barcode registrasi tamu walk-in"
+          >
+            <QrCode size={16} />
+            <span className="hidden sm:inline">QR Walk-In</span>
+          </button>
+
           {canExport && (
             <button
               className="btn-ghost"
@@ -437,6 +463,7 @@ export default function Visits() {
             setDetail(null);
           }}
           onDelete={() => removeRow(detail)}
+          onViewPhoto={(url, name, nik) => setPreviewPhoto({ url, name, nik })}
         />
       )}
       {editing && (
@@ -457,26 +484,48 @@ export default function Visits() {
           }}
         />
       )}
+
+      {/* Modal Popup Foto Identitas di Halaman yang Sama */}
+      {previewPhoto && (
+        <PhotoPreviewModal
+          photoUrl={previewPhoto.url}
+          visitorName={previewPhoto.name}
+          identityNumber={previewPhoto.nik}
+          onClose={() => setPreviewPhoto(null)}
+        />
+      )}
+
+      {/* Modal Barcode Statis Walk-In Tamu */}
+      {showQrModal && <WalkInQrModal onClose={() => setShowQrModal(false)} />}
     </div>
   );
 }
 
-function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, onDelete }) {
+function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, onDelete, onViewPhoto }) {
   const { can } = useAuth();
   const { t } = useI18n();
+  const { prompt, alert: customAlert } = useDialog();
   const [busy, setBusy] = useState(false);
   const canCancel = can('visit.cancel') && ['WAITING_VALIDATION', 'APPROVED'].includes(visit.status);
 
   const cancel = async () => {
-    const reason = window.prompt('Alasan pembatalan:', 'Dibatalkan oleh PIC');
-    if (reason === null) return;
+    const reason = await prompt({
+      title: 'Batalkan Kunjungan Tamu',
+      message: `Masukkan alasan pembatalan untuk kunjungan ${visit.visitNumber}:`,
+      placeholder: 'Contoh: Tamu berhalangan hadir / dibatalkan oleh PIC',
+      defaultValue: 'Dibatalkan oleh PIC',
+      confirmText: 'Batalkan Kunjungan',
+      variant: 'warning'
+    });
+    if (!reason) return;
+
     setBusy(true);
     try {
       await endpoints.cancel(visit.id, reason);
       onChanged();
       onClose();
     } catch (err) {
-      alert(errMsg(err, 'Gagal membatalkan'));
+      customAlert({ title: 'Gagal Membatalkan', message: errMsg(err, 'Gagal membatalkan kunjungan'), type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -499,15 +548,17 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
               <img
                 src={visit.identityPhoto}
                 alt="Foto Identitas"
-                className="w-16 h-11 object-cover rounded border border-slate-200 dark:border-slate-700 cursor-pointer"
-                onClick={() => window.open(visit.identityPhoto, '_blank')}
+                className="w-16 h-11 object-cover rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-85 shadow-xs transition-opacity"
+                onClick={() => onViewPhoto(visit.identityPhoto, visit.visitorName, visit.identityNumber)}
               />
-              <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">Foto Identitas (KTP/SIM)</span>
+              <span className="text-xs text-slate-700 dark:text-slate-300 font-semibold">
+                Foto Identitas (KTP/SIM)
+              </span>
             </div>
             <button
               type="button"
-              className="btn-ghost text-xs py-1 px-2.5"
-              onClick={() => window.open(visit.identityPhoto, '_blank')}
+              className="btn-ghost text-xs py-1.5 px-3 rounded-lg font-bold text-brand-600 dark:text-brand-400"
+              onClick={() => onViewPhoto(visit.identityPhoto, visit.visitorName, visit.identityNumber)}
             >
               Lihat Foto
             </button>

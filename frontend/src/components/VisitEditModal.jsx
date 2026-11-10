@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, Save, Trash2, X } from 'lucide-react';
+import { Loader2, Save, Trash2, X, Eye } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
+import { useDialog } from '../lib/dialog.jsx';
+import PhotoPreviewModal from './PhotoPreviewModal.jsx';
 
 const STATUS_OPTIONS = [
   ['WAITING_VALIDATION', 'Menunggu Validasi'],
@@ -33,18 +35,28 @@ export function Modal({ title, onClose, children, wide }) {
 }
 
 /** Hapus kunjungan dengan konfirmasi. Mengembalikan true bila terhapus. */
-export async function confirmDeleteVisit(visit) {
+export async function confirmDeleteVisit(visit, confirmFn) {
   const label = `${visit.visitNumber} — ${visit.visitorName}`;
-  if (!window.confirm(`Hapus kunjungan ${label}?\n\nData kunjungan dan token barcode-nya dihapus permanen.`)) {
-    return false;
+  if (confirmFn) {
+    const ok = await confirmFn({
+      title: 'Hapus Kunjungan Tamu',
+      message: `Hapus kunjungan ${label}?\n\nData kunjungan dan token barcode-nya akan dihapus permanen.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'trash'
+    });
+    if (!ok) return false;
   }
   await endpoints.deleteVisit(visit.id);
   return true;
 }
 
 export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
+  const { confirm } = useDialog();
   const [departments, setDepartments] = useState([]);
   const [pics, setPics] = useState([]);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
   const [form, setForm] = useState({
     fullName: visit.visitorName || '',
     phone: visit.phone || '',
@@ -91,14 +103,22 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
   };
 
   const remove = async () => {
-    setDeleting(true);
     setError('');
+    const ok = await confirm({
+      title: 'Hapus Kunjungan Tamu',
+      message: `Hapus kunjungan ${visit.visitNumber} (${visit.visitorName})?\n\nData kunjungan dan token barcode-nya akan dihapus permanen.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'trash'
+    });
+    if (!ok) return;
+
+    setDeleting(true);
     try {
-      const ok = await confirmDeleteVisit(visit);
-      if (ok) {
-        onDeleted?.(visit);
-        onClose();
-      }
+      await endpoints.deleteVisit(visit.id);
+      onDeleted?.(visit);
+      onClose();
     } catch (err) {
       setError(errMsg(err, 'Gagal menghapus kunjungan'));
     } finally {
@@ -129,22 +149,23 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
             <input className="input" value={form.identityNumber} onChange={set('identityNumber')} />
           </div>
           {visit.identityPhoto && (
-            <div className="sm:col-span-2 p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div className="sm:col-span-2 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img
                   src={visit.identityPhoto}
                   alt="Foto Identitas"
-                  className="w-16 h-11 object-cover rounded border border-slate-200"
+                  className="w-16 h-11 object-cover rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setShowPhotoPreview(true)}
                 />
                 <div>
-                  <span className="text-xs font-semibold text-slate-800">Foto Identitas Terlampir</span>
-                  <p className="text-[11px] text-slate-500">KTP/SIM/Paspor terunggah saat pendaftaran</p>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Foto Identitas Terlampir</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">KTP/SIM/Paspor terunggah saat pendaftaran</p>
                 </div>
               </div>
               <button
                 type="button"
-                className="btn-ghost text-xs py-1 px-2.5"
-                onClick={() => window.open(visit.identityPhoto, '_blank')}
+                className="btn-ghost text-xs py-1.5 px-3 rounded-lg font-bold text-brand-600 dark:text-brand-400"
+                onClick={() => setShowPhotoPreview(true)}
               >
                 Lihat Foto
               </button>
@@ -255,6 +276,15 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
           </button>
         </div>
       </form>
+
+      {showPhotoPreview && (
+        <PhotoPreviewModal
+          photoUrl={visit.identityPhoto}
+          visitorName={visit.visitorName}
+          identityNumber={visit.identityNumber}
+          onClose={() => setShowPhotoPreview(false)}
+        />
+      )}
     </Modal>
   );
 }

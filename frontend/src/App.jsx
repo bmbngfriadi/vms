@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './lib/auth.jsx';
 import { ThemeProvider } from './lib/theme.jsx';
 import { I18nProvider, useI18n } from './lib/i18n.jsx';
+import { DialogProvider } from './lib/dialog.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Shell from './components/Shell.jsx';
 import Login from './pages/Login.jsx';
@@ -54,10 +55,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <I18nProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <ErrorBoundary>
-              <Routes>
+        <DialogProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <ErrorBoundary>
+                <Routes>
                 {/* Rute Publik */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -137,7 +139,8 @@ export default function App() {
             </ErrorBoundary>
           </BrowserRouter>
         </AuthProvider>
-      </I18nProvider>
-    </ThemeProvider>
-  );
+      </DialogProvider>
+    </I18nProvider>
+  </ThemeProvider>
+);
 }

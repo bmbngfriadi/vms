@@ -22,6 +22,8 @@ import {
 import { useAuth } from '../lib/auth.jsx';
 import { useTheme } from '../lib/theme.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
+import WalkInQrModal from './WalkInQrModal.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 
 function SidebarBrand() {
@@ -102,7 +104,7 @@ function SidebarNav({ items, onNavigate, t }) {
   );
 }
 
-function SidebarFooter({ onLogout, t, lang, toggleLang, isDark, toggleTheme }) {
+function SidebarFooter({ onLogout, onOpenQr, t, lang, toggleLang, isDark, toggleTheme }) {
   return (
     <div className="px-3 py-3 border-t border-slate-200/80 dark:border-slate-800 space-y-2">
       {/* Tombol Pengaturan Cepat: Mode & Bahasa */}
@@ -127,11 +129,21 @@ function SidebarFooter({ onLogout, t, lang, toggleLang, isDark, toggleTheme }) {
         </button>
       </div>
 
+      {/* Tombol Barcode Walk-In Registration untuk Pos Security */}
+      <button
+        type="button"
+        onClick={onOpenQr}
+        className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50/60 dark:bg-brand-950/40 hover:bg-brand-100 dark:hover:bg-brand-950/70 border border-brand-200/60 dark:border-brand-900/50 transition-colors"
+      >
+        <ScanLine size={15} strokeWidth={2.2} />
+        <span>QR Pendaftaran Walk-In</span>
+      </button>
+
       <a
         href="/register"
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
       >
         <ExternalLink size={14} strokeWidth={2} />
         <span>{t('nav.register_guest', 'Form Tamu (Publik)')}</span>
@@ -139,7 +151,7 @@ function SidebarFooter({ onLogout, t, lang, toggleLang, isDark, toggleTheme }) {
 
       <button
         onClick={onLogout}
-        className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+        className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
       >
         <LogOut size={14} strokeWidth={2} />
         <span>{t('nav.logout', 'Keluar')}</span>
@@ -152,9 +164,11 @@ export default function Shell() {
   const { user, logout, can } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useI18n();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
   const location = useLocation();
   const [showMoreSheet, setShowMoreSheet] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const NAV_ITEMS = [
     { to: '/', label: 'Dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
@@ -177,7 +191,17 @@ export default function Shell() {
     ...(can('page.features') ? [{ to: '/features', label: t('nav.features', 'Manajemen Fitur'), desc: 'Role permissions & kontrol modul sistem', icon: SlidersHorizontal }] : [])
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Konfirmasi Keluar',
+      message: 'Apakah Anda yakin ingin keluar dari sistem Visitor Management?',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'logout'
+    });
+    if (!ok) return;
+
     setShowMoreSheet(false);
     logout();
     navigate('/login');
@@ -192,6 +216,7 @@ export default function Shell() {
         <SidebarNav items={items} t={t} />
         <SidebarFooter
           onLogout={handleLogout}
+          onOpenQr={() => setShowQrModal(true)}
           t={t}
           lang={lang}
           toggleLang={toggleLang}
@@ -438,6 +463,31 @@ export default function Shell() {
                   </button>
                 ))}
 
+                {/* Tombol Buka Barcode Statis Walk-in Pos Security */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreSheet(false);
+                    setShowQrModal(true);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200/50 dark:border-brand-900/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-brand-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <ScanLine size={17} strokeWidth={2.4} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                        QR Pendaftaran Tamu Walk-In
+                      </div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                        Tampilkan & cetak barcode standee untuk tamu
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-400" />
+                </button>
+
                 <a
                   href="/register"
                   target="_blank"
@@ -496,6 +546,8 @@ export default function Shell() {
             </div>
           </div>
         )}
+        {/* Modal Barcode Statis Walk-in Registration */}
+        {showQrModal && <WalkInQrModal onClose={() => setShowQrModal(false)} />}
       </div>
     </div>
   );

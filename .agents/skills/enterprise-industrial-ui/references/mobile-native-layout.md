@@ -188,3 +188,4 @@ Setiap halaman pada proyek baru harus lulus checklist mobile berikut:
 - [ ] Tombol aksi melayang (FAB) berukuran `w-15 h-15` di atas bottom bar hanya pada halaman Home.
 - [ ] Semua data list berbentuk kartu vertikal (*Card Layout*) di layar `< md`.
 - [ ] Semua tombol aksi lapangan memiliki touch target minimal 42px – 48px.
+

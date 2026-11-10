@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Loader2, X, Pencil, Trash2, Save, User as UserIcon } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 const ROLES = [
   ['PIC', 'PIC / Tuan Rumah'],
@@ -50,6 +51,7 @@ export default function Master() {
 
 function Departments() {
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const [rows, setRows] = useState([]);
   const [form, setForm] = useState({ name: '', code: '' });
   const [editing, setEditing] = useState(null);
@@ -87,7 +89,11 @@ function Departments() {
       await endpoints.updateDepartment(d.id, { isActive: !d.isActive });
       load();
     } catch (err) {
-      alert(errMsg(err));
+      customAlert({
+        title: 'Gagal Mengubah Status',
+        message: errMsg(err),
+        type: 'error'
+      });
     }
   };
 
@@ -99,19 +105,36 @@ function Departments() {
       setEditing(null);
       load();
     } catch (err) {
-      alert(errMsg(err, 'Gagal memperbarui departemen'));
+      customAlert({
+        title: 'Gagal Memperbarui',
+        message: errMsg(err, 'Gagal memperbarui departemen'),
+        type: 'error'
+      });
     } finally {
       setBusy(false);
     }
   };
 
   const remove = async (d) => {
-    if (!window.confirm(`Hapus departemen ${d.name}?`)) return;
+    const ok = await confirm({
+      title: 'Hapus Departemen',
+      message: `Hapus departemen ${d.name}?\n\nPengguna dan data terkait departemen ini akan terpengaruh.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'trash'
+    });
+    if (!ok) return;
+
     try {
       await endpoints.deleteDepartment(d.id);
       load();
     } catch (err) {
-      alert(errMsg(err, 'Gagal menghapus departemen'));
+      customAlert({
+        title: 'Gagal Menghapus',
+        message: errMsg(err, 'Gagal menghapus departemen'),
+        type: 'error'
+      });
     }
   };
 
@@ -336,11 +359,11 @@ function Departments() {
 
 function Users() {
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const [rows, setRows] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = () => {
     endpoints.users().then(setRows).catch((e) => setError(errMsg(e)));
@@ -351,6 +374,29 @@ function Users() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDelete = async (u) => {
+    const ok = await confirm({
+      title: 'Hapus Pengguna',
+      message: `Hapus akun pengguna ${u.name} (${u.email})?\n\nRiwayat kunjungan tetap tersimpan di dalam sistem.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'trash'
+    });
+    if (!ok) return;
+
+    try {
+      await endpoints.deleteUser(u.id);
+      load();
+    } catch (err) {
+      customAlert({
+        title: 'Gagal Menghapus',
+        message: errMsg(err, 'Gagal menghapus pengguna'),
+        type: 'error'
+      });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -434,7 +480,7 @@ function Users() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDeleteTarget(u)}
+                  onClick={() => handleDelete(u)}
                   className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
                 >
                   <Trash2 size={15} />
@@ -501,7 +547,7 @@ function Users() {
                       </button>
                       <button
                         className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1 transition-colors"
-                        onClick={() => setDeleteTarget(u)}
+                        onClick={() => handleDelete(u)}
                         title="Hapus"
                       >
                         <Trash2 size={15} />
@@ -526,56 +572,6 @@ function Users() {
           }}
         />
       )}
-
-      {deleteTarget && (
-        <ConfirmDeleteUser
-          user={deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onDeleted={() => {
-            setDeleteTarget(null);
-            load();
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function ConfirmDeleteUser({ user, onClose, onDeleted }) {
-  const { t } = useI18n();
-  const [busy, setBusy] = useState(false);
-  const remove = async () => {
-    setBusy(true);
-    try {
-      await endpoints.deleteUser(user.id);
-      onDeleted();
-    } catch (err) {
-      alert(errMsg(err, 'Gagal menghapus pengguna'));
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-full max-w-sm shadow-xl p-5">
-        <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
-          <Trash2 size={18} />
-        </div>
-        <h3 className="font-semibold text-slate-900 dark:text-white">Hapus pengguna?</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Akun <strong className="text-slate-800 dark:text-slate-200">{user.name}</strong> akan dihapus. Riwayat kunjungan tetap tersimpan.
-        </p>
-        <div className="flex gap-2 mt-5">
-          <button className="btn-ghost flex-1" onClick={onClose}>
-            {t('action.cancel', 'Batal')}
-          </button>
-          <button className="btn-danger flex-1" onClick={remove} disabled={busy}>
-            {busy ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}{' '}
-            {t('action.delete', 'Hapus')}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

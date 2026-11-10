@@ -14,10 +14,12 @@ import {
 import { endpoints, errMsg, fmtDateTime } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 export default function WhatsApp() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const isAdmin = user.role === 'ADMIN';
 
   const [status, setStatus] = useState(null);
@@ -62,7 +64,15 @@ export default function WhatsApp() {
   };
 
   const hardRestart = async () => {
-    if (!window.confirm('Restart gateway WhatsApp? Sesi aktif akan ditutup sementara lalu disambung ulang.')) return;
+    const ok = await confirm({
+      title: 'Restart Gateway WhatsApp',
+      message: 'Restart gateway WhatsApp? Sesi aktif akan ditutup sementara lalu disambung ulang secara otomatis.',
+      confirmText: 'Ya, Restart',
+      cancelText: 'Batal',
+      icon: 'refresh'
+    });
+    if (!ok) return;
+
     setBusy(true);
     setError('');
     try {
@@ -76,7 +86,16 @@ export default function WhatsApp() {
   };
 
   const logout = async () => {
-    if (!window.confirm('Putuskan sesi WhatsApp? Anda harus scan QR lagi untuk menyambungkan kembali.')) return;
+    const ok = await confirm({
+      title: 'Putuskan Sesi WhatsApp',
+      message: 'Putuskan sesi WhatsApp saat ini? Anda harus scan kode QR lagi untuk menyambungkan kembali perangkat.',
+      confirmText: 'Ya, Putuskan Sesi',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'alert'
+    });
+    if (!ok) return;
+
     setBusy(true);
     setError('');
     try {
@@ -111,17 +130,34 @@ export default function WhatsApp() {
       setNewRecipient({ name: '', phone: '', title: '' });
       endpoints.recipients().then(setRecipients);
     } catch (err) {
-      alert(errMsg(err));
+      customAlert({
+        title: 'Gagal Menambah Penerima',
+        message: errMsg(err),
+        type: 'error'
+      });
     }
   };
 
   const removeRecipient = async (id) => {
-    if (!window.confirm('Hapus penerima ini?')) return;
+    const ok = await confirm({
+      title: 'Hapus Penerima Notifikasi',
+      message: 'Hapus kontak penerima notifikasi ini dari daftar siaran otomatis?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'trash'
+    });
+    if (!ok) return;
+
     try {
       await endpoints.deleteRecipient(id);
       endpoints.recipients().then(setRecipients);
     } catch (err) {
-      alert(errMsg(err));
+      customAlert({
+        title: 'Gagal Menghapus Penerima',
+        message: errMsg(err),
+        type: 'error'
+      });
     }
   };
 

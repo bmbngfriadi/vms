@@ -228,6 +228,23 @@ async function notifyCheckOut(visit) {
 // PUBLIC: master data untuk form tamu
 // ============================================================
 
+publicRouter.get('/walkin-qr', async (req, res) => {
+  try {
+    const origin = req.query.url || `${requestBaseUrl(req)}/register`;
+    const qr = await QRCode.toDataURL(origin, {
+      margin: 2,
+      width: 600,
+      errorCorrectionLevel: 'H'
+    });
+    res.json({
+      url: origin,
+      qrDataUrl: qr
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal membuat QR Code Walk-In' });
+  }
+});
+
 publicRouter.get('/departments', async (_req, res) => {
   const departments = await prisma.department.findMany({
     where: { isActive: true },

@@ -15,9 +15,14 @@ import {
 import { endpoints, errMsg, fmtDateTime, fmtTime } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
+import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
+import WalkInQrModal from '../components/WalkInQrModal.jsx';
+import { QrCode } from 'lucide-react';
 
 export default function Scan() {
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const scannerRef = useRef(null);
   const startingRef = useRef(false);
   const [scanning, setScanning] = useState(false);
@@ -31,6 +36,8 @@ export default function Scan() {
   const [note, setNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [showWalkInQr, setShowWalkInQr] = useState(false);
+  const [previewPhoto, setPreviewPhoto] = useState(null);
 
   const stopCamera = async () => {
     const s = scannerRef.current;
@@ -179,7 +186,16 @@ export default function Scan() {
   };
 
   const doReject = async () => {
-    if (!window.confirm('Tolak kunjungan tamu ini?')) return;
+    const ok = await confirm({
+      title: 'Tolak Kunjungan Tamu',
+      message: `Tolak kunjungan tamu ${result.visit.visitorName} (${result.visit.visitNumber})?\n\nTamu tidak akan diizinkan masuk ke kawasan pabrik.`,
+      confirmText: 'Ya, Tolak Kunjungan',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'alert'
+    });
+    if (!ok) return;
+
     setActionLoading(true);
     try {
       await endpoints.reject(result.visit.id, note || 'Ditolak oleh Security');
@@ -187,7 +203,11 @@ export default function Scan() {
       setResult(null);
       setCode('');
     } catch (err) {
-      setError(errMsg(err, 'Gagal menolak kunjungan'));
+      customAlert({
+        title: 'Gagal Menolak Kunjungan',
+        message: errMsg(err, 'Gagal menolak kunjungan'),
+        type: 'error'
+      });
     } finally {
       setActionLoading(false);
     }
@@ -205,13 +225,23 @@ export default function Scan() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('scan.title', 'Scan Barcode Kunjungan')}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t('scan.subtitle', 'Arahkan kamera ke QR Code tamu untuk Check-in atau Check-out.')}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('scan.title', 'Scan Barcode Kunjungan')}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('scan.subtitle', 'Arahkan kamera ke QR Code tamu untuk Check-in atau Check-out.')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowWalkInQr(true)}
+          className="btn-ghost self-start sm:self-auto text-xs py-2 px-3 border border-slate-200 dark:border-slate-800 text-brand-700 dark:text-brand-300 bg-white dark:bg-slate-900 shadow-xs"
+        >
+          <QrCode size={15} className="text-brand-600 dark:text-brand-400" />
+          <span>QR Pendaftaran Walk-In</span>
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5 items-start">
@@ -331,13 +361,31 @@ export default function Scan() {
                       <img
                         src={result.visit.identityPhoto}
                         alt="Foto Identitas"
-                        className="w-20 h-14 object-cover rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
-                        onClick={() => window.open(result.visit.identityPhoto, '_blank')}
+                        className="w-20 h-14 object-cover rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-brand-500 transition-all shrink-0"
+                        onClick={() =>
+                          setPreviewPhoto({
+                            photo: result.visit.identityPhoto,
+                            title: `Foto Identitas — ${result.visit.visitorName}`,
+                            visitNumber: result.visit.visitNumber
+                          })
+                        }
                         title="Klik untuk perbesar foto identitas"
                       />
                       <div>
                         <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Foto Identitas (KTP/SIM)</div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400">Klik gambar untuk melihat ukuran penuh</div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewPhoto({
+                              photo: result.visit.identityPhoto,
+                              title: `Foto Identitas — ${result.visit.visitorName}`,
+                              visitNumber: result.visit.visitNumber
+                            })
+                          }
+                          className="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline mt-0.5 inline-block text-left"
+                        >
+                          Klik untuk melihat ukuran penuh
+                        </button>
                       </div>
                     </div>
                   )}
@@ -442,6 +490,16 @@ export default function Scan() {
           )}
         </div>
       </div>
+      {previewPhoto && (
+        <PhotoPreviewModal
+          photo={previewPhoto.photo}
+          title={previewPhoto.title}
+          subtitle={previewPhoto.visitNumber}
+          onClose={() => setPreviewPhoto(null)}
+        />
+      )}
+
+      {showWalkInQr && <WalkInQrModal onClose={() => setShowWalkInQr(false)} />}
     </div>
   );
 }

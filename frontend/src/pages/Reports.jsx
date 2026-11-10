@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import VisitEditModal, { confirmDeleteVisit } from '../components/VisitEditModal.jsx';
 import { useAuth } from '../lib/auth.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 const firstOfMonth = () => {
   const d = new Date();
@@ -14,6 +15,7 @@ const firstOfMonth = () => {
 export default function Reports() {
   const { can } = useAuth();
   const { t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
   const canEdit = can('visit.edit');
   const canDelete = can('visit.delete');
   const canExport = can('report.export');
@@ -64,7 +66,11 @@ export default function Reports() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(errMsg(err, 'Gagal mengunduh laporan Excel'));
+      customAlert({
+        title: 'Gagal Unduh Laporan',
+        message: errMsg(err, 'Gagal mengunduh laporan Excel'),
+        type: 'error'
+      });
     } finally {
       setDownloading(false);
     }
@@ -236,11 +242,15 @@ export default function Reports() {
                         type="button"
                         onClick={async () => {
                           try {
-                            if (await confirmDeleteVisit(v)) {
+                            if (await confirmDeleteVisit(v, confirm)) {
                               setRows((list) => list.filter((r) => r.id !== v.id));
                             }
                           } catch (err) {
-                            alert(errMsg(err, 'Gagal menghapus kunjungan'));
+                            customAlert({
+                              title: 'Gagal Menghapus Kunjungan',
+                              message: errMsg(err, 'Gagal menghapus kunjungan'),
+                              type: 'error'
+                            });
                           }
                         }}
                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
@@ -323,11 +333,15 @@ export default function Reports() {
                               title="Hapus kunjungan"
                               onClick={async () => {
                                 try {
-                                  if (await confirmDeleteVisit(v)) {
+                                  if (await confirmDeleteVisit(v, confirm)) {
                                     setRows((list) => list.filter((r) => r.id !== v.id));
                                   }
                                 } catch (err) {
-                                  alert(errMsg(err, 'Gagal menghapus kunjungan'));
+                                  customAlert({
+                                    title: 'Gagal Menghapus Kunjungan',
+                                    message: errMsg(err, 'Gagal menghapus kunjungan'),
+                                    type: 'error'
+                                  });
                                 }
                               }}
                             >

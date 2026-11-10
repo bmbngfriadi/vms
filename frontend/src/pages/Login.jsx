@@ -20,11 +20,13 @@ import { useAuth } from '../lib/auth.jsx';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 export default function Login() {
   const { login, user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useI18n();
+  const { alert: customAlert } = useDialog();
   const navigate = useNavigate();
 
   // Mode: 'login' | 'forgot_otp' | 'reset_password'
@@ -99,7 +101,11 @@ export default function Login() {
         otp,
         newPassword
       });
-      alert(res.message || 'Kata sandi berhasil diperbarui.');
+      await customAlert({
+        title: 'Kata Sandi Diperbarui',
+        message: res.message || 'Kata sandi berhasil diperbarui. Silakan masuk menggunakan kata sandi baru.',
+        type: 'success'
+      });
       setView('login');
       setIdentifier(forgotId);
       setPassword('');

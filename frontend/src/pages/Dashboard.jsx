@@ -1,17 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clock, Users, LogOut, CalendarDays, ScanLine } from 'lucide-react';
+import { Clock, Users, LogOut, CalendarDays, ScanLine, QrCode } from 'lucide-react';
 import { endpoints, fmtTime, errMsg } from '../lib/api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useAuth } from '../lib/auth.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
+import WalkInQrModal from '../components/WalkInQrModal.jsx';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { t } = useI18n();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [showQrModal, setShowQrModal] = useState(false);
+
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Konfirmasi Keluar',
+      message: 'Apakah Anda yakin ingin keluar dari sistem Visitor Management?',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+      danger: true,
+      icon: 'logout'
+    });
+    if (!ok) return;
+    logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     endpoints
@@ -49,35 +67,35 @@ export default function Dashboard() {
             {t('dashboard.subtitle', 'Ringkasan aktivitas tamu dan operasional pabrik hari ini.')}
           </p>
         </div>
-        {['ADMIN', 'SECURITY'].includes(user?.role) ? (
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Tombol QR Barcode Walk-In untuk Standee Pos Security */}
+          <button
+            type="button"
+            onClick={() => setShowQrModal(true)}
+            className="btn-ghost text-xs font-bold text-brand-600 dark:text-brand-400"
+            title="Tampilkan barcode statis untuk registrasi tamu walk-in"
+          >
+            <QrCode size={16} /> QR Walk-In
+          </button>
+
+          {['ADMIN', 'SECURITY'].includes(user?.role) && (
             <Link to="/scan" className="btn-primary">
               <ScanLine size={16} /> {t('dashboard.btn_scan', 'Scan Barcode')}
             </Link>
-            <button
-              className="btn-ghost"
-              onClick={() => {
-                logout();
-                navigate('/login');
-              }}
-              title="Keluar dari sistem"
-            >
-              <LogOut size={16} /> {t('nav.logout', 'Keluar')}
-            </button>
-          </div>
-        ) : (
+          )}
+
           <button
-            className="btn-ghost self-start sm:self-auto"
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
+            className="btn-ghost"
+            onClick={handleLogout}
             title="Keluar dari sistem"
           >
             <LogOut size={16} /> {t('nav.logout', 'Keluar')}
           </button>
-        )}
+        </div>
       </div>
+
+      {/* Modal QR Code Walk-in */}
+      {showQrModal && <WalkInQrModal onClose={() => setShowQrModal(false)} />}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat

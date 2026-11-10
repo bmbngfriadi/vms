@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { endpoints } from '../lib/api.js';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 
 /**
  * Kompres gambar ke ukuran maksimal 1280px dan format JPEG quality 0.85
@@ -56,6 +57,7 @@ export default function IdentityPhotoCapture({
   required = true
 }) {
   const { t } = useI18n();
+  const { alert: customAlert } = useDialog();
   const [preview, setPreview] = useState(value || '');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrStatus, setOcrStatus] = useState(null); // { type: 'success'|'warn'|'error', msg: string, nik?: string }
@@ -194,7 +196,11 @@ export default function IdentityPhotoCapture({
       const compressed = await compressImage(file);
       handleNewPhoto(compressed);
     } catch (err) {
-      alert('Error: ' + err.message);
+      customAlert({
+        title: 'Gagal Memproses Gambar',
+        message: err.message || 'Format gambar tidak didukung atau file rusak.',
+        type: 'error'
+      });
     } finally {
       e.target.value = '';
     }
