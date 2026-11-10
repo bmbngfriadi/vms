@@ -88,3 +88,4 @@ Sebelum menyelesaikan pengerjaan UI pada sistem apapun, lakukan verifikasi:
 - [ ] Tombol utama menggunakan `bg-brand-500` atau semantic color yang jelas (`bg-emerald-600` untuk sukses, `bg-red-600` untuk bahaya).
 - [ ] Tabel memiliki baris pencarian, header yang jelas, dan indikator status badge.
 - [ ] Tampilan nyaman dibuka di layar desktop maupun smartphone operasional.
+

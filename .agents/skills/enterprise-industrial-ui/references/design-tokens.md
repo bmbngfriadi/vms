@@ -131,3 +131,4 @@ export default {
 | **Neutral / Muted** | `bg-slate-100` | `text-slate-700` | `border-slate-200` | Checked-out, Draft, Diarsipkan |
 | **Danger / Error** | `bg-red-50` | `text-red-700` | `border-red-200` | Ditolak, Dibatalkan, Expired, Error |
 | **Special / VIP** | `bg-purple-50` | `text-purple-700` | `border-purple-200` | Tamu Khusus, Management, VIP |
+
