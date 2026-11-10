@@ -3,89 +3,98 @@ name: enterprise-industrial-ui
 description: >-
   Standard design system, UI/UX guidelines, component patterns, and styling rules
   for industrial enterprise web applications (free of AI slop, high-density, professional).
-  Use whenever creating, redesigning, or styling web user interfaces, dashboards,
-  forms, tables, or modals to ensure consistent enterprise aesthetic.
+  Includes full specifications for both Desktop and Native Mobile Layouts (Bottom Bar,
+  Native Bottom Sheet, Floating Action Buttons, and Mobile Data Cards).
 ---
 
-# Enterprise Industrial UI/UX Design System
+# Enterprise Industrial UI/UX Design System (v2.0)
 
-Standar arsitektur antarmuka dan pengalaman pengguna (UI/UX) untuk aplikasi web enterprise industri (pabrik, manufaktur, logistik, corporate internal tools). Menjamin seluruh sistem memiliki konsistensi visual, fungsional, dan bebas dari tampilan kecerdasan buatan murahan ("AI slop").
+Standar arsitektur antarmuka dan pengalaman pengguna (UI/UX) untuk aplikasi web & mobile enterprise industri (pabrik, manufaktur, logistik, corporate internal tools, dan visitor management). 
+
+Menjamin seluruh sistem perusahaan memiliki konsistensi visual, fungsional, adaptif terhadap mode gelap/terang (Dark & Light Mode), dwibahasa (i18n), bebas dari tampilan AI murahan (*anti-AI slop*), serta memberikan **pengalaman aplikasi mobile native (100% Native Mobile App Style)** di perangkat smartphone.
 
 ---
 
 ## 1. Prinsip Utama Desain
 
 1. **Anti-AI Slop**:
-   - Dilarang menggunakan efek gradien neon/pastel melayang, border radius raksasa (pill/bubble), dan bayangan bercahaya (glowing shadow).
-   - Dilarang membuat halaman kosong berjarak besar (low density) hanya demi terlihat "estetik".
-   - Utamakan struktur berbasis kotak yang rapi (`rounded-lg` pada card/container, `rounded-md` pada input & button).
+   - Dilarang keras menggunakan efek gradien neon/pastel melayang, border radius raksasa (pill/bubble berlebihan), dan bayangan bercahaya (*glowing shadow*).
+   - Dilarang membuat halaman kosong berjarak besar (*low density*) hanya demi terlihat "estetik".
+   - Utamakan struktur berbasis kotak yang presisi dan tegas (`rounded-xl` pada card/container, `rounded-xl` pada input & button, border tipis `border-slate-200` / `dark:border-slate-800`).
 
-2. **Kepadatan Informasi Tinggi (High Density)**:
-   - Pengguna industri (operator, security, admin, management) membutuhkan data yang cepat dibaca dalam satu layar tanpa scroll berlebihan.
-   - Gunakan tabel padat dengan `th` uppercase 11px, `td` 13px–14px, dan badge status ringkas.
+2. **Dua Mode Tampilan: Desktop High-Density & Mobile Native App**:
+   - **Pada Desktop (`≥ lg` / `≥ 1024px`)**:
+     - Sidebar tetap (*fixed sidebar*) selebar 256px (`w-64`).
+     - Tabel data padat (*high-density data tables*) dengan `th` uppercase 11px, `td` 13px–14px, pagination, dan filter terintegrasi.
+   - **Pada Mobile (`< lg` / `< 1024px`)**:
+     - **Tanpa Sidebar Drawer Samping**: Drawer sidebar slider samping dihilangkan sepenuhnya agar tidak mengganggu operasional.
+     - **Enlarged Top Bar (h-16 / 64px)**: Header atas lega dengan branding perusahaan, judul tidak terpotong, touch target besar untuk toggle bahasa, dark mode, dan avatar profil.
+     - **Enlarged Bottom Navigation Bar (h-17 / 68px)**: Bar navigasi bawah bergaya native app dengan ikon besar (`size={22}`), label teks `11px font-bold`, dan area sentuh `min-h-[50px]`.
+     - **Native Bottom Sheet ("Menu Lainnya")**: Menu administratif/sekunder diakses melalui modal sheet yang meluncur halus dari bawah layar.
+     - **Floating Action Button (FAB)**: Tombol aksi utama (misal: Scan Barcode, Buat Transaksi) melayang bundar merah di kanan bawah (`fixed bottom-[82px] right-5 z-40`) hanya pada halaman operasional utama.
+     - **Semua Data List Menggunakan Card Layout di Mobile (`< md`)**: Tidak ada tabel scroll horizontal yang sempit di HP. Semua tabel otomatis berubah menjadi deretan kartu data (*Card List*) yang rapi dan terstruktur.
 
-3. **Operasional Lapangan & Mobile-Ready**:
-   - Untuk tombol aksi lapangan utama (misal: tombol Scan Barcode, Check-in, Check-out, Validasi), sediakan touch target berukuran besar dan jelas (tinggi minimal 48px–56px) dengan kontras tinggi agar mudah digunakan oleh Security / Petugas Lapangan menggunakan smartphone.
+3. **Tombol Sentuh Ramah Jempol (Ergonomic Touch Targets)**:
+   - Seluruh tombol (`.btn`, `.btn-primary`, `.btn-ghost`, dll) memiliki tinggi sentuhan minimal `min-h-[42px]` hingga `48px` di mobile dengan padding `px-4 py-2.5`, sudut `rounded-xl`, dan efek tekan `active:scale-[0.98]`.
+   - Input formulir dibuat dengan tinggi minimal `min-h-[42px]` untuk mencegah auto-zoom mengganggu di mobile browser iOS/Android.
 
-4. **Hierarki Warna Perusahaan**:
-   - Background canvas: Slate terang (`bg-slate-100`).
-   - Card/Surface: Putih bersih (`bg-white border border-slate-200 shadow-sm`).
-   - Warna Utama Brand: Merah bata industrial Cemindo (`#b52025` / `brand-500`).
-   - Teks: Slate gelap (`text-slate-900` judul, `text-slate-800` body, `text-slate-500` caption).
+4. **Hierarki Warna Perusahaan & Adaptasi Penuh Dark/Light Mode**:
+   - **Light Mode**: Canvas `bg-slate-100`, Surface Card `bg-white border-slate-200`, Teks `text-slate-900` (judul), `text-slate-700` (body), `text-slate-500` (caption).
+   - **Dark Mode**: Canvas `bg-slate-950`, Surface Card `bg-slate-900 border-slate-800`, Teks `text-white` (judul), `text-slate-200` (body), `text-slate-400` (caption).
+   - **Brand Color**: Merah Bata Korporat Cemindo (`#b52025` / `brand-500` hover `brand-600`).
+   - Seluruh huruf/teks otomatis beradaptasi dengan kontras tinggi tanpa teks silau atau tak terbaca.
+
+5. **Arsitektur Translasi Otomatis (i18n)**:
+   - Dukungan penuh Bahasa Indonesia (`ID`) dan English (`EN`).
+   - Seluruh teks, label input, placeholder, opsi select, badge status, alert box, pesan konfirmasi, hingga halaman publik wajib dibungkus dengan hook translasi `t(key, fallback)`.
 
 ---
 
 ## 2. Struktur Referensi Detail
 
-Sebelum membuat komponen atau halaman baru, pelajari referensi berikut:
+Sebelum membuat komponen atau halaman baru pada proyek apapun, rujuk dokumen berikut:
 
-- [Design Tokens & Styling Guidelines](./references/design-tokens.md): Aturan lengkap token warna, konfigurasi Tailwind, CSS base/components, dan palet semantic.
-- [Component Patterns](./references/component-patterns.md): Template kode React siap pakai untuk `Shell` (Sidebar & Layout), `StatCard`, `DataTable`, `Modal`, dan `StatusBadge`.
+- [Design Tokens & Styling Guidelines](./references/design-tokens.md): Token warna lengkap, palet semantic, konfigurasi Tailwind, dan layer komponen CSS dasar (`index.css`).
+- [Component Patterns](./references/component-patterns.md): Template kode React siap pakai untuk `Shell.jsx` (Desktop & Mobile), `StatCard`, `DataTable`, `Modal`, `StatusBadge`, dan formulir pendaftaran.
+- [Mobile Native Layout & Card List Patterns](./references/mobile-native-layout.md): Pola spesifik Native Mobile App (Enlarged Topbar, Bottom Navigation Bar, Native Bottom Sheet, FAB, dan Card List).
 
 ---
 
-## 3. Langkah Implementasi pada Proyek Baru
+## 3. Langkah Menerapkan Standar pada Proyek Baru
 
-Ketika menerapkan standar ini pada sistem atau proyek baru:
-
-### Langkah 1: Pasang Tailwind CSS & Lucide Icons
-Pastikan proyek frontend memiliki paket pendukung standar:
+### Langkah 1: Pasang Paket Dependensi
 ```bash
 npm install lucide-react clsx tailwind-merge
 ```
 
-### Langkah 2: Terapkan Tailwind Config
-Salin konfigurasi palet `brand` dan `fontFamily` ke `tailwind.config.js` sesuai panduan di [design-tokens.md](./references/design-tokens.md).
+### Langkah 2: Salin Konfigurasi Tailwind (`tailwind.config.js`)
+Gunakan konfigurasi warna brand korporat dan font sans sesuai panduan di [design-tokens.md](./references/design-tokens.md).
 
-### Langkah 3: Definisikan Komponen CSS Dasar
-Tambahkan layer komponen standar pada file CSS utama (`src/index.css`):
-- `.card`: `bg-white border border-slate-200 rounded-lg`
-- `.btn-primary`: `btn bg-brand-500 text-white hover:bg-brand-600`
-- `.btn-ghost`: `btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50`
-- `.input`: `w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm`
-- `.th` & `.td`: Padding tabel padat dan terstruktur.
+### Langkah 3: Definisikan Komponen CSS Dasar (`src/index.css`)
+Pasang utility classes `.card`, `.input`, `.btn`, `.btn-primary`, `.btn-ghost`, `.btn-danger`, `.btn-success`, `.th`, `.td`, `.badge` yang telah disesuaikan untuk responsivitas mobile native.
 
-### Langkah 4: Gunakan Layout Shell
-Bungkus seluruh rute aplikasi internal dengan layout `Shell.jsx` (lihat [component-patterns.md](./references/component-patterns.md)) yang mencakup:
-- Header brand perusahaan di kiri atas.
-- Kartu informasi akun login di bawah navigasi.
-- Menu navigasi dengan badge penanda route aktif (warna solid `brand-500` dengan teks putih).
-- Responsif: Sidebar permanen di desktop, drawer sliding di perangkat mobile.
+### Langkah 4: Terapkan Arsitektur Layout `Shell.jsx`
+Gunakan `Shell.jsx` yang memiliki:
+- Sidebar desktop (`hidden lg:flex w-64`)
+- Top bar mobile lega (`h-16 lg:h-14`)
+- Bottom navigation bar native (`h-[68px] lg:hidden`)
+- Native bottom sheet untuk menu pendukung
+- Floating action button pada halaman operasional
 
-### Langkah 5: Standar Form & Modal
-- Gunakan `Modal.jsx` untuk setiap aksi edit, tambah data, atau konfirmasi penting.
-- Header modal memiliki judul tebal dan tombol close (X).
-- Form inputs selalu memiliki label berukuran 12px font semibold (`.label`).
-- Footer modal wajib memiliki tombol aksi sekunder (*Batal*) di kiri dan aksi primer (*Simpan/Hapus*) di kanan.
+### Langkah 5: Terapkan Dual View pada Setiap Data List
+Setiap kali menampilkan data tabel:
+- Buat container mobile (`md:hidden space-y-3`) berisi deretan komponen **Card**.
+- Buat container desktop (`hidden md:block overflow-x-auto`) berisi komponen **Table**.
 
 ---
 
 ## 4. Checklist Kualitas UI
 
-Sebelum menyelesaikan pengerjaan UI pada sistem apapun, lakukan verifikasi:
-- [ ] Tidak ada gradien neon / background ungu-pink AI slop.
-- [ ] Semua kartu data menggunakan border tipis `border-slate-200` dengan rounded halus (8px).
-- [ ] Tombol utama menggunakan `bg-brand-500` atau semantic color yang jelas (`bg-emerald-600` untuk sukses, `bg-red-600` untuk bahaya).
-- [ ] Tabel memiliki baris pencarian, header yang jelas, dan indikator status badge.
-- [ ] Tampilan nyaman dibuka di layar desktop maupun smartphone operasional.
-
+Sebelum merilis halaman atau fitur baru, pastikan:
+- [ ] **Anti-AI Slop**: Tidak ada gradien ungu-pink, bayangan bercahaya, atau elemen bulat raksasa yang tidak perlu.
+- [ ] **Desktop & Mobile Responsif**: Tampilan desktop rapi dan tampilan mobile terasa seperti aplikasi native smartphone.
+- [ ] **Data List di Mobile**: Semua tabel otomatis tampil dalam bentuk Card di mobile (`< md`).
+- [ ] **Top Bar & Bottom Bar**: Memiliki tinggi lega (`h-16` dan `h-[68px]`) dengan touch target besar dan mudah ditekan.
+- [ ] **Dark Mode & Light Mode**: Semua teks otomatis kontras dan terbaca di kedua mode tanpa bug warna.
+- [ ] **i18n Translation**: Semua kata/kalimat terdaftar di dictionary dan berubah saat toggle bahasa diklik.
+- [ ] **Touch Target**: Semua tombol aksi memiliki tinggi sentuhan minimal 42px - 44px.

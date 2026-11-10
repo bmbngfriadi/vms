@@ -1,240 +1,335 @@
 # Ready-to-Use Industrial Component Patterns
 
-Kumpulan pola komponen React + Tailwind CSS siap pakai dengan estetika industrial enterprise.
+Kumpulan pola komponen React + Tailwind CSS siap pakai dengan estetika industrial enterprise dan **100% Native Mobile App Layout**.
 
 ---
 
-## 1. App Shell Layout (`Shell.jsx`)
-Sidebar tetap di desktop, drawer di mobile, dilengkapi kartu profil user di bawah.
+## 1. App Shell Layout Lengkap (`Shell.jsx`)
+Mengintegrasikan Sidebar Desktop permanen dan Native Mobile Navigation (Enlarged Topbar, Bottombar, Native Bottom Sheet, & FAB).
 
 ```jsx
 import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
   FileText,
   Database,
   LogOut,
-  Menu,
   X,
   UserRound,
-  ChevronDown
+  MoreHorizontal,
+  ChevronRight,
+  Globe,
+  Sun,
+  Moon,
+  ScanLine
 } from 'lucide-react';
+import { useAuth } from '../lib/auth.jsx';
+import { useTheme } from '../lib/theme.jsx';
+import { useI18n } from '../lib/i18n.jsx';
 
-export default function Shell({ user, navItems, onLogout, appTitle = "INDUSTRIAL VMS", plantName = "Plant Batam" }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+export default function Shell() {
+  const { user, logout, can } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const { lang, toggleLang, t } = useI18n();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
+
+  const NAV_ITEMS = [
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
+    { to: '/visits', label: 'Data Kunjungan', icon: Users, feature: 'page.visits' },
+    { to: '/reports', label: 'Laporan', icon: FileText, feature: 'page.reports' },
+    { to: '/profile', label: 'Profil Saya', icon: UserRound, feature: 'always' }
+  ];
+
+  const handleLogout = () => {
+    setShowMoreSheet(false);
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
-      {/* Mobile Top Header */}
-      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded bg-brand-500 text-white font-bold flex items-center justify-center text-sm">
-            CG
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-900 leading-tight">{appTitle}</div>
-            <div className="text-[10px] text-slate-500">{plantName}</div>
-          </div>
-        </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-1.5 rounded-md text-slate-600 hover:bg-slate-100"
-        >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </header>
-
-      {/* Sidebar Desktop */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 border-r border-slate-200 flex flex-col transition-transform
-        md:translate-x-0 md:static md:h-screen
-        ${mobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:shadow-none'}
-      `}>
+    <div className="min-h-screen flex bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+      {/* ================= 1. SIDEBAR DESKTOP (lg:flex) ================= */}
+      <aside className="hidden lg:flex w-64 shrink-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col fixed inset-y-0 z-30">
         {/* Brand */}
-        <div className="px-5 pt-5 pb-4 border-b border-slate-200">
+        <div className="px-5 pt-5 pb-4 border-b border-slate-200/80 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-md bg-brand-500 text-white font-extrabold flex items-center justify-center text-base shrink-0 shadow-sm">
-              CG
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
+              <img src="/logo.png" alt="Company Logo" className="h-8 w-auto" />
             </div>
             <div className="min-w-0">
-              <div className="text-[13px] font-bold text-slate-900 leading-tight truncate">{appTitle}</div>
-              <div className="text-[10.5px] text-slate-500 mt-0.5">{plantName}</div>
+              <div className="text-[12.5px] font-bold text-slate-900 dark:text-white leading-tight">
+                PT CEMINDO GEMILANG
+              </div>
+              <div className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Industrial Plant Batam
+              </div>
             </div>
           </div>
         </div>
 
         {/* User Card */}
-        <div className="px-3 py-3 border-b border-slate-200 bg-white/50">
-          <div className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-center gap-2.5 shadow-sm">
-            <div className="w-8 h-8 rounded bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+        <div className="px-3 py-3 border-b border-slate-200/80 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => navigate('/profile')}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center gap-2.5 shadow-xs text-left"
+          >
+            <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
               <UserRound size={16} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-slate-800 truncate">{user?.name || 'Operator'}</div>
-              <div className="text-[10px] text-slate-500 truncate">{user?.role} {user?.department ? `· ${user.department}` : ''}</div>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{user?.name}</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user?.role}</div>
             </div>
-          </div>
+          </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Items */}
         <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
-              onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors ${
+                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors ${
                   isActive
-                    ? 'bg-brand-500 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                    ? 'bg-brand-500 text-white font-bold shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                 }`
               }
             >
-              <item.icon size={16} strokeWidth={2} />
+              <item.icon size={17} strokeWidth={2} />
               <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-slate-200">
+        {/* Footer Settings & Logout */}
+        <div className="px-3 py-3 border-t border-slate-200/80 dark:border-slate-800 space-y-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleLang}
+              className="btn-ghost flex-1 py-1.5 px-2 text-xs flex items-center justify-center gap-1.5 rounded-xl"
+            >
+              <Globe size={14} />
+              <span className="font-bold">{lang.toUpperCase()}</span>
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="btn-ghost p-2 rounded-xl"
+            >
+              {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+            </button>
+          </div>
           <button
-            onClick={onLogout}
-            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
           >
-            <LogOut size={16} />
+            <LogOut size={15} />
             <span>Keluar Sistem</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto max-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="hidden lg:block w-64 shrink-0" />
+
+      {/* ================= 2. MAIN AREA ================= */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Enlarged Mobile Top Bar Header (h-16 / 64px) */}
+        <header className="h-16 lg:h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3.5 sm:px-4 lg:px-6 sticky top-0 z-20">
+          <div className="flex items-center gap-2.5">
+            <div className="lg:hidden bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
+              <img src="/logo.png" alt="Company Logo" className="h-8 w-auto" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                PT Cemindo Gemilang
+              </span>
+              <span className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                Visitor Management · Batam
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleLang}
+              className="px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 min-h-[38px]"
+            >
+              <Globe size={15} />
+              <span>{lang.toUpperCase()}</span>
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[38px] min-w-[38px] flex items-center justify-center"
+            >
+              {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+            </button>
+            <button
+              onClick={() => navigate('/profile')}
+              className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs shadow-sm ring-2 ring-white dark:ring-slate-800"
+            >
+              {user?.name?.charAt(0) || 'U'}
+            </button>
+          </div>
+        </header>
+
+        {/* Content Viewport with pb-28 for Mobile Bottom Bar */}
+        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-28 lg:pb-6">
           <Outlet />
-        </div>
-      </main>
-    </div>
-  );
-}
-```
+        </main>
 
----
+        {/* ================= 3. FLOATING ACTION BUTTON (FAB) SCAN ================= */}
+        {location.pathname === '/' && (
+          <div className="lg:hidden fixed bottom-[82px] right-5 z-40 flex flex-col items-center select-none">
+            <button
+              onClick={() => navigate('/scan')}
+              className="w-15 h-15 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
+              title="Scan Barcode"
+            >
+              <ScanLine size={28} strokeWidth={2.4} />
+            </button>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 drop-shadow-sm">
+              Scan
+            </span>
+          </div>
+        )}
 
-## 2. Stat Card / KPI Widget (`StatCard.jsx`)
-
-```jsx
-export function StatCard({ label, value, subtext, icon: Icon, color = "blue" }) {
-  const colorMap = {
-    brand: "bg-brand-50 text-brand-600 border-brand-200",
-    emerald: "bg-emerald-50 text-emerald-600 border-emerald-200",
-    amber: "bg-amber-50 text-amber-600 border-amber-200",
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    slate: "bg-slate-100 text-slate-600 border-slate-200"
-  };
-
-  return (
-    <div className="card p-4 sm:p-5 flex items-start justify-between shadow-sm">
-      <div className="space-y-1">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
-        <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{value}</p>
-        {subtext && <p className="text-[11px] text-slate-500 mt-1">{subtext}</p>}
-      </div>
-      {Icon && (
-        <div className={`p-2.5 rounded-lg border ${colorMap[color] || colorMap.blue}`}>
-          <Icon size={20} strokeWidth={2} />
-        </div>
-      )}
-    </div>
-  );
-}
-```
-
----
-
-## 3. Data Table & Filter Bar (`DataTable.jsx`)
-
-```jsx
-import React from 'react';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-
-export function FilterBar({ search, onSearchChange, children }) {
-  return (
-    <div className="card p-3 sm:p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between shadow-sm">
-      <div className="relative flex-1 max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Cari data..."
-          className="input pl-9 text-xs"
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export function TableContainer({ children }) {
-  return (
-    <div className="card overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          {children}
-        </table>
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-## 4. Modal Dialog Standar Industri (`Modal.jsx`)
-
-```jsx
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
-
-export function Modal({ isOpen, onClose, title, children, footer, maxWidth = "max-w-xl" }) {
-  useEffect(() => {
-    const handleEsc = (e) => e.key === 'Escape' && onClose();
-    if (isOpen) document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div className={`bg-white rounded-lg border border-slate-200 shadow-xl w-full ${maxWidth} overflow-hidden flex flex-col max-h-[90vh]`}>
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
-          <button
-            onClick={onClose}
-            className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+        {/* ================= 4. NATIVE MOBILE BOTTOM BAR (h-[68px]) ================= */}
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2 shadow-2xl h-[68px]">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              }`
+            }
           >
-            <X size={18} />
+            <LayoutDashboard size={22} strokeWidth={2.2} />
+            <span>Home</span>
+          </NavLink>
+
+          <NavLink
+            to="/visits"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              }`
+            }
+          >
+            <Users size={22} strokeWidth={2.2} />
+            <span>Tamu</span>
+          </NavLink>
+
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              }`
+            }
+          >
+            <FileText size={22} strokeWidth={2.2} />
+            <span>Laporan</span>
+          </NavLink>
+
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              }`
+            }
+          >
+            <UserRound size={22} strokeWidth={2.2} />
+            <span>Profil</span>
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={() => setShowMoreSheet(true)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+              showMoreSheet ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <MoreHorizontal size={22} strokeWidth={2.2} />
+            <span>Menu</span>
           </button>
-        </div>
+        </nav>
 
-        {/* Body */}
-        <div className="p-5 overflow-y-auto space-y-4 text-xs">
-          {children}
-        </div>
+        {/* ================= 5. NATIVE MOBILE BOTTOM SHEET ================= */}
+        {showMoreSheet && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs"
+              onClick={() => setShowMoreSheet(false)}
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-slate-200 dark:border-slate-800 p-4 max-h-[85vh] overflow-y-auto">
+              {/* Drag Handle Bar */}
+              <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
 
-        {/* Footer */}
-        {footer && (
-          <div className="px-5 py-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-end gap-2.5">
-            {footer}
+              {/* User Summary Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-sm">
+                    {user?.name?.charAt(0) || 'U'}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                      {user?.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {user?.role} {user?.department ? `· ${user.department}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMoreSheet(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Secondary Actions List */}
+              <div className="py-2 space-y-1">
+                <button
+                  onClick={() => {
+                    setShowMoreSheet(false);
+                    navigate('/master');
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-left transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                      <Database size={17} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Master Data</div>
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400">Departemen & Akun User</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-400" />
+                </button>
+              </div>
+
+              {/* Footer Logout */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  onClick={handleLogout}
+                  className="w-full py-2.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-2"
+                >
+                  <LogOut size={16} />
+                  <span>Keluar dari Sistem</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -245,26 +340,64 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = "ma
 
 ---
 
-## 5. Status Badge Universal (`StatusBadge.jsx`)
+## 2. Formulir Publik Mobile Native (`Register.jsx` Pattern)
 
 ```jsx
-export function StatusBadge({ status }) {
-  const config = {
-    CHECKED_IN: { label: 'CHECKED IN', bg: 'bg-emerald-50 text-emerald-700 border-emerald-300' },
-    APPROVED: { label: 'DISETUJUI', bg: 'bg-emerald-50 text-emerald-700 border-emerald-300' },
-    PENDING_VALIDATION: { label: 'MENUNGGU VALIDASI', bg: 'bg-amber-50 text-amber-700 border-amber-300' },
-    CHECKED_OUT: { label: 'CHECKED OUT', bg: 'bg-slate-100 text-slate-700 border-slate-300' },
-    REJECTED: { label: 'DITOLAK', bg: 'bg-red-50 text-red-700 border-red-300' },
-    CANCELLED: { label: 'DIBATALKAN', bg: 'bg-red-50 text-red-700 border-red-300' }
-  };
+<div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-3 sm:py-6 px-3 sm:px-4 transition-colors">
+  <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
+    {/* Header Mobile Lega */}
+    <header className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/80 dark:border-slate-800">
+      <div className="flex items-center gap-2 min-w-0">
+        <img src="/logo.png" alt="Logo" className="h-7 sm:h-8 w-auto shrink-0" />
+        <div className="min-w-0">
+          <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+            PT Cemindo Gemilang
+          </div>
+          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+            Pendaftaran Tamu · Plant Batam
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button onClick={toggleLang} className="btn-ghost text-xs px-2 py-1.5 rounded-lg font-bold">
+          {lang.toUpperCase()}
+        </button>
+        <button onClick={toggleTheme} className="btn-ghost text-xs p-1.5 rounded-lg">
+          {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} />}
+        </button>
+      </div>
+    </header>
 
-  const current = config[status] || { label: status, bg: 'bg-slate-100 text-slate-600 border-slate-200' };
+    {/* Kartu Formulir */}
+    <div className="card rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="px-4 py-4 sm:px-6 sm:py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+        <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+          Formulir Kunjungan Tamu
+        </h1>
+        <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 mt-1">
+          Isi data berikut sebelum memasuki kawasan pabrik.
+        </p>
+      </div>
 
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-bold border tracking-wide uppercase ${current.bg}`}>
-      {current.label}
-    </span>
-  );
-}
+      <form className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <div>
+          <label className="label">Nama Lengkap *</label>
+          <input className="input" placeholder="Nama sesuai KTP" required />
+        </div>
+        <div>
+          <label className="label">Nomor WhatsApp *</label>
+          <input className="input font-mono" placeholder="0812xxxxxxx" inputMode="tel" required />
+        </div>
+        
+        {/* Tombol Submit Full-Width Mobile */}
+        <button
+          type="submit"
+          className="btn-primary w-full py-3.5 sm:py-3 text-sm font-bold rounded-xl shadow-lg shadow-brand-500/20 active:scale-[0.99]"
+        >
+          Kirim & Dapatkan Barcode
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 ```
-

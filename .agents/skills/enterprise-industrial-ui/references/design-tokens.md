@@ -7,11 +7,11 @@ Standard design system for Industrial Enterprise Web Applications (PT Cemindo Ge
 ## 1. Anti-AI Slop Manifesto
 Setiap UI yang dihasilkan dengan standar ini **HARUS BEBAS DARI AI SLOP**:
 1. **DILARANG menggunakan gradient neon/pastel berlebihan**: Jangan gunakan background radial gradient ungu/merah muda/cyan melayang yang khas template AI murahan.
-2. **DILARANG menggunakan border radius raksasa**: Gunakan `rounded-lg` (8px) untuk card/modal dan `rounded-md` (6px) untuk tombol dan form inputs. Hindari `rounded-3xl` atau `rounded-full` pada kartu data.
-3. **DILARANG low-density padding**: Aplikasi industri membutuhkan kepadatan informasi yang efisien (high density). Hindari padding 64px yang membuat layar kosong dan boros scroll.
-4. **DILARANG glowing shadows**: Gunakan subtle borders (`border-slate-200`) dan shadow ringan (`shadow-sm` atau `shadow-md`), jangan gunakan `drop-shadow-[0_0_25px_rgba(...)]`.
-5. **DILARANG teks dummy / placeholder palsu**: Gunakan terminologi nyata operasional industri (NIK, Department, PIC, No Polisi, Check-In, Barcode, Audit Log).
-6. **Desain Mobile-First untuk Operasional Lapangan**: Tombol aksi utama (Scan Barcode, Check-In, Validasi) harus berukuran besar dan mudah ditekan oleh jari operator di lapangan dengan touch target minimal 44px.
+2. **DILARANG menggunakan border radius raksasa pada kontainer**: Gunakan `rounded-xl` (12px) untuk card/modal/input/button, dan `rounded-lg` untuk badge status. Hindari `rounded-3xl` atau `rounded-full` pada kartu data atau formulir.
+3. **Kepadatan Informasi Tinggi (High Density) di Desktop**: Di desktop, hindari padding berlebihan yang membuat layar kosong dan boros scroll.
+4. **Ergonomi Ramah Jempol di Mobile (Native Experience)**: Di mobile, seluruh tombol aksi dan input memiliki touch target minimal 42px – 48px agar tidak meleset saat ditekan.
+5. **DILARANG glowing shadows**: Gunakan subtle borders (`border-slate-200 dark:border-slate-800`) dan shadow ringan/tegas (`shadow-sm`, `shadow-md`, `shadow-xl`), jangan gunakan `drop-shadow-[0_0_25px_rgba(...)]`.
+6. **DILARANG teks dummy / placeholder palsu**: Gunakan terminologi nyata operasional industri (NIK, Department, PIC, No Polisi, Check-In, Check-Out, Barcode, Audit Log).
 
 ---
 
@@ -21,6 +21,7 @@ Setiap UI yang dihasilkan dengan standar ini **HARUS BEBAS DARI AI SLOP**:
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class', // Wajib class-based dark mode
   theme: {
     extend: {
       colors: {
@@ -30,15 +31,17 @@ export default {
           200: '#f2c6c9',
           300: '#e79aa0',
           400: '#d95f68',
-          500: '#b52025', // Primary Corporate Brand Red
+          500: '#b52025', // Primary Corporate Brand Red (Cemindo)
           600: '#9e1c21',
           700: '#82171b',
           800: '#611114',
-          900: '#470d10'
+          900: '#470d10',
+          950: '#2b0709'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Segoe UI', 'system-ui', '-apple-system', 'sans-serif']
+        sans: ['Inter', 'Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
       }
     }
   },
@@ -48,7 +51,7 @@ export default {
 
 ---
 
-## 3. Base & Utility Classes (`index.css`)
+## 3. Base & Utility Classes (`src/index.css`)
 
 ```css
 @tailwind base;
@@ -60,75 +63,78 @@ export default {
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-slate-100 text-slate-800 antialiased;
+    @apply bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased;
   }
 }
 
 @layer components {
-  /* Surfaces */
+  /* Surfaces & Containers */
   .card {
-    @apply bg-white border border-slate-200 rounded-lg;
+    @apply bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl transition-colors;
   }
 
   /* Form Elements */
   .label {
-    @apply block text-xs font-semibold text-slate-700 mb-1.5;
+    @apply block text-xs sm:text-[13px] font-bold text-slate-700 dark:text-slate-300 mb-1.5;
   }
 
   .input {
-    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 sm:py-2 text-sm text-slate-800
       placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30
-      focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500 transition-colors;
+      focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500
+      dark:bg-slate-800/90 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500
+      dark:disabled:bg-slate-900 dark:disabled:text-slate-600 transition-colors min-h-[42px] sm:min-h-[38px];
   }
 
-  /* Buttons */
+  /* Buttons - Mobile Ergonomic Touch Targets */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold
-      transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 sm:py-2 text-sm font-bold
+      transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none
+      active:scale-[0.98] min-h-[42px] sm:min-h-[38px];
   }
 
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-sm hover:shadow;
   }
 
   .btn-ghost {
-    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:bg-slate-100;
+    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50
+      dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:border-slate-600 shadow-sm;
   }
 
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800;
+    @apply btn bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm;
   }
 
   .btn-success {
-    @apply btn bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800;
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm;
   }
 
-  /* High-Density Data Tables */
+  /* High-Density Data Tables (Desktop only) */
   .th {
-    @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-50 border-b border-slate-200;
+    @apply px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50 border-b border-slate-200
+      dark:text-slate-400 dark:bg-slate-800/60 dark:border-slate-800;
   }
 
   .td {
-    @apply px-4 py-3 text-sm text-slate-700 border-b border-slate-100 align-middle;
+    @apply px-4 py-3.5 text-sm text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/60 align-middle;
   }
 
   /* Badges */
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded px-2.5 py-0.5 text-[11px] font-semibold tracking-wide uppercase;
+    @apply inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider;
   }
 }
 ```
 
 ---
 
-## 4. Semantic Color Mapping
+## 4. Semantic Color & Status Mapping (Dark & Light)
 
-| State / Kategori | Background | Text | Border | Kegunaan |
-| :--- | :--- | :--- | :--- | :--- |
-| **Active / Success** | `bg-emerald-50` | `text-emerald-700` | `border-emerald-200` | Checked-in, Aktif, Selesai, Disetujui |
-| **Pending / Warning** | `bg-amber-50` | `text-amber-700` | `border-amber-200` | Menunggu Validasi, Menunggu Approval |
-| **Info / Walk-In** | `bg-blue-50` | `text-blue-700` | `border-blue-200` | Pre-Registered, Tamu Walk-in, Kunjungan Baru |
-| **Neutral / Muted** | `bg-slate-100` | `text-slate-700` | `border-slate-200` | Checked-out, Draft, Diarsipkan |
-| **Danger / Error** | `bg-red-50` | `text-red-700` | `border-red-200` | Ditolak, Dibatalkan, Expired, Error |
-| **Special / VIP** | `bg-purple-50` | `text-purple-700` | `border-purple-200` | Tamu Khusus, Management, VIP |
-
+| State / Kategori | Light Mode Classes | Dark Mode Classes | Makna & Penggunaan |
+| :--- | :--- | :--- | :--- |
+| **Active / Success** | `bg-emerald-50 text-emerald-800 border-emerald-200` | `dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50` | Selesai, Terhubung, Aktif, Di Dalam Pabrik |
+| **Pending / Warning** | `bg-amber-50 text-amber-800 border-amber-200` | `dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-900/50` | Menunggu Validasi, Terjadwal, OTP Pending |
+| **Danger / Rejected** | `bg-red-50 text-red-700 border-red-200` | `dark:bg-red-950/60 dark:text-red-300 dark:border-red-900/50` | Ditolak, Dibatalkan, Terputus, Gagal Kirim |
+| **Neutral / Muted** | `bg-slate-100 text-slate-700 border-slate-200` | `dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700` | Nonaktif, Selesai Diperiksa, Arsip |
+| **Brand Highlight** | `bg-brand-50 text-brand-700 border-brand-200` | `dark:bg-brand-950/60 dark:text-brand-300 dark:border-brand-900/50` | Identitas Nomor, Role Admin, Tag Khusus |

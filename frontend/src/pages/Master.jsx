@@ -33,11 +33,10 @@ export default function Master() {
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === k
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === k
                 ? 'border-brand-600 text-brand-700 dark:text-brand-400 dark:border-brand-500'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-            }`}
+              }`}
           >
             {label}
           </button>
@@ -138,11 +137,10 @@ function Departments() {
                   </span>
                 </div>
                 <span
-                  className={`badge border ${
-                    d.isActive
+                  className={`badge border ${d.isActive
                       ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
                       : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                  }`}
+                    }`}
                 >
                   {d.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
                 </span>
@@ -253,11 +251,10 @@ function Departments() {
                   <td className="td text-slate-600 dark:text-slate-400">{d._count?.users ?? 0}</td>
                   <td className="td">
                     <span
-                      className={`badge border ${
-                        d.isActive
+                      className={`badge border ${d.isActive
                           ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
                           : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                      }`}
+                        }`}
                     >
                       {d.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
                     </span>
@@ -347,7 +344,7 @@ function Users() {
 
   const load = () => {
     endpoints.users().then(setRows).catch((e) => setError(errMsg(e)));
-    endpoints.departments().then(setDepartments).catch(() => {});
+    endpoints.departments().then(setDepartments).catch(() => { });
   };
 
   useEffect(() => {
@@ -390,11 +387,10 @@ function Users() {
                   )}
                 </div>
                 <span
-                  className={`badge border ${
-                    u.isActive
+                  className={`badge border ${u.isActive
                       ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
                       : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                  }`}
+                    }`}
                 >
                   {u.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
                 </span>
@@ -486,11 +482,10 @@ function Users() {
                   <td className="td text-slate-600 dark:text-slate-400 text-xs font-mono">{u.phone || '-'}</td>
                   <td className="td">
                     <span
-                      className={`badge border ${
-                        u.isActive
+                      className={`badge border ${u.isActive
                           ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
                           : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                      }`}
+                        }`}
                     >
                       {u.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
                     </span>
