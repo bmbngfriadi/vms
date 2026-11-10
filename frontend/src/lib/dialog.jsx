@@ -123,15 +123,15 @@ export function DialogProvider({ children }) {
 
       {/* ================= MODAL DIALOG CUSTOM POPUP ================= */}
       {dialogState && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
-          {/* Backdrop Blur */}
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          {/* Backdrop Blur Layer Tertinggi */}
           <div
-            className="absolute inset-0 bg-slate-950/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-150"
             onClick={() => handleClose(dialogState.type === 'confirm' ? false : null)}
           />
 
           {/* Modal Container */}
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
             {/* Header dengan Icon & Tombol X */}
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3.5">
@@ -140,7 +140,7 @@ export function DialogProvider({ children }) {
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                     {dialogState.title}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">
                     PT Cemindo Gemilang · Sistem Konfirmasi
                   </p>
                 </div>
@@ -148,14 +148,15 @@ export function DialogProvider({ children }) {
               <button
                 type="button"
                 onClick={() => handleClose(dialogState.type === 'confirm' ? false : null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Tutup"
               >
-                <X size={18} />
+                <X size={19} />
               </button>
             </div>
 
             {/* Konten Pesan */}
-            <div className="mt-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+            <div className="mt-4 text-[13.5px] sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
               {dialogState.message}
             </div>
 
@@ -165,7 +166,7 @@ export function DialogProvider({ children }) {
                 <textarea
                   autoFocus
                   rows={3}
-                  className="input text-sm p-3 rounded-xl w-full"
+                  className="input text-sm p-3 rounded-xl w-full border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
                   value={promptInput}
                   onChange={(e) => setPromptInput(e.target.value)}
                   placeholder={dialogState.placeholder}
@@ -173,14 +174,14 @@ export function DialogProvider({ children }) {
               </div>
             )}
 
-            {/* Tombol Aksi Bawah */}
-            <div className="mt-6 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            {/* Tombol Aksi Bawah Proporsional Native Mobile */}
+            <div className="mt-6 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
               {/* Tombol Batal untuk Confirm & Prompt */}
               {(dialogState.type === 'confirm' || dialogState.type === 'prompt') && (
                 <button
                   type="button"
                   onClick={() => handleClose(dialogState.type === 'confirm' ? false : null)}
-                  className="btn-ghost flex-1 sm:flex-none py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl min-h-[42px]"
+                  className="w-full sm:w-auto py-3 sm:py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl min-h-[46px] btn-ghost text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   {dialogState.cancelText}
                 </button>
@@ -199,7 +200,7 @@ export function DialogProvider({ children }) {
                     handleClose(true);
                   }
                 }}
-                className={`flex-1 sm:flex-none py-2.5 px-5 text-xs sm:text-sm font-bold rounded-xl min-h-[42px] transition-all shadow-sm ${
+                className={`w-full sm:w-auto py-3 sm:py-2.5 px-6 text-xs sm:text-sm font-bold rounded-xl min-h-[46px] transition-all shadow-sm flex items-center justify-center ${
                   dialogState.variant === 'danger' || dialogState.variant === 'error'
                     ? 'btn-danger'
                     : dialogState.variant === 'warning'

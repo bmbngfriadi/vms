@@ -121,7 +121,7 @@ export default function Visits() {
           {/* Tombol QR Barcode Walk-In */}
           <button
             type="button"
-            className="btn-ghost font-bold text-brand-600 dark:text-brand-400"
+            className="btn-ghost font-bold text-brand-600 dark:text-brand-400 py-2.5 px-3 min-h-[42px] rounded-xl"
             onClick={() => setShowQrModal(true)}
             title="Tampilkan & cetak barcode registrasi tamu walk-in"
           >
@@ -131,7 +131,7 @@ export default function Visits() {
 
           {canExport && (
             <button
-              className="btn-ghost"
+              className="btn-ghost py-2.5 px-3 min-h-[42px] rounded-xl"
               onClick={downloadExcel}
               disabled={exporting}
               title="Unduh laporan Excel (.xlsx)"
@@ -141,7 +141,7 @@ export default function Visits() {
             </button>
           )}
           {canCreate && (
-            <button className="btn-primary" onClick={() => setShowCreate(true)}>
+            <button className="btn-primary py-2.5 px-3.5 min-h-[42px] rounded-xl font-bold" onClick={() => setShowCreate(true)}>
               <CalendarPlus size={16} /> {t('visits.btn_preregister', 'Buat Janji Temu')}
             </button>
           )}
@@ -781,16 +781,16 @@ function CreateModal({ user, onClose, onCreated }) {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-8 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-full max-w-lg shadow-2xl my-auto">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative z-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl my-auto max-h-[92vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-            <X size={17} />
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg">
+            <X size={18} />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-4 sm:p-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

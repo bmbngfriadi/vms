@@ -536,8 +536,11 @@ export default function Shell() {
 
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="w-full py-2.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors"
+                  onClick={() => {
+                    setShowMoreSheet(false);
+                    handleLogout();
+                  }}
+                  className="w-full py-3 px-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors min-h-[46px]"
                 >
                   <LogOut size={16} strokeWidth={2} />
                   <span>{t('nav.logout', 'Keluar dari Sistem')}</span>

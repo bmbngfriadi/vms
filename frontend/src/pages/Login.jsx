@@ -326,7 +326,7 @@ export default function Login() {
                   </div>
                 )}
 
-                <button type="submit" className="btn-primary w-full py-2.5 text-xs font-bold" disabled={loading}>
+                <button type="submit" className="btn-primary w-full py-3 text-sm font-bold min-h-[46px] rounded-xl shadow-xs" disabled={loading}>
                   {loading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
@@ -392,7 +392,7 @@ export default function Login() {
                   </div>
                 )}
 
-                <button type="submit" className="btn-primary w-full py-2.5 text-xs font-bold" disabled={loading}>
+                <button type="submit" className="btn-primary w-full py-3 text-sm font-bold min-h-[46px] rounded-xl shadow-xs" disabled={loading}>
                   {loading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
@@ -476,7 +476,7 @@ export default function Login() {
                   </div>
                 )}
 
-                <button type="submit" className="btn-primary w-full py-2.5 text-xs font-bold" disabled={loading}>
+                <button type="submit" className="btn-primary w-full py-3 text-sm font-bold min-h-[46px] rounded-xl shadow-xs" disabled={loading}>
                   {loading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (

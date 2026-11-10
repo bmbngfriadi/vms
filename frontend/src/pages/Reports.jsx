@@ -118,11 +118,11 @@ export default function Reports() {
               <option value="CANCELLED">Dibatalkan</option>
             </select>
           </div>
-          <button className="btn-ghost" onClick={load}>
+          <button className="btn-ghost py-2.5 min-h-[42px] rounded-xl font-bold justify-center" onClick={load}>
             <FileText size={16} /> {t('reports.btn_apply', 'Terapkan Filter')}
           </button>
           {canExport && (
-            <button className="btn-primary" onClick={downloadExcel} disabled={downloading}>
+            <button className="btn-primary py-2.5 min-h-[42px] rounded-xl font-bold justify-center" onClick={downloadExcel} disabled={downloading}>
               {downloading ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (

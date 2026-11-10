@@ -347,7 +347,7 @@ function Departments() {
             />
           </div>
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-          <button className="btn-primary w-full" disabled={busy}>
+          <button className="btn-primary w-full py-2.5 min-h-[44px] rounded-xl font-bold justify-center" disabled={busy}>
             {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}{' '}
             {t('action.save', 'Simpan')}
           </button>
@@ -401,7 +401,10 @@ function Users() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button className="btn-primary" onClick={() => setEditing({})}>
+        <button
+          className="btn-primary w-full sm:w-auto py-2.5 px-4 min-h-[44px] rounded-xl font-bold justify-center"
+          onClick={() => setEditing({})}
+        >
           <Plus size={16} /> {t('master.btn_add_user', 'Tambah Pengguna')}
         </button>
       </div>
@@ -616,19 +619,19 @@ function UserModal({ user, departments, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-8 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-full max-w-lg shadow-xl my-auto">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative z-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl my-auto max-h-[92vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {isNew ? t('master.btn_add_user', 'Tambah Pengguna') : 'Edit Pengguna'}
           </h3>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-            <X size={17} />
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg">
+            <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={submit} className="p-5 space-y-3.5">
+        <form onSubmit={submit} className="p-4 sm:p-5 space-y-3.5 overflow-y-auto">
           <div>
             <label className="label">{t('master.col_name', 'Nama Lengkap')} *</label>
             <input className="input" value={form.name} onChange={set('name')} required />

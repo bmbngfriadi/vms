@@ -235,23 +235,31 @@ export default function WhatsApp() {
           {isAdmin && (
             <div className="flex flex-wrap gap-2 mt-4">
               <button
-                className="btn-ghost flex-1 text-xs"
+                className="btn-ghost flex-1 text-xs py-2.5 px-3 min-h-[42px] rounded-xl font-bold justify-center"
                 onClick={connected ? loadStatus : reconnect}
                 disabled={busy}
               >
-                {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {busy ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
                 {connected ? 'Muat ulang' : t('wa.btn_reconnect', 'Muat ulang QR')}
               </button>
 
               {!connected && status?.lastError && (
-                <button className="btn-ghost text-xs" onClick={hardRestart} disabled={busy}>
-                  <RotateCcw size={14} /> {t('wa.btn_restart', 'Sambung ulang')}
+                <button
+                  className="btn-ghost text-xs py-2.5 px-3 min-h-[42px] rounded-xl font-bold justify-center"
+                  onClick={hardRestart}
+                  disabled={busy}
+                >
+                  <RotateCcw size={15} /> {t('wa.btn_restart', 'Sambung ulang')}
                 </button>
               )}
 
               {connected && (
-                <button className="btn-danger text-xs" onClick={logout} disabled={busy}>
-                  <Power size={14} /> {t('wa.btn_logout', 'Putuskan')}
+                <button
+                  className="btn-danger text-xs py-2.5 px-4 min-h-[42px] rounded-xl font-bold justify-center"
+                  onClick={logout}
+                  disabled={busy}
+                >
+                  <Power size={15} /> {t('wa.btn_logout', 'Putuskan Sesi')}
                 </button>
               )}
             </div>
@@ -295,10 +303,10 @@ export default function WhatsApp() {
           </div>
 
           {isAdmin && (
-            <form onSubmit={addRecipient} className="mt-4 grid sm:grid-cols-4 gap-2">
+            <form onSubmit={addRecipient} className="mt-4 grid sm:grid-cols-4 gap-2.5">
               <input
                 className="input sm:col-span-1"
-                placeholder="Nama"
+                placeholder="Nama Lengkap"
                 value={newRecipient.name}
                 onChange={(e) => setNewRecipient({ ...newRecipient, name: e.target.value })}
                 required
@@ -316,8 +324,8 @@ export default function WhatsApp() {
                 value={newRecipient.title}
                 onChange={(e) => setNewRecipient({ ...newRecipient, title: e.target.value })}
               />
-              <button className="btn-primary" type="submit">
-                <Plus size={15} /> Tambah
+              <button className="btn-primary py-2.5 min-h-[42px] rounded-xl font-bold justify-center" type="submit">
+                <Plus size={16} /> Tambah
               </button>
             </form>
           )}
@@ -329,7 +337,7 @@ export default function WhatsApp() {
           <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {t('wa.test_send', 'Kirim Pesan Uji Coba')}
           </h2>
-          <form onSubmit={sendTest} className="mt-3 grid sm:grid-cols-4 gap-2">
+          <form onSubmit={sendTest} className="mt-3 grid sm:grid-cols-4 gap-2.5">
             <input
               className="input"
               placeholder="Nomor tujuan (0812…)"
@@ -342,8 +350,12 @@ export default function WhatsApp() {
               value={testMsg}
               onChange={(e) => setTestMsg(e.target.value)}
             />
-            <button className="btn-primary" type="submit" disabled={busy}>
-              {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Kirim
+            <button
+              className="btn-primary py-2.5 min-h-[42px] rounded-xl font-bold justify-center"
+              type="submit"
+              disabled={busy}
+            >
+              {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Kirim
             </button>
           </form>
           {testResult && (

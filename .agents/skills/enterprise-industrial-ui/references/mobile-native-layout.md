@@ -184,8 +184,25 @@ Setiap halaman pada proyek baru harus lulus checklist mobile berikut:
 - [ ] Header top bar berukuran `h-16` di mobile dengan logo jelas dan tidak memotong judul.
 - [ ] Tidak ada drawer sidebar samping yang muncul di smartphone.
 - [ ] Navigasi utama menggunakan Bottom Bar `h-[68px]` dengan touch target `min-h-[50px]`.
-- [ ] Menu pendukung/admin dapat dibuka melalui Native Bottom Sheet.
-- [ ] Tombol aksi melayang (FAB) berukuran `w-15 h-15` di atas bottom bar hanya pada halaman Home.
+- [ ] Menu pendukung/admin dapat dibuka melalui Native Bottom Sheet (`z-50`).
+- [ ] Tombol aksi melayang (FAB) berukuran `w-15 h-15` di atas bottom bar hanya pada halaman Home (`z-40`).
 - [ ] Semua data list berbentuk kartu vertikal (*Card Layout*) di layar `< md`.
 - [ ] Semua tombol aksi lapangan memiliki touch target minimal 42px – 48px.
+- [ ] **Modal dialog konfirmasi & alert custom WAJIB menggunakan layer tertinggi `z-[99999]`** agar tidak pernah tertimpa oleh bottom sheet, bottom nav bar, maupun modal form lainnya.
+- [ ] Di layar mobile smartphone, tombol konfirmasi dialog ditata vertikal (`flex-col-reverse sm:flex-row`) dengan tinggi minimal 46px agar ergonomis bagi sentuhan satu tangan.
+
+---
+
+## 4. Hirarki Z-Index Bebas Tabrakan (Layering Hierarchy)
+
+| Layer | Nilai Tailwind | Elemen UI |
+|---|---|---|
+| Konten Halaman | default (`z-0`) | Card, Form, List, Dashboard Grid |
+| Sticky Table Header / Filter Bar | `z-10` / `z-20` | Header tabel sticky saat di-scroll |
+| Mobile Bottom Bar | `z-30` | Bar navigasi bawah smartphone |
+| Floating Action Button (FAB) | `z-40` | Tombol bulat scan mengambang di Home |
+| Mobile Bottom Sheet / Modal Form | `z-50` | Action sheet menu, modal detail & edit form |
+| Fullscreen Photo Preview | `z-[90]` | Pratinjau KTP/SIM resolusi penuh |
+| **Global Confirmation / Alert Dialog** | **`z-[99999]`** | **Pop-up dialog konfirmasi, prompt alasan, pesan error/sukses** |
+
 

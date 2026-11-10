@@ -447,9 +447,9 @@ export default function Scan() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
                     <button
-                      className="btn-success flex-1"
+                      className="btn-success flex-1 py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
                       onClick={doCheckIn}
                       disabled={actionLoading || !picUserId}
                       title={!picUserId ? 'Pilih PIC terlebih dahulu' : ''}
@@ -457,12 +457,16 @@ export default function Scan() {
                       {actionLoading ? (
                         <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <UserCheck size={16} />
+                        <UserCheck size={18} />
                       )}
                       Validasi & Check-In
                     </button>
-                    <button className="btn-danger" onClick={doReject} disabled={actionLoading}>
-                      <XCircle size={16} /> Tolak
+                    <button
+                      className="btn-danger sm:w-auto py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
+                      onClick={doReject}
+                      disabled={actionLoading}
+                    >
+                      <XCircle size={18} /> Tolak Kunjungan
                     </button>
                   </div>
                 </div>
@@ -472,10 +476,14 @@ export default function Scan() {
                 <div className="card p-5">
                   <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">Konfirmasi Keluar</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                    Pastikan tamu telah menyerahkan badge dan meninggalkan area.
+                    Pastikan tamu telah menyerahkan badge dan meninggalkan area kawasan pabrik.
                   </p>
-                  <button className="btn-primary w-full" onClick={doCheckOut} disabled={actionLoading}>
-                    {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+                  <button
+                    className="btn-primary w-full py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
+                    onClick={doCheckOut}
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={18} />}
                     Konfirmasi Check-Out
                   </button>
                 </div>

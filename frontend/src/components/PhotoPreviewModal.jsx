@@ -13,15 +13,15 @@ export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumbe
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-5">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-5">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm transition-opacity animate-in fade-in duration-150"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
+      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
         {/* Header Modal */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2.5 min-w-0">
