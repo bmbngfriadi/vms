@@ -1,10 +1,14 @@
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
-  fetchLatestBaileysVersion
+  fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
+  proto
 } from '@whiskeysockets/baileys';
+import NodeCache from '@cacheable/node-cache';
 import QRCode from 'qrcode';
 import pino from 'pino';
+import prisma from '../db.js';
 
 const AUTH_PATH = process.env.WA_AUTH_PATH || './wa_auth';
 const logger = pino({ level: 'silent' });
@@ -17,6 +21,38 @@ export const wa = {
   phone: null,
   lastError: null
 };
+
+/**
+ * Cache retry counters untuk menangani negosiasi enkripsi Signal (E2EE) WhatsApp.
+ * Wajib ada untuk mencegah masalah "Waiting for this message. This may take a while."
+ */
+const msgRetryCounterCache = new NodeCache({
+  stdTTL: 3600, // 1 jam
+  useClones: false
+});
+
+/**
+ * Cache penyimpanan pesan (outgoing & incoming) untuk melayani permintaan retry (getMessage).
+ * Ketika penerima belum memiliki session key yang sinkron, WhatsApp meminta pengirim mengirimkan ulang
+ * payload pesan asli. getMessage mengembalikan proto.IMessage dari cache ini.
+ */
+const messageStore = new NodeCache({
+  stdTTL: 24 * 3600, // 24 jam
+  maxKeys: 5000,
+  useClones: false
+});
+
+export function recordMessage(msg) {
+  if (!msg) return;
+  const id = msg.key?.id || msg.id;
+  const payload = msg.message || msg;
+  if (id && payload) {
+    messageStore.set(id, payload);
+    if (msg.key?.remoteJid) {
+      messageStore.set(`${msg.key.remoteJid}:${id}`, payload);
+    }
+  }
+}
 
 /**
  * Hanya boleh ada SATU socket aktif. Setiap socket diberi nomor generasi;
@@ -78,6 +114,11 @@ function teardownSocket(sock) {
     /* ignore */
   }
   try {
+    sock.ev.removeAllListeners('messages.upsert');
+  } catch {
+    /* ignore */
+  }
+  try {
     sock.end(undefined);
   } catch {
     /* ignore */
@@ -108,14 +149,79 @@ export async function startWhatsApp() {
     // Dibatalkan (mis. logout/restart) selama menunggu state
     if (gen !== generation) return;
 
+    // Cache Signal Keys di memori untuk performa enkripsi & mencegah kegagalan sesi
+    const keys = makeCacheableSignalKeyStore(state.keys, logger);
+
     const sock = makeWASocket({
       version,
-      auth: state,
+      auth: {
+        creds: state.creds,
+        keys
+      },
       logger,
       printQRInTerminal: false,
       browser: ['VMS Cemindo Batam', 'Chrome', '1.0.0'],
       syncFullHistory: false,
-      markOnlineOnConnect: false
+      markOnlineOnConnect: false,
+      msgRetryCounterCache,
+      // Handler krusial untuk menyelesaikan "Waiting for this message"
+      getMessage: async (key) => {
+        if (!key) return undefined;
+        // 1. Cek dari memory cache
+        let found = key.id ? messageStore.get(key.id) : null;
+        if (!found && key.remoteJid && key.id) {
+          found = messageStore.get(`${key.remoteJid}:${key.id}`);
+        }
+        if (found) {
+          try {
+            return proto.Message.fromObject(found.message || found);
+          } catch {
+            return found.message || found;
+          }
+        }
+
+        // 2. Fallback: ambil dari notificationLog jika service sempat restart
+        try {
+          if (key.remoteJid) {
+            const cleanPhone = String(key.remoteJid).split('@')[0].split(':')[0];
+            const log = await prisma.notificationLog.findFirst({
+              where: {
+                recipient: { contains: cleanPhone }
+              },
+              orderBy: { createdAt: 'desc' }
+            });
+            if (log?.message) {
+              return proto.Message.fromObject({
+                conversation: log.message
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('[WA] Fallback getMessage log error:', e.message);
+        }
+        return undefined;
+      },
+      patchMessageBeforeSending: (message) => {
+        const requiresPatch = !!(
+          message.buttonsMessage ||
+          message.templateMessage ||
+          message.listMessage
+        );
+        if (requiresPatch) {
+          return {
+            viewOnceMessage: {
+              message: {
+                messageContextInfo: {
+                  deviceListMetadataVersion: 2,
+                  deviceListMetadata: {}
+                },
+                ...message
+              }
+            }
+          };
+        }
+        return message;
+      }
     });
 
     wa.sock = sock;
@@ -124,6 +230,15 @@ export async function startWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
     sock.ev.on('connection.update', (update) => {
       handleUpdate(update, gen, sock).catch((e) => console.error('[WA] update error:', e.message));
+    });
+
+    // Simpan pesan masuk & keluar ke messageStore agar selalu siap melayani getMessage (retry)
+    sock.ev.on('messages.upsert', ({ messages }) => {
+      if (Array.isArray(messages)) {
+        for (const m of messages) {
+          recordMessage(m);
+        }
+      }
     });
   } catch (err) {
     wa.status = 'DISCONNECTED';
@@ -244,12 +359,16 @@ export async function sendText(phone, text) {
   assertConnected();
   const jid = toJid(phone);
   if (!jid) throw new Error(`Nomor tidak valid: ${phone}`);
-  return wa.sock.sendMessage(jid, { text });
+  const result = await wa.sock.sendMessage(jid, { text });
+  recordMessage(result);
+  return result;
 }
 
 export async function sendImage(phone, buffer, caption) {
   assertConnected();
   const jid = toJid(phone);
   if (!jid) throw new Error(`Nomor tidak valid: ${phone}`);
-  return wa.sock.sendMessage(jid, { image: buffer, caption });
+  const result = await wa.sock.sendMessage(jid, { image: buffer, caption });
+  recordMessage(result);
+  return result;
 }
