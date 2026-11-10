@@ -76,6 +76,7 @@ model Visitor {
   phone          String
   company        String?
   identityNumber String?  @map("identity_number")
+  identityPhoto  String?  @map("identity_photo") @db.Text
   visits         Visit[]
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -90,6 +91,7 @@ model Visit {
   visitor          Visitor     @relation(fields: [visitorId], references: [id])
   visitType        VisitType   @default(WALK_IN) @map("visit_type")
   status           VisitStatus @default(WAITING_VALIDATION)
+  identityPhoto    String?     @map("identity_photo") @db.Text
 
   departmentId     String      @map("department_id")
   department       Department  @relation(fields: [departmentId], references: [id])

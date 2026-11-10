@@ -128,6 +128,28 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
             <label className="label">No. Identitas</label>
             <input className="input" value={form.identityNumber} onChange={set('identityNumber')} />
           </div>
+          {visit.identityPhoto && (
+            <div className="sm:col-span-2 p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={visit.identityPhoto}
+                  alt="Foto Identitas"
+                  className="w-16 h-11 object-cover rounded border border-slate-200"
+                />
+                <div>
+                  <span className="text-xs font-semibold text-slate-800">Foto Identitas Terlampir</span>
+                  <p className="text-[11px] text-slate-500">KTP/SIM/Paspor terunggah saat pendaftaran</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-ghost text-xs py-1 px-2.5"
+                onClick={() => window.open(visit.identityPhoto, '_blank')}
+              >
+                Lihat Foto
+              </button>
+            </div>
+          )}
           <div>
             <label className="label">Status *</label>
             <select className="input" value={form.status} onChange={set('status')}>

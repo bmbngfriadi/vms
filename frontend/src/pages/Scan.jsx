@@ -307,6 +307,7 @@ export default function Scan() {
 
                 <div className="p-5 space-y-2.5 text-sm">
                   <Row label="Nama" value={result.visit.visitorName} strong />
+                  <Row label="No. Identitas" value={result.visit.identityNumber || '-'} />
                   <Row label="Perusahaan" value={result.visit.company || '-'} />
                   <Row label="No. WhatsApp" value={result.visit.phone || '-'} />
                   <Row label="Departemen" value={result.visit.department?.name || '-'} />
@@ -319,6 +320,22 @@ export default function Scan() {
                   )}
                   {result.visit.checkOutAt && (
                     <Row label="Keluar" value={fmtDateTime(result.visit.checkOutAt)} />
+                  )}
+
+                  {result.visit.identityPhoto && (
+                    <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                      <img
+                        src={result.visit.identityPhoto}
+                        alt="Foto Identitas"
+                        className="w-20 h-14 object-cover rounded-md border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
+                        onClick={() => window.open(result.visit.identityPhoto, '_blank')}
+                        title="Klik untuk perbesar foto identitas"
+                      />
+                      <div>
+                        <div className="text-xs font-semibold text-slate-800">Foto Identitas (KTP/SIM)</div>
+                        <div className="text-[11px] text-slate-500">Klik gambar untuk melihat ukuran penuh</div>
+                      </div>
+                    </div>
                   )}
                 </div>
 

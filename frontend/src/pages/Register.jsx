@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, QrCode, ArrowRight, Loader2, LogIn } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
+import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
 
 const EMPTY = {
   fullName: '',
   phone: '',
   company: '',
   identityNumber: '',
+  identityPhoto: '',
   departmentId: '',
   picUserId: '',
   purpose: '',
@@ -50,6 +52,13 @@ export default function Register() {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!form.identityPhoto) {
+      setError('Foto identitas (KTP/SIM/Paspor) wajib dilampirkan.');
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await endpoints.publicRegister({
@@ -149,7 +158,7 @@ export default function Register() {
                   <label className="label">Nama Lengkap (sesuai KTP) *</label>
                   <input className="input" value={form.fullName} onChange={set('fullName')} required />
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label className="label">Nomor WhatsApp *</label>
                   <input
                     className="input"
@@ -161,13 +170,44 @@ export default function Register() {
                   />
                   <p className="text-[11px] text-slate-400 mt-1">Barcode & notifikasi dikirim ke nomor ini.</p>
                 </div>
-                <div>
-                  <label className="label">No. Identitas (KTP/SIM/Paspor)</label>
-                  <input className="input" value={form.identityNumber} onChange={set('identityNumber')} />
-                </div>
+
+                {/* Kolom Foto Identitas (Mandatory) - Kamera Langsung & Upload File */}
                 <div className="sm:col-span-2">
+                  <IdentityPhotoCapture
+                    value={form.identityPhoto}
+                    onChange={(photo) => setForm((curr) => ({ ...curr, identityPhoto: photo }))}
+                    onNikDetected={(detectedNik) => {
+                      setForm((curr) => ({
+                        ...curr,
+                        identityNumber: detectedNik
+                      }));
+                    }}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="label">No. Identitas (KTP/SIM/Paspor)</label>
+                    {form.identityNumber && (
+                      <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">
+                        Dapat Dikoreksi
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    className="input font-mono"
+                    value={form.identityNumber}
+                    onChange={set('identityNumber')}
+                    placeholder="Nomor identitas (otomatis terisi dari foto)"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Terbaca otomatis dari foto. Tamu dapat mengoreksi data jika diperlukan.
+                  </p>
+                </div>
+                <div>
                   <label className="label">Perusahaan / Instansi</label>
-                  <input className="input" value={form.company} onChange={set('company')} />
+                  <input className="input" value={form.company} onChange={set('company')} placeholder="PT Contoh / Pribadi" />
                 </div>
               </div>
             </div>

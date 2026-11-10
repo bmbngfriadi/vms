@@ -308,8 +308,29 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
         <Row label="Tipe" value={TYPE_LABEL[visit.visitType]} />
         <div className="h-px bg-slate-100 my-3" />
         <Row label="Nama Tamu" value={visit.visitorName} />
+        {visit.identityNumber && <Row label="No. Identitas" value={visit.identityNumber} mono />}
         <Row label="Perusahaan" value={visit.company || '-'} />
         {visit.phone && <Row label="WhatsApp" value={visit.phone} />}
+        {visit.identityPhoto && (
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src={visit.identityPhoto}
+                alt="Foto Identitas"
+                className="w-16 h-11 object-cover rounded border border-slate-200 cursor-pointer"
+                onClick={() => window.open(visit.identityPhoto, '_blank')}
+              />
+              <span className="text-xs text-slate-600 font-medium">Foto Identitas (KTP/SIM)</span>
+            </div>
+            <button
+              type="button"
+              className="btn-ghost text-xs py-1 px-2.5"
+              onClick={() => window.open(visit.identityPhoto, '_blank')}
+            >
+              Lihat Foto
+            </button>
+          </div>
+        )}
         <Row label="Departemen" value={visit.department?.name || '-'} />
         <Row label="PIC" value={visit.picName} />
         <Row label="Keperluan" value={visit.purpose} />

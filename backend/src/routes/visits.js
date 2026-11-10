@@ -7,6 +7,7 @@ import { authenticate, allow, requireFeature } from '../middleware/auth.js';
 import { normalizePhone } from '../wa/client.js';
 import { notify } from '../wa/notify.js';
 import * as msg from '../wa/messages.js';
+import { recognizeIdentityImage } from '../lib/ocr.js';
 
 const router = express.Router();
 export const publicRouter = express.Router();
@@ -83,6 +84,7 @@ function formatVisit(visit, viewer) {
     company: visit.visitor?.company || null,
     phone: canSeeContact ? visit.visitor?.phone : null,
     identityNumber: canSeeContact ? visit.visitor?.identityNumber : null,
+    identityPhoto: visit.identityPhoto || visit.visitor?.identityPhoto || null,
     department: visit.department,
     picUser: visit.picUser,
     picNameManual: visit.picNameManual,
@@ -246,6 +248,24 @@ publicRouter.get('/pics', async (req, res) => {
 });
 
 // ============================================================
+// PUBLIC: pembacaan OCR nomor identitas dari foto KTP/SIM/Paspor
+// ============================================================
+
+publicRouter.post('/ocr-id', async (req, res) => {
+  try {
+    const { image } = req.body || {};
+    if (!image) {
+      return res.status(400).json({ error: 'Data foto identitas wajib dikirim' });
+    }
+    const result = await recognizeIdentityImage(image);
+    res.json(result);
+  } catch (err) {
+    console.error('[OCR Error]', err.message);
+    res.status(500).json({ error: 'Gagal memproses pembacaan foto identitas' });
+  }
+});
+
+// ============================================================
 // PUBLIC: pendaftaran tamu walk-in (tanpa janji)
 // ============================================================
 
@@ -259,11 +279,25 @@ const registerLimiter = rateLimit({
 
 publicRouter.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { fullName, phone, company, identityNumber, departmentId, picUserId, purpose, numberOfVisitors, vehiclePlate } =
-      req.body || {};
+    const {
+      fullName,
+      phone,
+      company,
+      identityNumber,
+      identityPhoto,
+      departmentId,
+      picUserId,
+      purpose,
+      numberOfVisitors,
+      vehiclePlate
+    } = req.body || {};
 
     if (!fullName || !phone || !departmentId || !picUserId || !purpose) {
       return res.status(400).json({ error: 'Nama, nomor WhatsApp, departemen, PIC, dan keperluan wajib diisi' });
+    }
+
+    if (!identityPhoto) {
+      return res.status(400).json({ error: 'Foto identitas (KTP/SIM/Paspor) wajib dilampirkan' });
     }
 
     const cleanPhone = normalizePhone(phone);
@@ -290,7 +324,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         data: {
           fullName: fullName.trim(),
           company: company ? company.trim() : visitor.company,
-          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber
+          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber,
+          identityPhoto: identityPhoto || visitor.identityPhoto
         }
       });
     } else {
@@ -299,7 +334,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
           fullName: fullName.trim(),
           phone: cleanPhone,
           company: company ? company.trim() : null,
-          identityNumber: identityNumber ? String(identityNumber).trim() : null
+          identityNumber: identityNumber ? String(identityNumber).trim() : null,
+          identityPhoto: identityPhoto || null
         }
       });
     }
@@ -320,6 +356,7 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         scheduledDate: new Date(),
         numberOfVisitors: Number(numberOfVisitors) > 0 ? Number(numberOfVisitors) : 1,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
+        identityPhoto: identityPhoto || null,
         tokens: { create: { token, type: 'CHECK_IN' } }
       },
       include: VISIT_INCLUDE
@@ -826,6 +863,10 @@ router.patch(
       if (has('company')) visitorData.company = b.company ? String(b.company).trim() : null;
       if (has('identityNumber'))
         visitorData.identityNumber = b.identityNumber ? String(b.identityNumber).trim() : null;
+      if (has('identityPhoto')) {
+        visitorData.identityPhoto = b.identityPhoto || null;
+        visitData.identityPhoto = b.identityPhoto || null;
+      }
       if (has('phone')) {
         const cleanPhone = normalizePhone(b.phone);
         if (!cleanPhone) return res.status(400).json({ error: 'Nomor WhatsApp tamu tidak valid' });
