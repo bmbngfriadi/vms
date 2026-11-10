@@ -29,22 +29,15 @@ export default function Reports() {
   const load = () => {
     setLoading(true);
     endpoints
-      .visits({ date: undefined, page: 1, limit: 200 })
-      .then((data) => {
-        let list = data.rows || [];
-        if (startDate) {
-          const s = new Date(startDate);
-          s.setHours(0, 0, 0, 0);
-          list = list.filter((r) => new Date(r.createdAt) >= s);
-        }
-        if (endDate) {
-          const e = new Date(endDate);
-          e.setHours(23, 59, 59, 999);
-          list = list.filter((r) => new Date(r.createdAt) <= e);
-        }
-        if (status && status !== 'ALL') {
-          list = list.filter((r) => r.status === status);
-        }
+      .visits({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        status: status && status !== 'ALL' ? status : undefined,
+        limit: 1000,
+        page: 1
+      })
+      .then((res) => {
+        const list = res?.data || res?.rows || (Array.isArray(res) ? res : []);
         setRows(list);
       })
       .catch((e) => setError(errMsg(e, 'Gagal memuat laporan')))

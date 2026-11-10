@@ -766,8 +766,8 @@ router.post('/:id/cancel', authenticate, requireFeature('visit.cancel', 'Anda ti
 
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { status, date, search, departmentId, page = 1, limit = 25 } = req.query;
-    const take = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 200);
+    const { status, date, startDate, endDate, search, departmentId, page = 1, limit = 25 } = req.query;
+    const take = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 1000);
     const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
 
     const where = {};
@@ -776,7 +776,19 @@ router.get('/', authenticate, async (req, res) => {
     if (status && status !== 'ALL') where.status = status;
     if (departmentId) where.departmentId = departmentId;
 
-    if (date) {
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        s.setHours(0, 0, 0, 0);
+        where.createdAt.gte = s;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        e.setHours(23, 59, 59, 999);
+        where.createdAt.lte = e;
+      }
+    } else if (date) {
       const start = new Date(date);
       start.setHours(0, 0, 0, 0);
       const end = new Date(date);
