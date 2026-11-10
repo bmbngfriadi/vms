@@ -324,13 +324,76 @@ export default function WhatsApp() {
             {t('wa.logs_title', 'Riwayat Pengiriman Notifikasi')}
           </h2>
           <button
-            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
+            className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline min-h-[32px] px-2"
             onClick={() => endpoints.waLogs().then(setLogs)}
           >
             Muat ulang
           </button>
         </div>
-        <div className="overflow-x-auto max-h-[420px]">
+
+        {/* ================= CARD LIST LOG NOTIFIKASI KHUSUS MOBILE (< md) ================= */}
+        <div className="md:hidden p-3 space-y-2.5">
+          {logs.length === 0 && (
+            <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500">
+              Belum ada riwayat pengiriman.
+            </div>
+          )}
+          {logs.map((l) => (
+            <div
+              key={l.id}
+              className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {l.type}
+                </span>
+                <span
+                  className={`badge border ${
+                    l.status === 'SENT'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
+                      : l.status === 'FAILED'
+                      ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-900/50'
+                      : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-900/50'
+                  }`}
+                >
+                  {l.status}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                    Penerima
+                  </span>
+                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    {l.recipient}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                    Waktu
+                  </span>
+                  <span className="text-slate-600 dark:text-slate-400 text-[11px]">
+                    {fmtDateTime(l.createdAt)}
+                  </span>
+                </div>
+              </div>
+
+              {(l.error || l.message) && (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-100 dark:border-slate-800 leading-relaxed">
+                  {l.error ? (
+                    <span className="text-red-500 font-medium">Error: {l.error}</span>
+                  ) : (
+                    <span>{l.message?.slice(0, 100)}...</span>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ================= TABEL DESKTOP (hidden md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto max-h-[420px]">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80 sticky top-0">
               <tr>

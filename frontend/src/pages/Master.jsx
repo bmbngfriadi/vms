@@ -118,8 +118,103 @@ function Departments() {
 
   return (
     <div className="grid lg:grid-cols-3 gap-5 items-start">
-      <div className="card p-5 lg:col-span-2 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="card p-4 sm:p-5 lg:col-span-2 overflow-hidden">
+        {/* ================= CARD LIST DEPARTEMEN MOBILE (< md) ================= */}
+        <div className="md:hidden space-y-2.5">
+          {rows.length === 0 && (
+            <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500">
+              Belum ada departemen.
+            </div>
+          )}
+          {rows.map((d) => (
+            <div
+              key={d.id}
+              className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-900/50">
+                    {d.code}
+                  </span>
+                </div>
+                <span
+                  className={`badge border ${
+                    d.isActive
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
+                      : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                  }`}
+                >
+                  {d.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
+                </span>
+              </div>
+
+              <div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                  {editing?.id === d.id ? (
+                    <input
+                      className="input py-1 text-sm mt-1"
+                      value={editing.name}
+                      onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    />
+                  ) : (
+                    d.name
+                  )}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Total Pengguna / PIC: <b>{d._count?.users ?? 0} orang</b>
+                </div>
+              </div>
+
+              {/* Tombol Aksi Mobile */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                {editing?.id === d.id ? (
+                  <>
+                    <button
+                      className="btn-primary py-1 px-3 text-xs rounded-lg min-h-[32px]"
+                      onClick={saveEdit}
+                      disabled={busy}
+                    >
+                      <Save size={14} /> Simpan
+                    </button>
+                    <button
+                      className="btn-ghost py-1 px-3 text-xs rounded-lg min-h-[32px]"
+                      onClick={() => setEditing(null)}
+                    >
+                      Batal
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggle(d)}
+                      className="btn-ghost py-1 px-2.5 text-xs rounded-lg min-h-[34px]"
+                    >
+                      {d.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ ...d })}
+                      className="btn-ghost py-1 px-2.5 text-xs rounded-lg min-h-[34px] text-brand-600 dark:text-brand-400"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(d)}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ================= TABEL DEPARTEMEN DESKTOP (hidden md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80">
               <tr>
@@ -271,7 +366,90 @@ function Users() {
       {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ================= CARD LIST PENGGUNA & PIC KHUSUS MOBILE (< md) ================= */}
+        <div className="md:hidden p-3 space-y-2.5">
+          {rows.length === 0 && (
+            <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500">
+              Belum ada data pengguna atau PIC.
+            </div>
+          )}
+          {rows.map((u) => (
+            <div
+              key={u.id}
+              className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">
+                    {u.name}
+                  </span>
+                  {u.username && (
+                    <span className="font-mono text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                      @{u.username}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`badge border ${
+                    u.isActive
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
+                      : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                  }`}
+                >
+                  {u.isActive ? t('master.active', 'Aktif') : t('master.inactive', 'Nonaktif')}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                    Email
+                  </span>
+                  <span className="text-slate-700 dark:text-slate-300 truncate block">
+                    {u.email}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                    Role & Dept
+                  </span>
+                  <span className="text-slate-700 dark:text-slate-300 truncate block font-semibold">
+                    {u.role} · {u.department?.code || '-'}
+                  </span>
+                </div>
+              </div>
+
+              {u.phone && (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span>WhatsApp:</span>
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                    {u.phone}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditing(u)}
+                  className="btn-ghost py-1.5 px-3 text-xs rounded-lg font-bold text-brand-600 dark:text-brand-400 min-h-[34px]"
+                >
+                  <Pencil size={13} /> Edit Pengguna
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(u)}
+                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ================= TABEL PENGGUNA DESKTOP (hidden md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80">
               <tr>

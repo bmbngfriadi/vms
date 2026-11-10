@@ -205,61 +205,61 @@ export default function Shell() {
 
       {/* Area Konten Utama */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Header Atas (Tanpa hamburger button di mobile, tampilan native app) */}
-        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 lg:px-6 sticky top-0 z-20">
+        {/* Header Atas (Lebih besar, lega & mudah diklik di mobile) */}
+        <header className="h-16 lg:h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3.5 sm:px-4 lg:px-6 sticky top-0 z-20 transition-colors">
           <div className="flex items-center gap-2.5">
             {/* Logo untuk Mobile */}
-            <div className="lg:hidden bg-white dark:bg-slate-800 p-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
-              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-7 w-auto" />
+            <div className="lg:hidden bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
+              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-8 w-auto" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+              <span className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
                 PT Cemindo Gemilang
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              <span className="text-[10.5px] text-slate-500 dark:text-slate-400">
                 Visitor Management · Batam
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Toggle Bahasa */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Quick Toggle Bahasa - Touch target besar */}
             <button
               type="button"
               onClick={toggleLang}
-              className="p-1.5 rounded-md text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"
+              className="px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors min-h-[38px]"
               title="Ganti Bahasa (ID / EN)"
             >
-              <Globe size={15} />
-              <span>{lang.toUpperCase()}</span>
+              <Globe size={16} />
+              <span className="tracking-wide">{lang.toUpperCase()}</span>
             </button>
 
-            {/* Quick Toggle Dark Mode */}
+            {/* Quick Toggle Dark Mode - Touch target besar */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2.5 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100/80 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
               title={isDark ? 'Mode Terang' : 'Mode Gelap'}
             >
-              {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} />}
             </button>
 
-            {/* Profil Avatar Quick Link */}
+            {/* Profil Avatar Quick Link - Touch target besar */}
             <button
               type="button"
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Buka Profil"
             >
-              <div className="w-7 h-7 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs shadow-sm ring-2 ring-white dark:ring-slate-800">
                 {user?.name?.charAt(0) || 'U'}
               </div>
             </button>
           </div>
         </header>
 
-        {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar */}
-        <main className="flex-1 p-3 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-24 lg:pb-6">
+        {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar yang lebih besar */}
+        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-28 lg:pb-6">
           <ErrorBoundary key={location.pathname}>
             <Outlet />
           </ErrorBoundary>
@@ -268,36 +268,38 @@ export default function Shell() {
         {/* ================= FLOATING ACTION BUTTON (FAB) SCAN ================= */}
         {/* HANYA MUNCUL DI HALAMAN HOME ('/') PADA MOBILE VIEW (< lg) SESUAI PERMINTAAN USER */}
         {location.pathname === '/' && can('page.scan') && (
-          <div className="lg:hidden fixed bottom-20 right-5 z-40 flex flex-col items-center">
+          <div className="lg:hidden fixed bottom-[82px] right-5 z-40 flex flex-col items-center select-none">
             <button
               type="button"
               onClick={() => navigate('/scan')}
-              className="w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-xl ring-4 ring-white dark:ring-slate-900 transition-transform duration-150"
+              className="w-15 h-15 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
               title="Scan Barcode Tamu"
               aria-label="Scan Barcode Tamu"
             >
-              <ScanLine size={26} strokeWidth={2.4} />
+              <ScanLine size={28} strokeWidth={2.4} />
             </button>
-            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 mt-1 drop-shadow-xs">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 drop-shadow-sm">
               Scan
             </span>
           </div>
         )}
 
         {/* ================= NATIVE MOBILE BOTTOM BAR ================= */}
-        {/* Menu Navigasi Bawah bergaya Native Mobile App tanpa sidebar drawer samping */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around py-1.5 px-2 shadow-lg">
+        {/* Menu Navigasi Bawah Lebih Besar, Lega & Mudah Di-klik Jari */}
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2 shadow-2xl h-[68px]">
           {/* 1. Home / Dashboard */}
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-                isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive
+                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
-            <LayoutDashboard size={19} strokeWidth={2} />
+            <LayoutDashboard size={22} strokeWidth={2.2} />
             <span>Home</span>
           </NavLink>
 
@@ -306,12 +308,14 @@ export default function Shell() {
             <NavLink
               to="/visits"
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-                  isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                  isActive
+                    ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`
               }
             >
-              <Users size={19} strokeWidth={2} />
+              <Users size={22} strokeWidth={2.2} />
               <span>{t('nav.visits', 'Tamu')}</span>
             </NavLink>
           )}
@@ -321,12 +325,14 @@ export default function Shell() {
             <NavLink
               to="/reports"
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-                  isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                  isActive
+                    ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`
               }
             >
-              <FileText size={19} strokeWidth={2} />
+              <FileText size={22} strokeWidth={2.2} />
               <span>{t('nav.reports', 'Laporan')}</span>
             </NavLink>
           )}
@@ -335,12 +341,14 @@ export default function Shell() {
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-                isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+                isActive
+                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
-            <UserCheck size={19} strokeWidth={2} />
+            <UserCheck size={22} strokeWidth={2.2} />
             <span>{t('nav.profile', 'Profil')}</span>
           </NavLink>
 
@@ -348,11 +356,13 @@ export default function Shell() {
           <button
             type="button"
             onClick={() => setShowMoreSheet(true)}
-            className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
-              showMoreSheet ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
+              showMoreSheet
+                ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <MoreHorizontal size={19} strokeWidth={2} />
+            <MoreHorizontal size={22} strokeWidth={2.2} />
             <span>Menu</span>
           </button>
         </nav>

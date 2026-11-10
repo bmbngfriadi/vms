@@ -176,7 +176,136 @@ export default function Visits() {
       {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ================= CARD LIST KHUSUS MOBILE VIEW (< md) ================= */}
+        <div className="md:hidden p-3 space-y-3">
+          {loading && (
+            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+              <Loader2 className="animate-spin inline mr-2" size={18} />
+              Memuat data kunjungan...
+            </div>
+          )}
+
+          {!loading && rows.length === 0 && (
+            <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs">
+              {t('visits.empty', 'Tidak ada data kunjungan yang cocok.')}
+            </div>
+          )}
+
+          {!loading &&
+            rows.map((v) => (
+              <div
+                key={v.id}
+                onClick={() => setDetail(v)}
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2.5 active:scale-[0.99] transition-transform cursor-pointer"
+              >
+                {/* Header Kartu: No. Kunjungan + Type + Status */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                      {v.visitNumber}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                      {t(`type.${v.visitType}`, TYPE_LABEL[v.visitType] || v.visitType)}
+                    </span>
+                  </div>
+                  <StatusBadge status={v.status} />
+                </div>
+
+                {/* Info Tamu */}
+                <div>
+                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight">
+                    {v.visitorName}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {v.company || 'Pribadi / Perorangan'}
+                  </div>
+                </div>
+
+                {/* Rincian Departemen & PIC */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11.5px]">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      Departemen
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.department?.name || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      PIC Tuan Rumah
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.picName || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Waktu Masuk & Keluar */}
+                {(v.checkInAt || v.checkOutAt) && (
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div>
+                      {v.checkInAt && (
+                        <span>
+                          Masuk: <b className="text-slate-700 dark:text-slate-300 font-mono">{fmtTime(v.checkInAt)}</b>
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {v.checkOutAt && (
+                        <span>
+                          Keluar: <b className="text-slate-700 dark:text-slate-300 font-mono">{fmtTime(v.checkOutAt)}</b>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tombol Aksi Mobile */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDetail(v);
+                    }}
+                    className="btn-ghost py-1.5 px-3 text-xs rounded-lg font-bold min-h-[34px]"
+                  >
+                    Rincian
+                  </button>
+
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditing(v);
+                      }}
+                      className="btn-ghost py-1.5 px-3 text-xs rounded-lg font-bold text-brand-600 dark:text-brand-400 min-h-[34px]"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                  )}
+
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRow(v);
+                      }}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* ================= TABEL DESKTOP VIEW (hidden md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80">
               <tr>

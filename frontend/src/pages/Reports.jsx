@@ -140,7 +140,122 @@ export default function Reports() {
         <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-200">
           {t('reports.details', 'Rincian Data')} ({rows.length} baris)
         </div>
-        <div className="overflow-x-auto max-h-[560px]">
+
+        {/* ================= CARD LIST KHUSUS MOBILE VIEW (< md) ================= */}
+        <div className="md:hidden p-3 space-y-3">
+          {loading && (
+            <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs">
+              <Loader2 className="animate-spin inline mr-2" size={16} />
+              Memuat data laporan...
+            </div>
+          )}
+
+          {!loading && rows.length === 0 && (
+            <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs">
+              {t('reports.empty', 'Tidak ada data pada periode ini.')}
+            </div>
+          )}
+
+          {!loading &&
+            rows.map((v) => (
+              <div
+                key={v.id}
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                    {v.visitNumber}
+                  </span>
+                  <StatusBadge status={v.status} />
+                </div>
+
+                <div>
+                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight">
+                    {v.visitorName}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {v.company || 'Pribadi / Perorangan'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11.5px]">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      Departemen
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.department?.name || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      PIC Tuan Rumah
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.picName || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                  <div>
+                    <span>Masuk: </span>
+                    <b className="text-slate-700 dark:text-slate-300 font-mono">
+                      {v.checkInAt ? fmtTime(v.checkInAt) : '-'}
+                    </b>
+                  </div>
+                  <div>
+                    <span>Keluar: </span>
+                    <b className="text-slate-700 dark:text-slate-300 font-mono">
+                      {v.checkOutAt ? fmtTime(v.checkOutAt) : '-'}
+                    </b>
+                  </div>
+                  <div>
+                    <span>Durasi: </span>
+                    <b className="text-slate-700 dark:text-slate-300 font-mono">
+                      {v.durationMinutes != null
+                        ? `${Math.floor(v.durationMinutes / 60)}j ${v.durationMinutes % 60}m`
+                        : '-'}
+                    </b>
+                  </div>
+                </div>
+
+                {(canEdit || canDelete) && (
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(v)}
+                        className="btn-ghost py-1.5 px-3 text-xs rounded-lg font-bold text-brand-600 dark:text-brand-400 min-h-[34px]"
+                      >
+                        <Pencil size={13} /> Edit
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            if (await confirmDeleteVisit(v)) {
+                              setRows((list) => list.filter((r) => r.id !== v.id));
+                            }
+                          } catch (err) {
+                            alert(errMsg(err, 'Gagal menghapus kunjungan'));
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 min-h-[34px] min-w-[34px] flex items-center justify-center"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+
+        {/* ================= TABEL DESKTOP VIEW (hidden md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto max-h-[560px]">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80 sticky top-0 z-10">
               <tr>

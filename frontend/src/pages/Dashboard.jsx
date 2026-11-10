@@ -165,12 +165,74 @@ export default function Dashboard() {
           </h2>
           <Link
             to="/visits"
-            className="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium transition-colors"
+            className="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-bold transition-colors"
           >
             Lihat semua →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* ================= CARD LIST KHUSUS MOBILE VIEW (< md) ================= */}
+        <div className="md:hidden p-3 space-y-2.5">
+          {data.recent.length === 0 ? (
+            <div className="text-xs text-slate-400 dark:text-slate-500 text-center py-6">
+              Belum ada kunjungan hari ini.
+            </div>
+          ) : (
+            data.recent.map((v) => (
+              <div
+                key={v.id}
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                    {v.visitNumber}
+                  </span>
+                  <StatusBadge status={v.status} />
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    {v.visitorName}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {v.company || 'Pribadi / Perorangan'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11.5px]">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      Departemen
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.department?.name || '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
+                      PIC Tuan Rumah
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
+                      {v.picName || '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {v.checkInAt && (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 flex items-center justify-between">
+                    <span>Masuk:</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                      {fmtTime(v.checkInAt)} WIB
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* ================= TABEL DESKTOP (md:block) ================= */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80">
               <tr>
@@ -192,7 +254,7 @@ export default function Dashboard() {
               )}
               {data.recent.map((v) => (
                 <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                  <td className="td font-mono text-xs">{v.visitNumber}</td>
+                  <td className="td font-mono text-xs font-bold text-brand-600 dark:text-brand-400">{v.visitNumber}</td>
                   <td className="td">
                     <div className="font-medium text-slate-800 dark:text-slate-200">{v.visitorName}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{v.company || '-'}</div>

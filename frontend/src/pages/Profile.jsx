@@ -206,17 +206,17 @@ export default function Profile() {
 
             <button
               type="submit"
-              className="btn-primary w-full py-2.5 text-xs font-bold mt-2"
+              className="btn-primary w-full py-3 sm:py-2.5 text-sm font-bold mt-3 rounded-xl min-h-[44px] shadow-sm"
               disabled={profileLoading}
             >
-              {profileLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+              {profileLoading ? <Loader2 size={16} className="animate-spin mr-1" /> : null}
               <span>{profileLoading ? 'Menyimpan...' : t('profile.btn_update_info', 'Simpan Perubahan Profil')}</span>
             </button>
           </form>
         </div>
 
         {/* ================= FORM 2: UBAH KATA SANDI ================= */}
-        <div className="card p-5 space-y-4">
+        <div className="card p-5 space-y-4 rounded-2xl">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
             <Lock size={18} className="text-brand-500" />
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -225,14 +225,14 @@ export default function Profile() {
           </div>
 
           {passSuccess && (
-            <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
               <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
               <span>{passSuccess}</span>
             </div>
           )}
 
           {passError && (
-            <div className="p-3 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
               <AlertCircle size={15} className="text-red-600 shrink-0" />
               <span>{passError}</span>
             </div>
@@ -277,10 +277,10 @@ export default function Profile() {
 
             <button
               type="submit"
-              className="btn-primary w-full py-2.5 text-xs font-bold mt-2"
+              className="btn-primary w-full py-3 sm:py-2.5 text-sm font-bold mt-3 rounded-xl min-h-[44px] shadow-sm"
               disabled={passLoading}
             >
-              {passLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+              {passLoading ? <Loader2 size={16} className="animate-spin mr-1" /> : null}
               <span>{passLoading ? 'Menyimpan...' : t('profile.btn_change_password', 'Perbarui Kata Sandi')}</span>
             </button>
           </form>
