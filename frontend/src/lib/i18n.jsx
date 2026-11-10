@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Kamus leksikal otomatis untuk kata-kata umum jika key baru belum terdaftar secara eksplisit
+// Kamus leksikal otomatis untuk kata-kata umum jika kalimat belum terdaftar secara eksplisit
 const LEXICON_ID_TO_EN = {
   'masuk': 'login',
   'keluar': 'logout',
@@ -32,13 +32,22 @@ const LEXICON_ID_TO_EN = {
   'berhasil': 'success',
   'gagal': 'failed',
   'aktif': 'active',
+  'nonaktif': 'inactive',
   'menunggu': 'waiting',
   'disetujui': 'approved',
   'ditolak': 'rejected',
   'dibatalkan': 'cancelled',
   'fitur': 'features',
   'pengguna': 'users',
-  'selesai': 'done'
+  'selesai': 'completed',
+  'semua': 'all',
+  'terapkan': 'apply',
+  'rincian': 'details',
+  'aksi': 'action',
+  'terjadwal': 'scheduled',
+  'pabrik': 'plant',
+  'tutup': 'close',
+  'kembali': 'back'
 };
 
 const DICTIONARY = {
@@ -72,11 +81,13 @@ const DICTIONARY = {
     'action.add': 'Tambah',
     'action.search': 'Cari...',
     'action.filter': 'Filter',
-    'action.export': 'Ekspor Excel / CSV',
+    'action.export': 'Unduh Laporan Excel (.xlsx)',
     'action.close': 'Tutup',
     'action.back': 'Kembali',
     'action.refresh': 'Segarkan',
     'action.confirm': 'Konfirmasi',
+    'action.apply': 'Terapkan',
+    'action.reset': 'Reset',
     'action.change_photo': 'Ganti Foto',
     'action.retake_photo': 'Foto Ulang',
     'action.open_camera': 'Buka Kamera Langsung',
@@ -129,11 +140,13 @@ const DICTIONARY = {
 
     // Statuses
     'status.WAITING_VALIDATION': 'Menunggu Validasi',
-    'status.APPROVED': 'Disetujui',
-    'status.CHECKED_IN': 'Checked In (Di Pabrik)',
-    'status.CHECKED_OUT': 'Checked Out (Keluar)',
+    'status.APPROVED': 'Terjadwal',
+    'status.CHECKED_IN': 'Di Dalam Pabrik',
+    'status.CHECKED_OUT': 'Selesai',
     'status.REJECTED': 'Ditolak',
     'status.CANCELLED': 'Dibatalkan',
+    'type.WALK_IN': 'Walk-In',
+    'type.PRE_REGISTERED': 'Janji Temu',
 
     // Form Registration
     'register.title': 'Formulir Kunjungan Tamu',
@@ -151,7 +164,92 @@ const DICTIONARY = {
     'register.purpose': 'Keperluan Kunjungan *',
     'register.visitors_count': 'Jumlah Orang',
     'register.vehicle_plate': 'Nomor Polisi Kendaraan',
-    'register.btn_submit': 'Kirim & Dapatkan Barcode'
+    'register.btn_submit': 'Kirim & Dapatkan Barcode',
+
+    // Dashboard
+    'dashboard.title': 'Dashboard Kunjungan',
+    'dashboard.subtitle': 'Ringkasan aktivitas tamu dan operasional pabrik hari ini.',
+    'dashboard.today_visitors': 'Tamu Hari Ini',
+    'dashboard.inside_plant': 'Di Dalam Pabrik',
+    'dashboard.completed_today': 'Selesai Hari Ini',
+    'dashboard.waiting_validation': 'Menunggu Validasi',
+    'dashboard.recent_activity': 'Aktivitas Kunjungan Terkini',
+    'dashboard.btn_quick_register': 'Daftarkan Tamu Pre-Reg',
+    'dashboard.btn_scan': 'Buka Scanner Barcode',
+
+    // Visits Page
+    'visits.title': 'Data Kunjungan Tamu',
+    'visits.subtitle': 'Daftar seluruh tamu pabrik baik walk-in maupun janji temu.',
+    'visits.btn_preregister': 'Buat Janji Temu (Pre-Reg)',
+    'visits.search_placeholder': 'Cari no. kunjungan, nama tamu, perusahaan...',
+    'visits.filter_all_status': 'Semua Status',
+    'visits.filter_reset': 'Reset Filter',
+    'visits.col_number': 'No. Kunjungan',
+    'visits.col_visitor': 'Tamu',
+    'visits.col_dept': 'Departemen',
+    'visits.col_pic': 'PIC / Tuan Rumah',
+    'visits.col_type': 'Tipe',
+    'visits.col_status': 'Status',
+    'visits.col_in': 'Masuk',
+    'visits.col_out': 'Keluar',
+    'visits.col_action': 'Aksi',
+    'visits.btn_validate': 'Validasi',
+    'visits.btn_checkin': 'Check-In',
+    'visits.btn_checkout': 'Check-Out',
+    'visits.btn_cancel': 'Batalkan',
+    'visits.btn_export': 'Unduh Excel (.xlsx)',
+    'visits.empty': 'Belum ada data kunjungan yang cocok.',
+
+    // Master Page
+    'master.title': 'Master Data',
+    'master.subtitle': 'Kelola departemen dan akun pengguna sistem.',
+    'master.tab_departments': 'Departemen',
+    'master.tab_users': 'Pengguna & PIC',
+    'master.btn_add_dept': 'Tambah Departemen',
+    'master.btn_add_user': 'Tambah Pengguna',
+    'master.col_name': 'Nama',
+    'master.col_username': 'Username',
+    'master.col_email': 'Email',
+    'master.col_role': 'Role',
+    'master.col_dept': 'Departemen',
+    'master.col_phone': 'WhatsApp',
+    'master.col_status': 'Status',
+    'master.active': 'Aktif',
+    'master.inactive': 'Nonaktif',
+    'master.username_hint': 'Digunakan untuk login selain email.',
+
+    // Reports Page
+    'reports.title': 'Laporan Kunjungan',
+    'reports.subtitle': 'Rekapitulasi data tamu berdasarkan periode dan status.',
+    'reports.from_date': 'Dari tanggal',
+    'reports.to_date': 'Sampai tanggal',
+    'reports.status': 'Status',
+    'reports.btn_apply': 'Terapkan Filter',
+    'reports.btn_download_excel': 'Unduh Laporan Excel (.xlsx)',
+    'reports.stat_total': 'Total Kunjungan',
+    'reports.stat_onsite': 'Masih di Dalam',
+    'reports.stat_duration': 'Rata-rata Durasi',
+    'reports.details': 'Rincian Data',
+    'reports.empty': 'Tidak ada data pada periode ini.',
+
+    // Scan Page
+    'scan.title': 'Scan Barcode Kunjungan',
+    'scan.subtitle': 'Arahkan kamera ke QR Code tamu untuk Check-in atau Check-out.',
+    'scan.btn_start': 'Nyalakan Kamera',
+    'scan.btn_stop': 'Matikan Kamera',
+    'scan.manual_search': 'Cari Manual Nomor Kunjungan',
+
+    // WhatsApp Page
+    'wa.title': 'WhatsApp Gateway',
+    'wa.subtitle': 'Monitoring koneksi Baileys dan log notifikasi sistem.',
+    'wa.status_connected': 'Terhubung',
+    'wa.status_disconnected': 'Terputus',
+    'wa.btn_reconnect': 'Muat Ulang QR',
+    'wa.btn_restart': 'Restart Gateway',
+    'wa.btn_logout': 'Putuskan Sesi',
+    'wa.test_send': 'Kirim Pesan Uji Coba',
+    'wa.logs_title': 'Riwayat Pengiriman Notifikasi',
+    'wa.recipients_title': 'Penerima Notifikasi Manajemen'
   },
   en: {
     // Navigation & Shell
@@ -183,11 +281,13 @@ const DICTIONARY = {
     'action.add': 'Add New',
     'action.search': 'Search...',
     'action.filter': 'Filter',
-    'action.export': 'Export Excel / CSV',
+    'action.export': 'Download Excel (.xlsx)',
     'action.close': 'Close',
     'action.back': 'Back',
     'action.refresh': 'Refresh',
     'action.confirm': 'Confirm',
+    'action.apply': 'Apply',
+    'action.reset': 'Reset',
     'action.change_photo': 'Change Photo',
     'action.retake_photo': 'Retake Photo',
     'action.open_camera': 'Open Camera Directly',
@@ -240,11 +340,13 @@ const DICTIONARY = {
 
     // Statuses
     'status.WAITING_VALIDATION': 'Waiting Validation',
-    'status.APPROVED': 'Approved',
-    'status.CHECKED_IN': 'Checked In (On Site)',
-    'status.CHECKED_OUT': 'Checked Out (Departed)',
+    'status.APPROVED': 'Scheduled',
+    'status.CHECKED_IN': 'Inside Plant',
+    'status.CHECKED_OUT': 'Completed',
     'status.REJECTED': 'Rejected',
     'status.CANCELLED': 'Cancelled',
+    'type.WALK_IN': 'Walk-In',
+    'type.PRE_REGISTERED': 'Pre-Registered',
 
     // Form Registration
     'register.title': 'Visitor Registration Form',
@@ -262,7 +364,92 @@ const DICTIONARY = {
     'register.purpose': 'Visit Purpose *',
     'register.visitors_count': 'Number of Visitors',
     'register.vehicle_plate': 'Vehicle License Plate',
-    'register.btn_submit': 'Submit & Get Visitor Pass'
+    'register.btn_submit': 'Submit & Get Visitor Pass',
+
+    // Dashboard
+    'dashboard.title': 'Visits Dashboard',
+    'dashboard.subtitle': 'Today’s visitor summary and factory operational activity.',
+    'dashboard.today_visitors': "Today's Visitors",
+    'dashboard.inside_plant': 'Inside Plant',
+    'dashboard.completed_today': 'Completed Today',
+    'dashboard.waiting_validation': 'Pending Validation',
+    'dashboard.recent_activity': 'Recent Visit Activities',
+    'dashboard.btn_quick_register': 'Pre-Register Guest',
+    'dashboard.btn_scan': 'Open QR Scanner',
+
+    // Visits Page
+    'visits.title': 'Visitor Records',
+    'visits.subtitle': 'All factory guests both walk-in and pre-registered.',
+    'visits.btn_preregister': 'New Appointment (Pre-Reg)',
+    'visits.search_placeholder': 'Search visit no, visitor name, company...',
+    'visits.filter_all_status': 'All Statuses',
+    'visits.filter_reset': 'Reset Filters',
+    'visits.col_number': 'Visit No.',
+    'visits.col_visitor': 'Visitor',
+    'visits.col_dept': 'Department',
+    'visits.col_pic': 'Host PIC',
+    'visits.col_type': 'Type',
+    'visits.col_status': 'Status',
+    'visits.col_in': 'Check-In',
+    'visits.col_out': 'Check-Out',
+    'visits.col_action': 'Action',
+    'visits.btn_validate': 'Validate',
+    'visits.btn_checkin': 'Check-In',
+    'visits.btn_checkout': 'Check-Out',
+    'visits.btn_cancel': 'Cancel',
+    'visits.btn_export': 'Download Excel (.xlsx)',
+    'visits.empty': 'No matching visits found.',
+
+    // Master Page
+    'master.title': 'Master Data',
+    'master.subtitle': 'Manage departments and system user accounts.',
+    'master.tab_departments': 'Departments',
+    'master.tab_users': 'Users & PIC',
+    'master.btn_add_dept': 'Add Department',
+    'master.btn_add_user': 'Add User',
+    'master.col_name': 'Name',
+    'master.col_username': 'Username',
+    'master.col_email': 'Email',
+    'master.col_role': 'Role',
+    'master.col_dept': 'Department',
+    'master.col_phone': 'WhatsApp',
+    'master.col_status': 'Status',
+    'master.active': 'Active',
+    'master.inactive': 'Inactive',
+    'master.username_hint': 'Used for login as alternative to email.',
+
+    // Reports Page
+    'reports.title': 'Visit Reports',
+    'reports.subtitle': 'Visitor recap based on date period and status.',
+    'reports.from_date': 'From Date',
+    'reports.to_date': 'To Date',
+    'reports.status': 'Status',
+    'reports.btn_apply': 'Apply Filter',
+    'reports.btn_download_excel': 'Download Excel Report (.xlsx)',
+    'reports.stat_total': 'Total Visits',
+    'reports.stat_onsite': 'Still Inside',
+    'reports.stat_duration': 'Average Duration',
+    'reports.details': 'Data Details',
+    'reports.empty': 'No data found in this period.',
+
+    // Scan Page
+    'scan.title': 'Scan Visitor Pass',
+    'scan.subtitle': 'Point camera to guest QR code for Check-in or Check-out.',
+    'scan.btn_start': 'Start Camera',
+    'scan.btn_stop': 'Stop Camera',
+    'scan.manual_search': 'Manual Visit Number Search',
+
+    // WhatsApp Page
+    'wa.title': 'WhatsApp Gateway',
+    'wa.subtitle': 'Baileys connection monitoring and system notification logs.',
+    'wa.status_connected': 'Connected',
+    'wa.status_disconnected': 'Disconnected',
+    'wa.btn_reconnect': 'Reload QR',
+    'wa.btn_restart': 'Restart Gateway',
+    'wa.btn_logout': 'Disconnect Session',
+    'wa.test_send': 'Send Test Message',
+    'wa.logs_title': 'Notification Delivery Logs',
+    'wa.recipients_title': 'Management Notification Recipients'
   }
 };
 
@@ -295,14 +482,14 @@ export function I18nProvider({ children }) {
 
   /**
    * Translates a key or fallback phrase.
-   * If a key or string is not yet explicitly in the dictionary,
-   * it automatically uses intelligent lexical translation so that
+   * If a key is not directly in the dictionary, checks whether the string itself
+   * matches a known phrase, or uses lexical translation so that
    * ANY newly added feature or page automatically translates!
    */
   const t = (key, fallback) => {
     if (!key) return '';
 
-    // 1. Cek langsung di kamus eksplisit
+    // 1. Cek langsung di kamus eksplisit berdasarkan key
     const currentDict = DICTIONARY[lang] || DICTIONARY.id;
     if (currentDict && currentDict[key]) {
       return currentDict[key];
@@ -315,14 +502,19 @@ export function I18nProvider({ children }) {
       return textToTranslate;
     }
 
+    // Cek apakah fallback string itu sendiri terdaftar sebagai key atau value di kamus
+    for (const [k, val] of Object.entries(DICTIONARY.id)) {
+      if (val.toLowerCase() === textToTranslate.toLowerCase()) {
+        if (DICTIONARY.en[k]) return DICTIONARY.en[k];
+      }
+    }
+
     // 2. Terjemahan leksikal otomatis untuk bahasa Inggris jika belum ada di kamus
-    // Memecah kata-kata dan mencocokkan leksikon
     const words = String(textToTranslate).split(/(\s+|[,.:;?!()\-]+)/);
     const translatedWords = words.map((w) => {
       const lower = w.toLowerCase().trim();
       if (!lower) return w;
       if (LEXICON_ID_TO_EN[lower]) {
-        // Pertahankan huruf kapital awal jika ada
         const match = LEXICON_ID_TO_EN[lower];
         if (w[0] === w[0].toUpperCase()) {
           return match.charAt(0).toUpperCase() + match.slice(1);
@@ -345,4 +537,3 @@ export function I18nProvider({ children }) {
 export function useI18n() {
   return useContext(I18nContext);
 }
-

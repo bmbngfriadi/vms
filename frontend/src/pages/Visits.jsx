@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2 } from 'lucide-react';
-import { endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet } from 'lucide-react';
+import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import VisitEditModal, { confirmDeleteVisit } from '../components/VisitEditModal.jsx';
 import { useAuth } from '../lib/auth.jsx';
+import { useI18n } from '../lib/i18n.jsx';
 
 const STATUSES = [
-  ['ALL', 'Semua status'],
+  ['ALL', 'Semua Status'],
   ['WAITING_VALIDATION', 'Menunggu Validasi'],
   ['APPROVED', 'Terjadwal'],
-  ['CHECKED_IN', 'Di Dalam'],
+  ['CHECKED_IN', 'Di Dalam Pabrik'],
   ['CHECKED_OUT', 'Selesai'],
   ['REJECTED', 'Ditolak'],
   ['CANCELLED', 'Dibatalkan']
@@ -17,9 +18,11 @@ const STATUSES = [
 
 export default function Visits() {
   const { user, can } = useAuth();
+  const { t } = useI18n();
   const canCreate = can('visit.create');
   const canEdit = can('visit.edit');
   const canDelete = can('visit.delete');
+  const canExport = can('report.export');
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -28,6 +31,7 @@ export default function Visits() {
   const [date, setDate] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [detail, setDetail] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -59,31 +63,72 @@ export default function Visits() {
   }, [status, date, search, page]);
 
   useEffect(() => {
-    const t = setTimeout(load, search ? 350 : 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, search ? 350 : 0);
+    return () => clearTimeout(timer);
   }, [load, search]);
+
+  const downloadExcel = async () => {
+    setExporting(true);
+    try {
+      const res = await api.get('/visits/export/excel', {
+        params: { status, startDate: date || undefined, endDate: date || undefined },
+        responseType: 'blob'
+      });
+      const url = URL.createObjectURL(
+        new Blob([res.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+      );
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `data-kunjungan-batam-${date || todayISO()}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(errMsg(err, 'Gagal mengunduh Excel'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">Data Kunjungan</h1>
-          <p className="text-sm text-slate-500">{total} kunjungan tercatat</p>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('visits.title', 'Data Kunjungan Tamu')}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {total} {t('visits.subtitle', 'kunjungan tercatat dalam sistem')}
+          </p>
         </div>
-        {canCreate && (
-          <button className="btn-primary" onClick={() => setShowCreate(true)}>
-            <CalendarPlus size={16} /> Buat Janji Temu
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canExport && (
+            <button
+              className="btn-ghost"
+              onClick={downloadExcel}
+              disabled={exporting}
+              title="Unduh laporan Excel (.xlsx)"
+            >
+              {exporting ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
+              <span className="hidden sm:inline">{t('action.export', 'Unduh Excel')}</span>
+            </button>
+          )}
+          {canCreate && (
+            <button className="btn-primary" onClick={() => setShowCreate(true)}>
+              <CalendarPlus size={16} /> {t('visits.btn_preregister', 'Buat Janji Temu')}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="card p-4">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+            <Search size={15} className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500" />
             <input
               className="input pl-9"
-              placeholder="Cari nama / perusahaan / no. kunjungan"
+              placeholder={t('visits.search_placeholder', 'Cari no. kunjungan, nama tamu, instansi...')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -101,7 +146,7 @@ export default function Visits() {
           >
             {STATUSES.map(([v, l]) => (
               <option key={v} value={v}>
-                {l}
+                {t(`status.${v}`, l)}
               </option>
             ))}
           </select>
@@ -123,47 +168,48 @@ export default function Visits() {
               setPage(1);
             }}
           >
-            Reset filter
+            {t('visits.filter_reset', 'Reset Filter')}
           </button>
         </div>
       </div>
 
-      {error && <div className="card p-4 text-sm text-red-600">{error}</div>}
+      {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 dark:bg-slate-800/80">
               <tr>
-                <th className="th">No. Kunjungan</th>
-                <th className="th">Tamu</th>
-                <th className="th">Departemen</th>
-                <th className="th">PIC</th>
-                <th className="th">Tipe</th>
-                <th className="th">Status</th>
-                <th className="th">Masuk</th>
-                <th className="th">Keluar</th>
-                {(canEdit || canDelete) && <th className="th text-right">Aksi</th>}
+                <th className="th">{t('visits.col_number', 'No. Kunjungan')}</th>
+                <th className="th">{t('visits.col_visitor', 'Tamu')}</th>
+                <th className="th">{t('visits.col_dept', 'Departemen')}</th>
+                <th className="th">{t('visits.col_pic', 'PIC')}</th>
+                <th className="th">{t('visits.col_type', 'Tipe')}</th>
+                <th className="th">{t('visits.col_status', 'Status')}</th>
+                <th className="th">{t('visits.col_in', 'Masuk')}</th>
+                <th className="th">{t('visits.col_out', 'Keluar')}</th>
+                {(canEdit || canDelete) && <th className="th text-right">{t('visits.col_action', 'Aksi')}</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loading && (
                 <tr>
                   <td
-                    className="td text-center py-10 text-slate-400"
+                    className="td text-center py-10 text-slate-400 dark:text-slate-500"
                     colSpan={canEdit || canDelete ? 9 : 8}
                   >
-                    <Loader2 className="animate-spin inline" size={16} />
+                    <Loader2 className="animate-spin inline mr-2" size={16} />
+                    Memuat data...
                   </td>
                 </tr>
               )}
               {!loading && rows.length === 0 && (
                 <tr>
                   <td
-                    className="td text-center py-10 text-slate-400"
+                    className="td text-center py-10 text-slate-400 dark:text-slate-500"
                     colSpan={canEdit || canDelete ? 9 : 8}
                   >
-                    Tidak ada data kunjungan.
+                    {t('visits.empty', 'Tidak ada data kunjungan.')}
                   </td>
                 </tr>
               )}
@@ -171,28 +217,34 @@ export default function Visits() {
                 rows.map((v) => (
                   <tr
                     key={v.id}
-                    className="hover:bg-slate-50/70 cursor-pointer"
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 cursor-pointer"
                     onClick={() => setDetail(v)}
                   >
                     <td className="td font-mono text-xs">{v.visitNumber}</td>
                     <td className="td">
-                      <div className="font-medium text-slate-800">{v.visitorName}</div>
-                      <div className="text-xs text-slate-500">{v.company || '-'}</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-200">{v.visitorName}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{v.company || '-'}</div>
                     </td>
-                    <td className="td">{v.department?.name || '-'}</td>
-                    <td className="td">{v.picName}</td>
-                    <td className="td text-xs text-slate-600">{TYPE_LABEL[v.visitType]}</td>
+                    <td className="td text-slate-600 dark:text-slate-300">{v.department?.name || '-'}</td>
+                    <td className="td text-slate-600 dark:text-slate-300">{v.picName}</td>
+                    <td className="td text-xs text-slate-600 dark:text-slate-400">
+                      {t(`type.${v.visitType}`, TYPE_LABEL[v.visitType] || v.visitType)}
+                    </td>
                     <td className="td">
                       <StatusBadge status={v.status} />
                     </td>
-                    <td className="td text-slate-600">{v.checkInAt ? fmtTime(v.checkInAt) : '-'}</td>
-                    <td className="td text-slate-600">{v.checkOutAt ? fmtTime(v.checkOutAt) : '-'}</td>
+                    <td className="td text-slate-600 dark:text-slate-400 font-mono text-xs">
+                      {v.checkInAt ? fmtTime(v.checkInAt) : '-'}
+                    </td>
+                    <td className="td text-slate-600 dark:text-slate-400 font-mono text-xs">
+                      {v.checkOutAt ? fmtTime(v.checkOutAt) : '-'}
+                    </td>
                     {(canEdit || canDelete) && (
                       <td className="td">
                         <div className="flex items-center justify-end gap-1">
                           {canEdit && (
                             <button
-                              className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-brand-600"
+                              className="p-1.5 rounded text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                               title="Edit kunjungan"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -204,7 +256,7 @@ export default function Visits() {
                           )}
                           {canDelete && (
                             <button
-                              className="p-1.5 rounded text-slate-500 hover:bg-red-50 hover:text-red-600"
+                              className="p-1.5 rounded text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                               title="Hapus kunjungan"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -224,7 +276,7 @@ export default function Visits() {
         </div>
 
         {pages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>
               Halaman {page} dari {pages}
             </span>
@@ -282,6 +334,7 @@ export default function Visits() {
 
 function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, onDelete }) {
   const { can } = useAuth();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const canCancel = can('visit.cancel') && ['WAITING_VALIDATION', 'APPROVED'].includes(visit.status);
 
@@ -305,22 +358,22 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
       <div className="space-y-2.5 text-sm">
         <Row label="No. Kunjungan" value={visit.visitNumber} mono />
         <Row label="Status" value={<StatusBadge status={visit.status} />} />
-        <Row label="Tipe" value={TYPE_LABEL[visit.visitType]} />
-        <div className="h-px bg-slate-100 my-3" />
+        <Row label="Tipe" value={t(`type.${visit.visitType}`, TYPE_LABEL[visit.visitType] || visit.visitType)} />
+        <div className="h-px bg-slate-100 dark:bg-slate-800 my-3" />
         <Row label="Nama Tamu" value={visit.visitorName} />
         {visit.identityNumber && <Row label="No. Identitas" value={visit.identityNumber} mono />}
         <Row label="Perusahaan" value={visit.company || '-'} />
         {visit.phone && <Row label="WhatsApp" value={visit.phone} />}
         {visit.identityPhoto && (
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
                 src={visit.identityPhoto}
                 alt="Foto Identitas"
-                className="w-16 h-11 object-cover rounded border border-slate-200 cursor-pointer"
+                className="w-16 h-11 object-cover rounded border border-slate-200 dark:border-slate-700 cursor-pointer"
                 onClick={() => window.open(visit.identityPhoto, '_blank')}
               />
-              <span className="text-xs text-slate-600 font-medium">Foto Identitas (KTP/SIM)</span>
+              <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">Foto Identitas (KTP/SIM)</span>
             </div>
             <button
               type="button"
@@ -337,7 +390,7 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
         <Row label="Jumlah" value={`${visit.numberOfVisitors} orang`} />
         {visit.vehiclePlate && <Row label="Kendaraan" value={visit.vehiclePlate} />}
         <Row label="Rencana" value={`${fmtDate(visit.scheduledDate)} ${visit.expectedTime || ''}`} />
-        <div className="h-px bg-slate-100 my-3" />
+        <div className="h-px bg-slate-100 dark:bg-slate-800 my-3" />
         <Row label="Masuk" value={visit.checkInAt ? fmtDateTime(visit.checkInAt) : '-'} />
         <Row label="Security In" value={visit.checkInBy || '-'} />
         <Row label="Keluar" value={visit.checkOutAt ? fmtDateTime(visit.checkOutAt) : '-'} />
@@ -354,21 +407,21 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
 
       <div className="flex flex-wrap gap-2 mt-5">
         <button className="btn-ghost" onClick={onClose}>
-          Tutup
+          {t('action.close', 'Tutup')}
         </button>
         {canDelete && (
-          <button className="btn-ghost text-red-600" onClick={onDelete}>
-            <Trash2 size={15} /> Hapus
+          <button className="btn-ghost text-red-600 dark:text-red-400" onClick={onDelete}>
+            <Trash2 size={15} /> {t('action.delete', 'Hapus')}
           </button>
         )}
         {canCancel && (
           <button className="btn-ghost" onClick={cancel} disabled={busy}>
-            Batalkan
+            {t('visits.btn_cancel', 'Batalkan')}
           </button>
         )}
         {canEdit && (
           <button className="btn-primary flex-1" onClick={onEdit}>
-            <Pencil size={15} /> Edit Kunjungan
+            <Pencil size={15} /> {t('action.edit', 'Edit Kunjungan')}
           </button>
         )}
       </div>
@@ -377,6 +430,7 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
 }
 
 function CreateModal({ user, onClose, onCreated }) {
+  const { t } = useI18n();
   const [departments, setDepartments] = useState([]);
   const [pics, setPics] = useState([]);
   const [form, setForm] = useState({
@@ -425,13 +479,13 @@ function CreateModal({ user, onClose, onCreated }) {
     return (
       <Modal title="Janji Temu Dibuat" onClose={onCreated}>
         <div className="text-center">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Undangan dan barcode telah dikirim ke WhatsApp tamu.
           </p>
-          <div className="mt-4 inline-block p-3 bg-white border border-slate-200 rounded-lg">
+          <div className="mt-4 inline-block p-3 bg-white rounded-lg border border-slate-200">
             <img src={created.qrDataUrl} alt="Barcode" className="w-48 h-48" />
           </div>
-          <div className="mt-3 font-mono text-sm font-semibold">{created.visitNumber}</div>
+          <div className="mt-3 font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">{created.visitNumber}</div>
           <button className="btn-primary w-full mt-5" onClick={onCreated}>
             Selesai
           </button>
@@ -441,15 +495,15 @@ function CreateModal({ user, onClose, onCreated }) {
   }
 
   return (
-    <Modal title="Buat Janji Temu Tamu" onClose={onClose}>
+    <Modal title={t('visits.btn_preregister', 'Buat Janji Temu Tamu')} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2">
-            <label className="label">Nama Tamu *</label>
+            <label className="label">{t('register.full_name', 'Nama Tamu *')}</label>
             <input className="input" value={form.fullName} onChange={set('fullName')} required />
           </div>
           <div>
-            <label className="label">No. WhatsApp Tamu *</label>
+            <label className="label">{t('register.phone', 'No. WhatsApp Tamu *')}</label>
             <input
               className="input"
               value={form.phone}
@@ -459,11 +513,11 @@ function CreateModal({ user, onClose, onCreated }) {
             />
           </div>
           <div>
-            <label className="label">Perusahaan</label>
+            <label className="label">{t('register.company', 'Perusahaan')}</label>
             <input className="input" value={form.company} onChange={set('company')} />
           </div>
           <div>
-            <label className="label">Departemen *</label>
+            <label className="label">{t('register.department', 'Departemen *')}</label>
             <select className="input" value={form.departmentId} onChange={set('departmentId')} required>
               <option value="">— Pilih —</option>
               {departments.map((d) => (
@@ -507,11 +561,11 @@ function CreateModal({ user, onClose, onCreated }) {
             <input type="time" className="input" value={form.expectedTime} onChange={set('expectedTime')} />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Keperluan *</label>
+            <label className="label">{t('register.purpose', 'Keperluan *')}</label>
             <textarea className="input min-h-[70px]" value={form.purpose} onChange={set('purpose')} required />
           </div>
           <div>
-            <label className="label">Jumlah Orang</label>
+            <label className="label">{t('register.visitors_count', 'Jumlah Orang')}</label>
             <input
               type="number"
               min="1"
@@ -521,20 +575,20 @@ function CreateModal({ user, onClose, onCreated }) {
             />
           </div>
           <div>
-            <label className="label">No. Polisi</label>
+            <label className="label">{t('register.vehicle_plate', 'No. Polisi')}</label>
             <input className="input" value={form.vehiclePlate} onChange={set('vehiclePlate')} />
           </div>
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-md bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/60 px-3 py-2 text-xs text-red-700 dark:text-red-300">
             {error}
           </div>
         )}
 
         <div className="flex gap-2">
           <button type="button" className="btn-ghost flex-1" onClick={onClose}>
-            Batal
+            {t('action.cancel', 'Batal')}
           </button>
           <button type="submit" className="btn-primary flex-1" disabled={busy}>
             {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Buat & Kirim
@@ -548,11 +602,11 @@ function CreateModal({ user, onClose, onCreated }) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-8 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg w-full max-w-lg shadow-xl my-auto">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
-          <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg w-full max-w-lg shadow-2xl my-auto">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
             <X size={17} />
           </button>
         </div>
@@ -565,8 +619,8 @@ function Modal({ title, onClose, children }) {
 function Row({ label, value, mono }) {
   return (
     <div className="flex justify-between gap-4">
-      <span className="text-slate-500 shrink-0">{label}</span>
-      <span className={`text-right text-slate-800 ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+      <span className="text-slate-500 dark:text-slate-400 shrink-0">{label}</span>
+      <span className={`text-right text-slate-800 dark:text-slate-200 ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
     </div>
   );
 }

@@ -13,9 +13,11 @@ import {
 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime } from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
+import { useI18n } from '../lib/i18n.jsx';
 
 export default function WhatsApp() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const isAdmin = user.role === 'ADMIN';
 
   const [status, setStatus] = useState(null);
@@ -60,7 +62,7 @@ export default function WhatsApp() {
   };
 
   const hardRestart = async () => {
-    if (!window.confirm('Tutup sesi WhatsApp saat ini lalu sambungkan ulang?')) return;
+    if (!window.confirm('Restart gateway WhatsApp? Sesi aktif akan ditutup sementara lalu disambung ulang.')) return;
     setBusy(true);
     setError('');
     try {
@@ -74,9 +76,9 @@ export default function WhatsApp() {
   };
 
   const logout = async () => {
-    if (!window.confirm('Putuskan sesi WhatsApp? Anda harus scan QR ulang untuk menghubungkan kembali.'))
-      return;
+    if (!window.confirm('Putuskan sesi WhatsApp? Anda harus scan QR lagi untuk menyambungkan kembali.')) return;
     setBusy(true);
+    setError('');
     try {
       await endpoints.waLogout();
       await loadStatus();
@@ -89,14 +91,14 @@ export default function WhatsApp() {
 
   const sendTest = async (e) => {
     e.preventDefault();
-    setTestResult(null);
     setBusy(true);
+    setTestResult(null);
     try {
-      await endpoints.waTest(testPhone, testMsg);
-      setTestResult({ ok: true, msg: 'Pesan uji berhasil dikirim.' });
+      await endpoints.waSendTest({ phone: testPhone, message: testMsg });
+      setTestResult({ ok: true, msg: 'Pesan terkirim!' });
       endpoints.waLogs().then(setLogs);
     } catch (err) {
-      setTestResult({ ok: false, msg: errMsg(err, 'Gagal mengirim pesan uji') });
+      setTestResult({ ok: false, msg: errMsg(err) });
     } finally {
       setBusy(false);
     }
@@ -134,51 +136,57 @@ export default function WhatsApp() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">WhatsApp Gateway</h1>
-        <p className="text-sm text-slate-500">
-          Koneksi perangkat WhatsApp untuk pengiriman barcode dan notifikasi otomatis.
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('wa.title', 'WhatsApp Gateway')}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t('wa.subtitle', 'Koneksi perangkat WhatsApp untuk pengiriman barcode dan notifikasi otomatis.')}
         </p>
       </div>
 
-      {error && <div className="card p-4 text-sm text-red-600">{error}</div>}
+      {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
       <div className="grid lg:grid-cols-3 gap-5 items-start">
         <div className="card p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-800">Status Koneksi</h2>
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Status Koneksi</h2>
             <span
-              className={`badge ${
-                connected ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              className={`badge border ${
+                connected
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
+                  : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-900/50'
               }`}
             >
-              {connected ? 'Terhubung' : STATUS_LABEL[status?.status] || 'Memuat'}
+              {connected ? t('wa.status_connected', 'Terhubung') : STATUS_LABEL[status?.status] || 'Memuat'}
             </span>
           </div>
 
           {connected ? (
             <div className="mt-4 flex items-start gap-2">
-              <CheckCircle2 className="text-emerald-600 mt-0.5" size={17} />
+              <CheckCircle2 className="text-emerald-600 dark:text-emerald-400 mt-0.5" size={17} />
               <div>
-                <div className="text-sm text-slate-700">Perangkat aktif</div>
-                <div className="font-mono text-xs text-slate-500 mt-0.5">{status?.phone || '-'}</div>
+                <div className="text-sm text-slate-700 dark:text-slate-200">Perangkat aktif</div>
+                <div className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-0.5">{status?.phone || '-'}</div>
               </div>
             </div>
           ) : status?.qrDataUrl ? (
             <div className="mt-4 text-center">
-              <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
                 Buka WhatsApp di HP → Perangkat Tertaut → Tautkan Perangkat, lalu scan QR ini.
               </p>
-              <img
-                src={status.qrDataUrl}
-                alt="QR WhatsApp"
-                className="mx-auto w-52 h-52 border border-slate-200 rounded"
-              />
-              <p className="text-[11px] text-slate-400 mt-2">
+              <div className="inline-block p-2 bg-white rounded-lg border border-slate-200 dark:border-slate-700">
+                <img
+                  src={status.qrDataUrl}
+                  alt="QR WhatsApp"
+                  className="mx-auto w-52 h-52 rounded"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
                 QR diperbarui otomatis setiap ±20 detik.
               </p>
             </div>
           ) : (
-            <div className="mt-4 flex items-start gap-2 text-sm text-slate-600">
+            <div className="mt-4 flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
               <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={16} />
               <p className="text-xs leading-relaxed">
                 {status?.lastError
@@ -196,18 +204,18 @@ export default function WhatsApp() {
                 disabled={busy}
               >
                 {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                {connected ? 'Muat ulang' : 'Muat ulang QR'}
+                {connected ? 'Muat ulang' : t('wa.btn_reconnect', 'Muat ulang QR')}
               </button>
 
               {!connected && status?.lastError && (
                 <button className="btn-ghost text-xs" onClick={hardRestart} disabled={busy}>
-                  <RotateCcw size={14} /> Sambung ulang
+                  <RotateCcw size={14} /> {t('wa.btn_restart', 'Sambung ulang')}
                 </button>
               )}
 
               {connected && (
                 <button className="btn-danger text-xs" onClick={logout} disabled={busy}>
-                  <Power size={14} /> Putuskan
+                  <Power size={14} /> {t('wa.btn_logout', 'Putuskan')}
                 </button>
               )}
             </div>
@@ -215,8 +223,10 @@ export default function WhatsApp() {
         </div>
 
         <div className="card p-5 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-slate-800">Penerima Notifikasi Management</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {t('wa.recipients_title', 'Penerima Notifikasi Management')}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Nomor-nomor ini menerima laporan setiap tamu masuk dan keluar.
           </p>
 
@@ -224,18 +234,18 @@ export default function WhatsApp() {
             {recipients.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 bg-slate-50/50 dark:bg-slate-800/40"
               >
                 <div>
-                  <div className="text-sm text-slate-800">{r.name}</div>
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-sm font-medium text-slate-800 dark:text-slate-200">{r.name}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {r.title ? `${r.title} · ` : ''}
                     {r.phone}
                   </div>
                 </div>
                 {isAdmin && (
                   <button
-                    className="text-slate-400 hover:text-red-600 p-1"
+                    className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1"
                     onClick={() => removeRecipient(r.id)}
                   >
                     <Trash2 size={15} />
@@ -244,7 +254,7 @@ export default function WhatsApp() {
               </div>
             ))}
             {recipients.length === 0 && (
-              <p className="text-xs text-slate-400 py-2">Belum ada penerima terdaftar.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 py-2">Belum ada penerima terdaftar.</p>
             )}
           </div>
 
@@ -280,7 +290,9 @@ export default function WhatsApp() {
 
       {isAdmin && (
         <div className="card p-5">
-          <h2 className="text-sm font-semibold text-slate-800">Kirim Pesan Uji</h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {t('wa.test_send', 'Kirim Pesan Uji Coba')}
+          </h2>
           <form onSubmit={sendTest} className="mt-3 grid sm:grid-cols-4 gap-2">
             <input
               className="input"
@@ -299,7 +311,7 @@ export default function WhatsApp() {
             </button>
           </form>
           {testResult && (
-            <p className={`text-xs mt-2 ${testResult.ok ? 'text-emerald-600' : 'text-red-600'}`}>
+            <p className={`text-xs mt-2 ${testResult.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {testResult.msg}
             </p>
           )}
@@ -307,10 +319,12 @@ export default function WhatsApp() {
       )}
 
       <div className="card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-800">Riwayat Pengiriman</h2>
+        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {t('wa.logs_title', 'Riwayat Pengiriman Notifikasi')}
+          </h2>
           <button
-            className="text-xs text-brand-600 hover:underline"
+            className="text-xs text-brand-600 dark:text-brand-400 hover:underline"
             onClick={() => endpoints.waLogs().then(setLogs)}
           >
             Muat ulang
@@ -318,7 +332,7 @@ export default function WhatsApp() {
         </div>
         <div className="overflow-x-auto max-h-[420px]">
           <table className="w-full">
-            <thead className="bg-slate-50 sticky top-0">
+            <thead className="bg-slate-50 dark:bg-slate-800/80 sticky top-0">
               <tr>
                 <th className="th">Waktu</th>
                 <th className="th">Tipe</th>
@@ -327,33 +341,33 @@ export default function WhatsApp() {
                 <th className="th">Keterangan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {logs.map((l) => (
-                <tr key={l.id}>
-                  <td className="td text-xs text-slate-600 whitespace-nowrap">{fmtDateTime(l.createdAt)}</td>
-                  <td className="td text-xs">{l.type}</td>
+                <tr key={l.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                  <td className="td text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">{fmtDateTime(l.createdAt)}</td>
+                  <td className="td text-xs font-mono">{l.type}</td>
                   <td className="td text-xs font-mono">{l.recipient}</td>
                   <td className="td">
                     <span
-                      className={`badge ${
+                      className={`badge border ${
                         l.status === 'SENT'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/50'
                           : l.status === 'FAILED'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-900/50'
+                          : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-900/50'
                       }`}
                     >
                       {l.status}
                     </span>
                   </td>
-                  <td className="td text-xs text-slate-500 max-w-[280px] truncate">
+                  <td className="td text-xs text-slate-500 dark:text-slate-400 max-w-[280px] truncate">
                     {l.error || l.message?.slice(0, 80)}
                   </td>
                 </tr>
               ))}
               {logs.length === 0 && (
                 <tr>
-                  <td className="td text-center py-8 text-slate-400" colSpan={5}>
+                  <td className="td text-center py-8 text-slate-400 dark:text-slate-500" colSpan={5}>
                     Belum ada riwayat pengiriman.
                   </td>
                 </tr>
@@ -363,8 +377,8 @@ export default function WhatsApp() {
         </div>
       </div>
 
-      <div className="card p-4 flex gap-3 text-xs text-slate-500">
-        <QrCode size={16} className="shrink-0 mt-0.5 text-slate-400" />
+      <div className="card p-4 flex gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <QrCode size={16} className="shrink-0 mt-0.5 text-slate-400 dark:text-slate-500" />
         <p className="leading-relaxed">
           Notifikasi otomatis dikirim saat tamu check-in (barcode check-out ke tamu, info ke PIC dan
           management) dan saat check-out (konfirmasi ke tamu, PIC, dan management). Pastikan sesi

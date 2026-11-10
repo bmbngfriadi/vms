@@ -140,36 +140,36 @@ export default function Features() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">Manajemen Fitur</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Manajemen Fitur</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Atur halaman dan aksi yang boleh dipakai tiap user. Fitur baru otomatis muncul di daftar
             ini.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <ShieldCheck size={15} className="text-emerald-600" />
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <ShieldCheck size={15} className="text-emerald-600 dark:text-emerald-400" />
           {features.length} fitur · {users.length} user
         </div>
       </div>
 
-      {error && <div className="card p-4 text-sm text-red-600">{error}</div>}
+      {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
       {notice && (
-        <div className="card p-4 text-sm text-emerald-700 bg-emerald-50 border-emerald-200 flex gap-2">
+        <div className="card p-4 text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900/50 flex gap-2">
           <CheckCircle2 size={16} className="shrink-0" /> {notice}
         </div>
       )}
 
       {loading ? (
-        <div className="card p-10 text-center text-slate-400">
+        <div className="card p-10 text-center text-slate-400 dark:text-slate-500">
           <Loader2 className="animate-spin inline" size={18} />
         </div>
       ) : (
         <div className="grid lg:grid-cols-[300px_1fr] gap-5 items-start">
           {/* Daftar user */}
           <div className="card overflow-hidden">
-            <div className="p-3 border-b border-slate-200">
+            <div className="p-3 border-b border-slate-200 dark:border-slate-800">
               <div className="relative">
-                <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+                <Search size={15} className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500" />
                 <input
                   className="input pl-9"
                   placeholder="Cari nama / email / role"
@@ -178,50 +178,52 @@ export default function Features() {
                 />
               </div>
             </div>
-            <div className="max-h-[560px] overflow-y-auto divide-y divide-slate-100">
+            <div className="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
               {filteredUsers.map((u) => (
                 <button
                   key={u.id}
                   onClick={() => setSelectedId(u.id)}
                   className={`w-full text-left px-4 py-3 transition-colors ${
-                    u.id === selectedId ? 'bg-brand-50' : 'hover:bg-slate-50'
+                    u.id === selectedId
+                      ? 'bg-brand-50 dark:bg-brand-950/50'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="text-[13px] font-medium text-slate-800 truncate">{u.name}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{u.email}</div>
+                      <div className="text-[13px] font-medium text-slate-800 dark:text-slate-200 truncate">{u.name}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{u.email}</div>
                     </div>
                     <span
-                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 border ${
                         u.role === 'ADMIN'
-                          ? 'bg-brand-100 text-brand-700'
-                          : 'bg-slate-100 text-slate-600'
+                          ? 'bg-brand-100 text-brand-700 border-brand-200 dark:bg-brand-950/60 dark:text-brand-300 dark:border-brand-900/50'
+                          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                       }`}
                     >
                       {u.role}
                     </span>
                   </div>
-                  <div className="text-[10.5px] text-slate-400 mt-0.5">
+                  <div className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">
                     {u.department?.name || 'Tanpa departemen'}
                     {!u.isActive && ' · nonaktif'}
                   </div>
                 </button>
               ))}
               {filteredUsers.length === 0 && (
-                <div className="px-4 py-8 text-center text-xs text-slate-400">User tidak ditemukan.</div>
+                <div className="px-4 py-8 text-center text-xs text-slate-400 dark:text-slate-500">User tidak ditemukan.</div>
               )}
             </div>
           </div>
 
           {/* Matriks fitur */}
           <div className="card overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-sm font-semibold text-slate-800">
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {selected ? selected.name : 'Pilih user'}
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {selected
                     ? `${ROLE_LABEL[selected.role] || selected.role}${
                         selected.department ? ` · ${selected.department.name}` : ''
@@ -237,10 +239,10 @@ export default function Features() {
             </div>
 
             {selected && (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {groups.map(([group, items]) => (
                   <div key={group} className="p-5">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2.5">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2.5">
                       {group}
                     </div>
                     <div className="space-y-2">
@@ -251,25 +253,25 @@ export default function Features() {
                         return (
                           <div
                             key={f.key}
-                            className="flex items-start justify-between gap-3 rounded-md border border-slate-200 px-3 py-2.5"
+                            className="flex items-start justify-between gap-3 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2.5 bg-white dark:bg-slate-900/60"
                           >
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[13px] font-medium text-slate-800">{f.label}</span>
-                                <code className="text-[10px] text-slate-400">{f.key}</code>
+                                <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200">{f.label}</span>
+                                <code className="text-[10px] text-slate-400 dark:text-slate-500">{f.key}</code>
                                 {f.locked && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-1.5 py-0.5 rounded">
                                     <Lock size={9} /> terkunci
                                   </span>
                                 )}
                                 {overridden && (
-                                  <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                                  <span className="text-[10px] text-amber-700 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 px-1.5 py-0.5 rounded">
                                     khusus
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-500 mt-0.5">{f.description}</div>
-                              <div className="text-[10.5px] text-slate-400 mt-0.5">
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{f.description}</div>
+                              <div className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5">
                                 Bawaan role: {f.defaultRoles.join(', ') || '-'}
                                 {isDefault ? ' · role ini termasuk' : ''}
                               </div>
@@ -278,7 +280,7 @@ export default function Features() {
                             <div className="flex items-center gap-2 shrink-0">
                               {overridden && !f.locked && (
                                 <button
-                                  className="p-1 text-slate-400 hover:text-slate-700"
+                                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                   title="Kembalikan ke bawaan role"
                                   onClick={() => resetFeature(f)}
                                 >
@@ -293,7 +295,7 @@ export default function Features() {
                                 onClick={() => toggle(f)}
                                 title={f.locked ? 'Fitur terkunci mengikuti role' : 'Aktif / nonaktif'}
                                 className={`relative w-11 h-6 rounded-full transition-colors ${
-                                  on ? 'bg-emerald-500' : 'bg-slate-300'
+                                  on ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
                                 } ${f.locked ? 'opacity-60 cursor-not-allowed' : ''}`}
                               >
                                 <span
@@ -310,7 +312,7 @@ export default function Features() {
                   </div>
                 ))}
 
-                <div className="p-4 bg-slate-50 flex gap-2 text-[11.5px] text-slate-500">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/40 flex gap-2 text-[11.5px] text-slate-500 dark:text-slate-400">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-500" />
                   Perubahan berlaku saat user memuat ulang halaman atau login kembali. Menu dan tombol
                   mengikuti hak fitur ini, dan server tetap memvalidasi setiap aksi.

@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import QRCode from 'qrcode';
+import ExcelJS from 'exceljs';
 import prisma from '../db.js';
 import { authenticate, allow, requireFeature } from '../middleware/auth.js';
 import { normalizePhone } from '../wa/client.js';
@@ -1038,10 +1039,10 @@ router.get('/stats/summary', authenticate, async (req, res) => {
 });
 
 // ============================================================
-// EXPORT (CSV)
+// EXPORT EXCEL (.XLSX)
 // ============================================================
 
-router.get('/export/csv', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), async (req, res) => {
+async function handleExcelExport(req, res) {
   try {
     const { startDate, endDate, status } = req.query;
     const where = {};
@@ -1066,59 +1067,188 @@ router.get('/export/csv', authenticate, requireFeature('report.export', 'Anda ti
       where,
       include: VISIT_INCLUDE,
       orderBy: { createdAt: 'desc' },
-      take: 5000
+      take: 10000
     });
 
-    const header = [
-      'No. Kunjungan',
-      'Nama Tamu',
-      'Perusahaan',
-      'No. WhatsApp',
-      'Departemen',
-      'PIC',
-      'Keperluan',
-      'Jumlah',
-      'Tipe',
-      'Status',
-      'Masuk',
-      'Keluar',
-      'Durasi (menit)',
-      'Security In',
-      'Security Out'
+    const STATUS_MAP = {
+      WAITING_VALIDATION: 'Menunggu Validasi',
+      APPROVED: 'Disetujui',
+      CHECKED_IN: 'Di Dalam Pabrik (Checked In)',
+      CHECKED_OUT: 'Selesai (Checked Out)',
+      REJECTED: 'Ditolak',
+      CANCELLED: 'Dibatalkan'
+    };
+
+    const TYPE_MAP = {
+      WALK_IN: 'Walk-In',
+      PRE_REGISTERED: 'Janji Temu (Pre-Reg)'
+    };
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'PT Cemindo Gemilang Tbk - VMS Batam';
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet('Laporan Kunjungan', {
+      views: [{ showGridLines: true }]
+    });
+
+    // 1. Header Judul Laporan (Row 1-3)
+    sheet.mergeCells('A1:P1');
+    const titleRow = sheet.getCell('A1');
+    titleRow.value = 'PT CEMINDO GEMILANG TBK — PLANT BATAM';
+    titleRow.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF991B1B' } }; // Cemindo Deep Red
+    titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(1).height = 30;
+
+    sheet.mergeCells('A2:P2');
+    const subtitleRow = sheet.getCell('A2');
+    subtitleRow.value = 'LAPORAN REKAPITULASI KUNJUNGAN TAMU (VISITOR MANAGEMENT SYSTEM)';
+    subtitleRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+    subtitleRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    subtitleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(2).height = 22;
+
+    sheet.mergeCells('A3:P3');
+    const infoRow = sheet.getCell('A3');
+    const rangeText = startDate && endDate ? `${startDate} s/d ${endDate}` : 'Semua Periode';
+    const statusText = status && status !== 'ALL' ? (STATUS_MAP[status] || status) : 'Semua Status';
+    infoRow.value = `Periode: ${rangeText}  |  Filter Status: ${statusText}  |  Total Data: ${rows.length} kunjungan  |  Diekspor: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`;
+    infoRow.font = { name: 'Arial', size: 9, italic: true, color: { argb: 'FF64748B' } };
+    infoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+    infoRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(3).height = 20;
+
+    // Row 4 Kosong
+    sheet.getRow(4).height = 10;
+
+    // 2. Kolom Header Tabel (Row 5)
+    const columns = [
+      { header: 'No.', key: 'no', width: 6, align: 'center' },
+      { header: 'No. Kunjungan', key: 'visitNumber', width: 20, align: 'center' },
+      { header: 'Nama Lengkap Tamu', key: 'fullName', width: 26, align: 'left' },
+      { header: 'No. Identitas (NIK/SIM)', key: 'identityNumber', width: 22, align: 'center' },
+      { header: 'Perusahaan / Instansi', key: 'company', width: 24, align: 'left' },
+      { header: 'No. WhatsApp', key: 'phone', width: 16, align: 'center' },
+      { header: 'Departemen Tujuan', key: 'department', width: 22, align: 'left' },
+      { header: 'PIC / Tuan Rumah', key: 'pic', width: 22, align: 'left' },
+      { header: 'Keperluan Kunjungan', key: 'purpose', width: 28, align: 'left' },
+      { header: 'Jml', key: 'visitors', width: 8, align: 'center' },
+      { header: 'Plat Kendaraan', key: 'plate', width: 16, align: 'center' },
+      { header: 'Tipe', key: 'type', width: 16, align: 'center' },
+      { header: 'Status', key: 'status', width: 22, align: 'center' },
+      { header: 'Waktu Masuk', key: 'checkIn', width: 20, align: 'center' },
+      { header: 'Waktu Keluar', key: 'checkOut', width: 20, align: 'center' },
+      { header: 'Durasi (Mnt)', key: 'duration', width: 14, align: 'center' }
     ];
 
-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const lines = rows.map((v) =>
-      [
-        v.visitNumber,
-        v.visitor.fullName,
-        v.visitor.company || '',
-        v.visitor.phone,
-        v.department?.name || '',
-        v.picUser?.name || v.picNameManual || '',
-        v.purpose,
-        v.numberOfVisitors,
-        v.visitType,
-        v.status,
-        v.checkInAt ? new Date(v.checkInAt).toLocaleString('id-ID') : '',
-        v.checkOutAt ? new Date(v.checkOutAt).toLocaleString('id-ID') : '',
+    const headerRow = sheet.getRow(5);
+    headerRow.height = 26;
+    columns.forEach((col, idx) => {
+      const cell = headerRow.getCell(idx + 1);
+      cell.value = col.header;
+      cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }; // Slate-800
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF0F172A' } },
+        bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
+        left: { style: 'thin', color: { argb: 'FF334155' } },
+        right: { style: 'thin', color: { argb: 'FF334155' } }
+      };
+    });
+
+    // 3. Masukkan Data Baris demi Baris
+    rows.forEach((v, idx) => {
+      const durationMins =
         v.checkInAt && v.checkOutAt
           ? Math.floor((new Date(v.checkOutAt) - new Date(v.checkInAt)) / 60000)
-          : '',
-        v.checkInBy?.name || '',
-        v.checkOutBy?.name || ''
-      ]
-        .map(esc)
-        .join(',')
-    );
+          : null;
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="laporan-tamu-${Date.now()}.csv"`);
-    res.send(`\uFEFF${header.map(esc).join(',')}\n${lines.join('\n')}`);
+      const rowValues = [
+        idx + 1,
+        v.visitNumber || '-',
+        v.visitor?.fullName || '-',
+        v.visitor?.identityNumber || '-',
+        v.visitor?.company || '-',
+        v.visitor?.phone || '-',
+        v.department?.name || '-',
+        v.picUser?.name || v.picNameManual || '-',
+        v.purpose || '-',
+        v.numberOfVisitors || 1,
+        v.vehiclePlate || '-',
+        TYPE_MAP[v.visitType] || v.visitType || '-',
+        STATUS_MAP[v.status] || v.status || '-',
+        v.checkInAt ? new Date(v.checkInAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : '-',
+        v.checkOutAt ? new Date(v.checkOutAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : '-',
+        durationMins != null ? durationMins : '-'
+      ];
+
+      const r = sheet.addRow(rowValues);
+      r.height = 22;
+      const isEven = (idx + 1) % 2 === 0;
+
+      r.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const colDef = columns[colNumber - 1];
+        cell.font = { name: 'Arial', size: 9, color: { argb: 'FF1E293B' } };
+        cell.alignment = {
+          horizontal: colDef?.align || 'left',
+          vertical: 'middle'
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEven ? 'FFF8FAFC' : 'FFFFFFFF' }
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+        };
+
+        // Format warna khusus untuk status
+        if (colNumber === 13) {
+          if (v.status === 'CHECKED_IN') {
+            cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF065F46' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+          } else if (v.status === 'CHECKED_OUT') {
+            cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF1E3A8A' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } };
+          } else if (v.status === 'WAITING_VALIDATION') {
+            cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF92400E' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+          } else if (v.status === 'REJECTED') {
+            cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF991B1B' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+          }
+        }
+      });
+    });
+
+    // 4. Set Column Widths
+    columns.forEach((col, idx) => {
+      sheet.getColumn(idx + 1).width = col.width;
+    });
+
+    const fileDate = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().slice(0, 10);
+    const fileName = `laporan-kunjungan-batam-${fileDate}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
-    console.error('[Export] error:', err.message);
-    res.status(500).json({ error: 'Gagal membuat laporan' });
+    console.error('[Export Excel] error:', err.message);
+    res.status(500).json({ error: 'Gagal membuat file excel laporan' });
   }
-});
+}
+
+router.get('/export/excel', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), handleExcelExport);
+router.get('/export/csv', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), handleExcelExport);
 
 export default router;

@@ -288,20 +288,7 @@ export default function Login() {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="label mb-0">{t('login.password_label', 'Kata Sandi')}</label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setView('forgot_otp');
-                        setForgotId(identifier);
-                        setError('');
-                      }}
-                      className="text-[11px] font-semibold text-brand-500 hover:text-brand-600 dark:text-brand-400 transition-colors"
-                    >
-                      {t('login.forgot_password', 'Lupa kata sandi?')}
-                    </button>
-                  </div>
+                  <label className="label">{t('login.password_label', 'Kata Sandi')}</label>
                   <input
                     type="password"
                     className="input"
@@ -311,6 +298,19 @@ export default function Login() {
                     autoComplete="current-password"
                     required
                   />
+                  <div className="flex justify-end mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView('forgot_otp');
+                        setForgotId(identifier);
+                        setError('');
+                      }}
+                      className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline transition-colors"
+                    >
+                      {t('login.forgot_password', 'Lupa kata sandi akun Anda?')}
+                    </button>
+                  </div>
                 </div>
 
                 {error && (

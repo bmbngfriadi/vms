@@ -122,7 +122,7 @@ router.get('/users', authenticate, allow(['ADMIN']), async (req, res) => {
 
 router.post('/users', authenticate, allow(['ADMIN']), async (req, res) => {
   try {
-    const { name, email, phone, password, role, departmentId, canReceiveVisits } = req.body || {};
+    const { name, username, email, phone, password, role, departmentId, canReceiveVisits } = req.body || {};
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
     }
@@ -130,9 +130,12 @@ router.post('/users', authenticate, allow(['ADMIN']), async (req, res) => {
       return res.status(400).json({ error: 'PIC wajib memiliki nomor WhatsApp untuk notifikasi' });
     }
 
+    const cleanUsername = username ? String(username).trim().toLowerCase() : null;
+
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
+        username: cleanUsername || null,
         email: String(email).trim().toLowerCase(),
         phone: phone ? String(phone).replace(/\D/g, '') : null,
         password: await bcrypt.hash(String(password), 10),
@@ -145,16 +148,18 @@ router.post('/users', authenticate, allow(['ADMIN']), async (req, res) => {
     const { password: _p, ...safe } = user;
     res.status(201).json(safe);
   } catch (err) {
-    if (err.code === 'P2002') return res.status(409).json({ error: 'Email sudah terdaftar' });
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Email atau Username sudah terdaftar' });
     res.status(500).json({ error: 'Gagal menyimpan user' });
   }
 });
 
 router.put('/users/:id', authenticate, allow(['ADMIN']), async (req, res) => {
   try {
-    const { name, email, phone, role, departmentId, isActive, canReceiveVisits, password } = req.body || {};
+    const { name, username, email, phone, role, departmentId, isActive, canReceiveVisits, password } = req.body || {};
+    const cleanUsername = username !== undefined ? (username ? String(username).trim().toLowerCase() : null) : undefined;
     const data = {
       ...(name ? { name: name.trim() } : {}),
+      ...(cleanUsername !== undefined ? { username: cleanUsername } : {}),
       ...(email ? { email: String(email).trim().toLowerCase() } : {}),
       ...(phone !== undefined ? { phone: phone ? String(phone).replace(/\D/g, '') : null } : {}),
       ...(role ? { role } : {}),
@@ -172,7 +177,7 @@ router.put('/users/:id', authenticate, allow(['ADMIN']), async (req, res) => {
     const { password: _p, ...safe } = user;
     res.json(safe);
   } catch (err) {
-    if (err.code === 'P2002') return res.status(409).json({ error: 'Email sudah digunakan' });
+    if (err.code === 'P2002') return res.status(409).json({ error: 'Email atau Username sudah digunakan' });
     if (err.code === 'P2025') return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     res.status(500).json({ error: 'Gagal memperbarui user' });
   }

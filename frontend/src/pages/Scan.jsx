@@ -14,8 +14,10 @@ import {
 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime, fmtTime } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
+import { useI18n } from '../lib/i18n.jsx';
 
 export default function Scan() {
+  const { t } = useI18n();
   const scannerRef = useRef(null);
   const startingRef = useRef(false);
   const [scanning, setScanning] = useState(false);
@@ -204,9 +206,11 @@ export default function Scan() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">Scan Barcode</h1>
-        <p className="text-sm text-slate-500">
-          Pindai barcode tamu untuk validasi masuk atau keluar kawasan.
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('scan.title', 'Scan Barcode Kunjungan')}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t('scan.subtitle', 'Arahkan kamera ke QR Code tamu untuk Check-in atau Check-out.')}
         </p>
       </div>
 
@@ -214,14 +218,14 @@ export default function Scan() {
         {/* Panel kamera */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-800">Kamera</h2>
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Kamera</h2>
             {scanning ? (
               <button onClick={stopCamera} className="btn-ghost text-xs py-1.5">
-                <CameraOff size={14} /> Hentikan
+                <CameraOff size={14} /> {t('scan.btn_stop', 'Hentikan')}
               </button>
             ) : (
               <button onClick={startCamera} className="btn-primary text-xs py-1.5">
-                <Camera size={14} /> Aktifkan Kamera
+                <Camera size={14} /> {t('scan.btn_start', 'Aktifkan Kamera')}
               </button>
             )}
           </div>
@@ -268,19 +272,19 @@ export default function Scan() {
         {/* Panel hasil */}
         <div className="space-y-4">
           {error && (
-            <div className="card border-red-200 bg-red-50 p-4 flex gap-3">
-              <AlertTriangle className="text-red-600 shrink-0" size={18} />
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="card border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/60 p-4 flex gap-3">
+              <AlertTriangle className="text-red-600 dark:text-red-400 shrink-0" size={18} />
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
 
           {success && (
-            <div className="card border-emerald-200 bg-emerald-50 p-5">
+            <div className="card border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/60 p-5">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="text-emerald-600" size={20} />
-                <h3 className="font-semibold text-emerald-900">{success.title}</h3>
+                <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" size={20} />
+                <h3 className="font-semibold text-emerald-900 dark:text-emerald-200">{success.title}</h3>
               </div>
-              <ul className="mt-3 space-y-1 text-sm text-emerald-800">
+              <ul className="mt-3 space-y-1 text-sm text-emerald-800 dark:text-emerald-300">
                 {success.lines.map((l, i) => (
                   <li key={i}>• {l}</li>
                 ))}
@@ -292,7 +296,7 @@ export default function Scan() {
           )}
 
           {!result && !success && !error && (
-            <div className="card p-8 text-center text-sm text-slate-400">
+            <div className="card p-8 text-center text-sm text-slate-400 dark:text-slate-500">
               Hasil pemindaian akan muncul di sini.
             </div>
           )}
@@ -300,8 +304,8 @@ export default function Scan() {
           {result && (
             <>
               <div className="card overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-800">Data Kunjungan</span>
+                <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Data Kunjungan</span>
                   <StatusBadge status={result.visit.status} />
                 </div>
 
@@ -323,17 +327,17 @@ export default function Scan() {
                   )}
 
                   {result.visit.identityPhoto && (
-                    <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
                       <img
                         src={result.visit.identityPhoto}
                         alt="Foto Identitas"
-                        className="w-20 h-14 object-cover rounded-md border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
+                        className="w-20 h-14 object-cover rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
                         onClick={() => window.open(result.visit.identityPhoto, '_blank')}
                         title="Klik untuk perbesar foto identitas"
                       />
                       <div>
-                        <div className="text-xs font-semibold text-slate-800">Foto Identitas (KTP/SIM)</div>
-                        <div className="text-[11px] text-slate-500">Klik gambar untuk melihat ukuran penuh</div>
+                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Foto Identitas (KTP/SIM)</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">Klik gambar untuk melihat ukuran penuh</div>
                       </div>
                     </div>
                   )}
@@ -341,9 +345,9 @@ export default function Scan() {
 
                 {result.warnings?.length > 0 && (
                   <div className="px-5 pb-4">
-                    <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
+                    <div className="rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/50 p-3">
                       {result.warnings.map((w, i) => (
-                        <p key={i} className="text-xs text-amber-800">
+                        <p key={i} className="text-xs text-amber-800 dark:text-amber-300">
                           ⚠ {w}
                         </p>
                       ))}
@@ -355,8 +359,8 @@ export default function Scan() {
               {result.action === 'CHECK_IN' && (
                 <div className="card p-5 space-y-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-800">Validasi Masuk</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Validasi Masuk</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Konfirmasi ke PIC, lalu pilih nama PIC agar notifikasi WhatsApp terkirim.
                     </p>
                   </div>
@@ -377,7 +381,7 @@ export default function Scan() {
                       ))}
                     </select>
                     {pics.length === 0 && (
-                      <p className="text-[11px] text-amber-600 mt-1">
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
                         Tidak ada PIC aktif di departemen ini. Pilih departemen lain atau tambahkan PIC di
                         Master Data.
                       </p>
@@ -418,8 +422,8 @@ export default function Scan() {
 
               {result.action === 'CHECK_OUT' && (
                 <div className="card p-5">
-                  <h3 className="text-sm font-semibold text-slate-800 mb-1">Konfirmasi Keluar</h3>
-                  <p className="text-xs text-slate-500 mb-4">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">Konfirmasi Keluar</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                     Pastikan tamu telah menyerahkan badge dan meninggalkan area.
                   </p>
                   <button className="btn-primary w-full" onClick={doCheckOut} disabled={actionLoading}>
@@ -430,7 +434,7 @@ export default function Scan() {
               )}
 
               {['DONE', 'BLOCKED', 'NONE'].includes(result.action) && (
-                <div className="card p-5 text-sm text-slate-600">
+                <div className="card p-5 text-sm text-slate-600 dark:text-slate-400">
                   Tidak ada aksi yang dapat dilakukan untuk kunjungan ini.
                 </div>
               )}
@@ -445,8 +449,14 @@ export default function Scan() {
 function Row({ label, value, strong }) {
   return (
     <div className="flex justify-between gap-4">
-      <span className="text-slate-500 shrink-0">{label}</span>
-      <span className={`text-right ${strong ? 'font-medium text-slate-900' : 'text-slate-700'}`}>
+      <span className="text-slate-500 dark:text-slate-400 shrink-0">{label}</span>
+      <span
+        className={`text-right ${
+          strong
+            ? 'font-medium text-slate-900 dark:text-white'
+            : 'text-slate-700 dark:text-slate-200'
+        }`}
+      >
         {value}
       </span>
     </div>
