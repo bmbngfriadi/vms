@@ -235,7 +235,7 @@ export default function IdentityPhotoCapture({
 
       {/* Jika BELUM ada foto: tampilkan 2 tombol terpisah */}
       {!preview ? (
-        <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 bg-slate-50/70 hover:bg-slate-50 transition-colors">
+        <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-4 bg-slate-50/70 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Tombol 1: Buka Kamera Langsung */}
             <button
@@ -251,9 +251,9 @@ export default function IdentityPhotoCapture({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center gap-2.5 rounded-md bg-white border border-slate-300 text-slate-700 px-4 py-3 text-xs font-bold hover:bg-slate-100 hover:text-slate-900 shadow-sm transition-all"
+              className="flex items-center justify-center gap-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-4 py-3 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white shadow-sm transition-all"
             >
-              <Upload size={18} strokeWidth={2.2} className="text-slate-500" />
+              <Upload size={18} strokeWidth={2.2} className="text-slate-500 dark:text-slate-400" />
               <span>Pilih dari File / Galeri</span>
             </button>
           </div>
@@ -264,8 +264,8 @@ export default function IdentityPhotoCapture({
         </div>
       ) : (
         /* Jika SUDAH ada foto: tampilkan preview, kontrol aksi, dan status OCR */
-        <div className="card p-3 space-y-3 bg-white shadow-sm border-slate-200">
-          <div className="relative rounded-md overflow-hidden bg-slate-900/5 border border-slate-200 flex items-center justify-center min-h-[140px] max-h-56">
+        <div className="card p-3 space-y-3 bg-white dark:bg-slate-900 shadow-sm border-slate-200 dark:border-slate-800">
+          <div className="relative rounded-md overflow-hidden bg-slate-900/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[140px] max-h-56">
             <img
               src={preview}
               alt="Foto Identitas"
@@ -275,14 +275,14 @@ export default function IdentityPhotoCapture({
 
           {/* Status Pembacaan NIK OCR */}
           {ocrLoading && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-brand-50 border border-brand-200 text-xs text-brand-700 animate-pulse font-medium">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 text-xs text-brand-700 dark:text-brand-300 animate-pulse font-medium">
               <Loader2 size={16} className="animate-spin text-brand-600 shrink-0" />
               <span>Memindai dan membaca NIK dari foto KTP secara otomatis...</span>
             </div>
           )}
 
           {!ocrLoading && ocrStatus?.type === 'success' && (
-            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
               <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
               <div className="leading-tight">
                 <span className="font-bold">NIK Terbaca Otomatis:</span>{' '}
@@ -295,14 +295,14 @@ export default function IdentityPhotoCapture({
           )}
 
           {!ocrLoading && ocrStatus?.type === 'warn' && (
-            <div className="flex items-start gap-2.5 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-800">
+            <div className="flex items-start gap-2.5 px-3 py-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
               <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
               <span className="text-[11.5px] leading-tight">{ocrStatus.msg}</span>
             </div>
           )}
 
           {/* Tombol Aksi: Ganti Foto / Hapus Foto */}
-          <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <button
                 type="button"

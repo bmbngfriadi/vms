@@ -48,6 +48,7 @@ model Department {
 model User {
   id               String      @id @default(uuid())
   name             String
+  username         String?     @unique
   email            String      @unique
   phone            String?
   password         String
@@ -61,13 +62,29 @@ model User {
   visitsCheckedIn  Visit[]     @relation("VisitCheckIn")
   visitsCheckedOut Visit[]     @relation("VisitCheckOut")
   featureOverrides UserFeature[]
+  passwordResets   PasswordReset[]
 
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
   @@index([role])
   @@index([departmentId])
+  @@index([phone])
   @@map("users")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp       String
+  expiresAt DateTime @map("expires_at")
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([otp])
+  @@map("password_resets")
 }
 
 model Visitor {

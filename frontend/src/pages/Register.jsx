@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, QrCode, ArrowRight, Loader2, LogIn } from 'lucide-react';
+import { CheckCircle2, QrCode, ArrowRight, Loader2, LogIn, Sun, Moon, Globe } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
+import { useTheme } from '../lib/theme.jsx';
+import { useI18n } from '../lib/i18n.jsx';
 
 const EMPTY = {
   fullName: '',
@@ -17,6 +19,8 @@ const EMPTY = {
 };
 
 export default function Register() {
+  const { isDark, toggleTheme } = useTheme();
+  const { lang, toggleLang, t } = useI18n();
   const [form, setForm] = useState(EMPTY);
   const [departments, setDepartments] = useState([]);
   const [pics, setPics] = useState([]);
@@ -124,27 +128,47 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 py-6 px-4">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 py-6 px-4 transition-colors">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
+            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
+              <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
+            </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-slate-900 truncate">PT CEMINDO GEMILANG Tbk</div>
-              <div className="text-xs text-slate-500">Plant Batam · Pendaftaran Tamu</div>
+              <div className="text-sm font-bold text-slate-900 dark:text-white truncate">PT CEMINDO GEMILANG Tbk</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Plant Batam · {t('register.title', 'Pendaftaran Tamu')}</div>
             </div>
           </div>
-          <a href="/login" className="btn-ghost text-xs shrink-0">
-            <LogIn size={14} /> Masuk
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={toggleLang}
+              className="btn-ghost text-xs px-2.5 py-1.5 flex items-center gap-1.5"
+              title="Ganti Bahasa (ID / EN)"
+            >
+              <Globe size={14} />
+              <span className="font-bold">{lang.toUpperCase()}</span>
+            </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn-ghost text-xs p-2"
+              title={isDark ? 'Mode Terang' : 'Mode Gelap'}
+            >
+              {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+            </button>
+            <a href="/login" className="btn-ghost text-xs">
+              <LogIn size={14} /> {t('nav.login', 'Masuk')}
+            </a>
+          </div>
         </div>
 
         <div className="card">
-          <div className="px-6 py-5 border-b border-slate-200">
-            <h1 className="text-lg font-semibold text-slate-900">Formulir Kunjungan Tamu</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Isi data berikut sebelum memasuki kawasan pabrik. Petugas Security akan memvalidasi
-              kedatangan Anda.
+          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">{t('register.title', 'Formulir Kunjungan Tamu')}</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t('register.subtitle', 'Isi data berikut sebelum memasuki kawasan pabrik. Petugas Security akan memvalidasi kedatangan Anda.')}
             </p>
           </div>
 

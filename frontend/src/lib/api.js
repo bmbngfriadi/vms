@@ -23,7 +23,16 @@ export const errMsg = (err, fallback = 'Terjadi kesalahan') =>
   err?.response?.data?.error || err?.message || fallback;
 
 export const endpoints = {
-  login: (email, password) => api.post('/auth/login', { email, password }).then((r) => r.data),
+  login: (identifierOrEmail, password) =>
+    api.post('/auth/login', { identifier: identifierOrEmail, password }).then((r) => r.data),
+  forgotPassword: (identifier) =>
+    api.post('/auth/forgot-password', { identifier }).then((r) => r.data),
+  resetPassword: (payload) =>
+    api.post('/auth/reset-password', payload).then((r) => r.data),
+  updateProfile: (payload) =>
+    api.put('/auth/profile', payload).then((r) => r.data),
+  changePassword: (payload) =>
+    api.put('/auth/change-password', payload).then((r) => r.data),
   me: () => api.get('/auth/me').then((r) => r.data),
 
   publicDepartments: () => api.get('/public/departments').then((r) => r.data),
