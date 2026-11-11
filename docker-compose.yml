@@ -10,12 +10,16 @@ services:
     volumes:
       - vms_pgdata:/var/lib/postgresql/data
     networks:
-      - vms_net
+      vms_net:
+        aliases:
+          - postgres
+          - vms-postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vms_user} -d ${POSTGRES_DB:-vms_batam}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 5s
 
   backend:
     build:
