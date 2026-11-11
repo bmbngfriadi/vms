@@ -52,12 +52,14 @@ function Guard({ feature, children }) {
 }
 
 export default function App() {
+  const basename = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
   return (
     <ThemeProvider>
       <I18nProvider>
         <DialogProvider>
           <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter basename={basename}>
               <ErrorBoundary>
                 <Routes>
                 {/* Rute Publik */}

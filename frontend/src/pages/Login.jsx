@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   LogIn,
   ShieldCheck,
@@ -337,12 +337,12 @@ export default function Login() {
               </form>
 
               <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center">
-                <a
-                  href="/register"
+                <Link
+                  to="/register"
                   className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
                 >
                   {t('login.guest_prompt', 'Tamu? Daftarkan kunjungan Anda di sini →')}
-                </a>
+                </Link>
               </div>
             </div>
           )}

@@ -16,7 +16,8 @@ export default function WalkInQrModal({ onClose }) {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const registerUrl = `${window.location.origin}/register`;
+  const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const registerUrl = `${window.location.origin}${basePath}/register`;
 
   useEffect(() => {
     endpoints

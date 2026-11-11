@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-export const api = axios.create({ baseURL: '/api', timeout: 30000 });
+const BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
+export const api = axios.create({ baseURL: `${BASE_PATH}/api`, timeout: 30000 });
 
 api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('vms_token');
@@ -11,9 +13,9 @@ api.interceptors.request.use((cfg) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && window.location.pathname !== '/login') {
+    if (err.response?.status === 401 && !window.location.pathname.endsWith('/login')) {
       localStorage.removeItem('vms_token');
-      window.location.href = '/login';
+      window.location.href = `${BASE_PATH}/login`;
     }
     return Promise.reject(err);
   }
