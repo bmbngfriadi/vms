@@ -1,9 +1,11 @@
-const CACHE_NAME = 'vms-pwa-v1';
+const CACHE_NAME = 'vms-pwa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.png',
+  '/icon.svg',
+  '/apple-touch-icon.png',
   '/icon-192.png',
   '/icon-512.png',
   '/logo.png'
