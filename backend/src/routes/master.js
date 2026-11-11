@@ -82,8 +82,8 @@ async function listPics(req, res) {
   const pics = await prisma.user.findMany({
     where: {
       isActive: true,
-      role: 'PIC',
       canReceiveVisits: true,
+      role: { in: ['PIC', 'ADMIN', 'MANAGEMENT'] },
       phone: { not: null },
       ...(departmentId ? { departmentId } : {})
     },
@@ -92,6 +92,7 @@ async function listPics(req, res) {
       name: true,
       phone: true,
       email: true,
+      role: true,
       department: { select: { id: true, name: true } }
     },
     orderBy: { name: 'asc' }
@@ -104,7 +105,12 @@ router.get('/pics/public', async (req, res) => {
   const { departmentId } = req.query;
   if (!departmentId) return res.json([]);
   const pics = await prisma.user.findMany({
-    where: { isActive: true, canReceiveVisits: true, departmentId },
+    where: {
+      isActive: true,
+      canReceiveVisits: true,
+      role: { in: ['PIC', 'ADMIN', 'MANAGEMENT'] },
+      departmentId
+    },
     select: { id: true, name: true },
     orderBy: { name: 'asc' }
   });

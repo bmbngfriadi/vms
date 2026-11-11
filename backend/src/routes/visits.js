@@ -258,7 +258,12 @@ publicRouter.get('/pics', async (req, res) => {
   const { departmentId } = req.query;
   if (!departmentId) return res.json([]);
   const pics = await prisma.user.findMany({
-    where: { departmentId, role: 'PIC', isActive: true, canReceiveVisits: true },
+    where: {
+      departmentId,
+      isActive: true,
+      canReceiveVisits: true,
+      role: { in: ['PIC', 'ADMIN', 'MANAGEMENT'] }
+    },
     select: { id: true, name: true },
     orderBy: { name: 'asc' }
   });
@@ -329,7 +334,13 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
     }
 
     const pic = await prisma.user.findFirst({
-      where: { id: picUserId, departmentId, role: 'PIC', isActive: true, canReceiveVisits: true }
+      where: {
+        id: picUserId,
+        departmentId,
+        isActive: true,
+        canReceiveVisits: true,
+        role: { in: ['PIC', 'ADMIN', 'MANAGEMENT'] }
+      }
     });
     if (!pic) {
       return res.status(400).json({ error: 'PIC tidak valid atau tidak berada di departemen yang dipilih' });
