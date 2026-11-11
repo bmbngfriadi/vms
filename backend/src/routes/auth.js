@@ -157,7 +157,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
       `• *JANGAN* membagikan kode OTP ini kepada siapapun, termasuk pihak Security atau IT Support.\n` +
       `• Jika Anda tidak merasa melakukan permintaan ini, abaikan pesan ini. Akun Anda tetap aman.\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `_Pesan Otomatis • IT & Security Department_`;
+      `_Pesan Otomatis, Visitor Management System_`;
 
     notify({
       recipient: targetPhone,
@@ -273,7 +273,7 @@ router.post('/reset-password', forgotLimiter, async (req, res) => {
           `⚠️ *Jika Anda TIDAK merasa melakukan perubahan ini:*\n` +
           `Segera hubungi Administrator Sistem atau Departemen IT untuk mengamankan akun Anda.\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━\n` +
-          `_Pesan Otomatis • IT & Security Department_`
+          `_Pesan Otomatis, Visitor Management System_`
       });
     }
 

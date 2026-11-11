@@ -128,6 +128,7 @@ async function notifyCheckIn(visit, req) {
         name: guest.fullName,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
+        purpose: visit.purpose,
         passUrl: passUrl(outToken.token, req)
       }),
       imageBuffer: await qrImageBuffer(passUrl(outToken.token, req))
@@ -144,6 +145,7 @@ async function notifyCheckIn(visit, req) {
         guestName: guest.fullName,
         company: guest.company,
         department: dept,
+        purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
         badge: visit.badgeNumber
@@ -162,6 +164,7 @@ async function notifyCheckIn(visit, req) {
         company: guest.company,
         department: dept,
         picName,
+        purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
         count: visit.numberOfVisitors
@@ -183,6 +186,7 @@ async function notifyCheckOut(visit) {
       message: msg.guestCheckedOut({
         name: guest.fullName,
         visitNumber: visit.visitNumber,
+        purpose: visit.purpose,
         checkInAt: visit.checkInAt,
         checkOutAt: visit.checkOutAt
       })
@@ -198,6 +202,8 @@ async function notifyCheckOut(visit) {
         picName,
         guestName: guest.fullName,
         company: guest.company,
+        department: dept,
+        purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
         checkOutAt: visit.checkOutAt
@@ -216,9 +222,11 @@ async function notifyCheckOut(visit) {
         company: guest.company,
         department: dept,
         picName,
+        purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
-        checkOutAt: visit.checkOutAt
+        checkOutAt: visit.checkOutAt,
+        count: visit.numberOfVisitors
       })
     });
   });
@@ -403,6 +411,7 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         company: visitor.company,
         visitNumber: visit.visitNumber,
         department: dept.name,
+        purpose: visit.purpose,
         passUrl: url
       }),
       imageBuffer: await qrImageBuffer(url)
@@ -553,6 +562,7 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         visitNumber: visit.visitNumber,
         department: dept.name,
         picName: pic.name,
+        purpose: visit.purpose,
         date: when,
         time: visit.expectedTime,
         passUrl: url

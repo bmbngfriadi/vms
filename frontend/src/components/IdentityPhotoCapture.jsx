@@ -271,7 +271,7 @@ export default function IdentityPhotoCapture({
           </div>
 
           <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center mt-3 leading-relaxed">
-            {t('register.photo_hint', 'Foto KTP, SIM, atau Paspor asli yang jelas dan tidak buram. Sistem akan membaca nomor identitas secara otomatis.')}
+            {t('register.photo_hint', 'Foto KTP, SIM, atau Paspor asli yang jelas dan tidak buram.')}
           </p>
         </div>
       ) : (

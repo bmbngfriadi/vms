@@ -254,7 +254,7 @@ export default function Register() {
                     className="input text-sm py-2.5 px-3 rounded-xl"
                     value={form.fullName}
                     onChange={set('fullName')}
-                    placeholder={lang === 'en' ? 'e.g. John Doe' : 'Contoh: Ahmad Fauzi'}
+                    placeholder=""
                     required
                   />
                 </div>
@@ -265,7 +265,7 @@ export default function Register() {
                     className="input text-sm py-2.5 px-3 rounded-xl font-mono"
                     value={form.phone}
                     onChange={set('phone')}
-                    placeholder="0812xxxxxxx"
+                    placeholder=""
                     inputMode="tel"
                     required
                   />
@@ -304,11 +304,8 @@ export default function Register() {
                     className="input font-mono text-sm py-2.5 px-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/50"
                     value={form.identityNumber}
                     onChange={set('identityNumber')}
-                    placeholder={t('register.identity_placeholder', 'Nomor identitas (otomatis terisi dari foto)')}
+                    placeholder=""
                   />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    {t('register.identity_number_hint', 'Terbaca otomatis dari foto. Tamu dapat mengoreksi data jika diperlukan.')}
-                  </p>
                 </div>
 
                 <div>
@@ -317,7 +314,7 @@ export default function Register() {
                     className="input text-sm py-2.5 px-3 rounded-xl"
                     value={form.company}
                     onChange={set('company')}
-                    placeholder={t('register.company_placeholder', 'PT Contoh / Pribadi')}
+                    placeholder=""
                   />
                 </div>
               </div>
@@ -387,7 +384,7 @@ export default function Register() {
                     className="input min-h-[76px] text-sm py-2.5 px-3 rounded-xl"
                     value={form.purpose}
                     onChange={set('purpose')}
-                    placeholder={t('register.purpose_placeholder', 'Contoh: Meeting teknis, pengiriman material, maintenance alat')}
+                    placeholder=""
                     required
                   />
                 </div>
@@ -422,7 +419,7 @@ export default function Register() {
                     className="input text-sm py-2.5 px-3 rounded-xl uppercase font-mono"
                     value={form.vehiclePlate}
                     onChange={set('vehiclePlate')}
-                    placeholder="BP 1234 XY"
+                    placeholder=""
                   />
                 </div>
               </div>
