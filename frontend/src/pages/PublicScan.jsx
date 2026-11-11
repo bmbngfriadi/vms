@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Camera, CameraOff, AlertTriangle, LogIn } from 'lucide-react';
 
@@ -93,9 +94,9 @@ export default function PublicScan() {
               <div className="text-xs text-slate-500">PT Cemindo Gemilang · Plant Batam</div>
             </div>
           </div>
-          <a href="/login" className="btn-ghost text-xs shrink-0">
+          <Link to="/login" className="btn-ghost text-xs shrink-0">
             <LogIn size={14} /> Login
-          </a>
+          </Link>
         </div>
 
         <div className="card p-5">

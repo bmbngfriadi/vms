@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CheckCircle2,
   QrCode,
@@ -145,15 +146,15 @@ export default function Register() {
             </div>
 
             <div className="mt-6 space-y-2">
-              <a
-                href={`/pass/${result.passToken}`}
+              <Link
+                to={`/pass/${result.passToken}`}
                 className="btn-primary w-full py-3 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl shadow-md flex items-center justify-center gap-2"
                 onClick={() => setResult(null)}
               >
                 <QrCode size={17} />
                 <span>{t('register.btn_open_pass', 'Buka Halaman Pass')}</span>
                 <ArrowRight size={16} />
-              </a>
+              </Link>
 
               <button
                 type="button"
@@ -213,14 +214,14 @@ export default function Register() {
               {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} />}
             </button>
 
-            <a
-              href="/login"
+            <Link
+              to="/login"
               className="btn-ghost text-xs px-2 py-1.5 sm:px-2.5 rounded-lg flex items-center gap-1 text-brand-600 dark:text-brand-400 font-bold hover:text-brand-700"
               title={t('nav.login', 'Masuk')}
             >
               <LogIn size={13} />
               <span className="hidden xs:inline text-[11px] sm:text-xs">{t('nav.login', 'Masuk')}</span>
-            </a>
+            </Link>
           </div>
         </header>
 

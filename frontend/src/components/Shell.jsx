@@ -104,6 +104,7 @@ function SidebarNav({ items, onNavigate, t }) {
 }
 
 function SidebarFooter({ onLogout, onOpenQr, t, lang, toggleLang, isDark, toggleTheme }) {
+  const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
   return (
     <div className="px-3 py-3 border-t border-slate-200/80 dark:border-slate-800 space-y-2">
       {/* Tombol Pengaturan Cepat: Mode & Bahasa */}
@@ -139,7 +140,7 @@ function SidebarFooter({ onLogout, onOpenQr, t, lang, toggleLang, isDark, toggle
       </button>
 
       <a
-        href="/register"
+        href={`${basePath}/register`}
         target="_blank"
         rel="noreferrer"
         className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -168,6 +169,7 @@ export default function Shell() {
   const location = useLocation();
   const [showMoreSheet, setShowMoreSheet] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
 
   const NAV_ITEMS = [
     { to: '/', label: 'Dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
@@ -485,7 +487,7 @@ export default function Shell() {
                 </button>
 
                 <a
-                  href="/register"
+                  href={`${basePath}/register`}
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setShowMoreSheet(false)}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, LogOut, LogIn, Loader2, Globe, Sun, Moon } from 'lucide-react';
 import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
@@ -47,9 +47,9 @@ export default function Pass() {
           <AlertCircle className="mx-auto text-red-500" size={32} />
           <h1 className="mt-3 font-bold text-slate-900 dark:text-white">Pass Tidak Ditemukan</h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">{error}</p>
-          <a href="/register" className="btn-primary mt-5 w-full py-2.5 rounded-xl text-xs font-bold">
+          <Link to="/register" className="btn-primary mt-5 w-full py-2.5 rounded-xl text-xs font-bold">
             Daftar Kunjungan Baru
-          </a>
+          </Link>
         </div>
       </div>
     );

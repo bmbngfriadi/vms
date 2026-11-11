@@ -159,7 +159,7 @@ export default function WalkInQrModal({ onClose }) {
           </button>
 
           <a
-            href="/register"
+            href={registerUrl}
             target="_blank"
             rel="noreferrer"
             className="btn-ghost col-span-2 sm:col-span-1 py-2.5 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 min-h-[42px] text-brand-600 dark:text-brand-400"
