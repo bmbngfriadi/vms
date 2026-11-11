@@ -287,7 +287,7 @@ export default function Shell() {
         {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar dan FAB */}
         <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-32 lg:pb-6">
           <ErrorBoundary key={location.pathname}>
-            <div key={location.pathname} className="animate-page-enter">
+            <div key={location.pathname} className="animate-page-enter lg:animate-none">
               <Outlet />
             </div>
           </ErrorBoundary>

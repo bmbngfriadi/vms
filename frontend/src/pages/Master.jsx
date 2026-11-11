@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Loader2, X, Pencil, Trash2, Save, User as UserIcon } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useI18n } from '../lib/i18n.jsx';
@@ -618,7 +619,7 @@ function UserModal({ user, departments, onClose, onSaved }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onClose} />
       <div className="relative z-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl my-auto max-h-[92vh] flex flex-col">
@@ -761,6 +762,7 @@ function UserModal({ user, departments, onClose, onSaved }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

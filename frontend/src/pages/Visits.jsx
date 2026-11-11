@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
@@ -780,7 +781,7 @@ function CreateModal({ user, onClose, onCreated }) {
 }
 
 function Modal({ title, onClose, children }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onClose} />
       <div className="relative z-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl my-auto max-h-[92vh] flex flex-col">
@@ -792,7 +793,8 @@ function Modal({ title, onClose, children }) {
         </div>
         <div className="p-4 sm:p-5 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

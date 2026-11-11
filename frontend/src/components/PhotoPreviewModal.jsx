@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download, UserCheck, Shield } from 'lucide-react';
 
 export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumber, onClose }) {
@@ -12,7 +13,7 @@ export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumbe
     a.click();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-5">
       {/* Backdrop */}
       <div
@@ -82,7 +83,8 @@ export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumbe
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

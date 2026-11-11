@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -122,7 +123,7 @@ export function DialogProvider({ children }) {
       {children}
 
       {/* ================= MODAL DIALOG CUSTOM POPUP ================= */}
-      {dialogState && (
+      {dialogState && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
           {/* Backdrop Blur Layer Tertinggi */}
           <div
@@ -212,7 +213,8 @@ export function DialogProvider({ children }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </DialogContext.Provider>
   );

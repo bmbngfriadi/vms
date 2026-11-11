@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Printer,
   Download,
@@ -51,7 +52,7 @@ export default function WalkInQrModal({ onClose }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 print:p-0">
       {/* Backdrop */}
       <div
@@ -169,7 +170,8 @@ export default function WalkInQrModal({ onClose }) {
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

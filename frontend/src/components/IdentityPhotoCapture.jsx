@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Camera,
   Upload,
@@ -348,7 +349,7 @@ export default function IdentityPhotoCapture({
       )}
 
       {/* Modal Kamera Interaktif Langsung */}
-      {cameraOpen && (
+      {cameraOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-xs">
           <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full border border-slate-800 flex flex-col max-h-[92vh]">
             {/* Header Modal Kamera */}
@@ -431,7 +432,8 @@ export default function IdentityPhotoCapture({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

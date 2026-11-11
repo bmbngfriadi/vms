@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Save, Trash2, X, Eye } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useDialog } from '../lib/dialog.jsx';
@@ -16,7 +17,7 @@ const STATUS_OPTIONS = [
 const toDateInput = (v) => (v ? new Date(v).toISOString().slice(0, 10) : '');
 
 export function Modal({ title, onClose, children, wide }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={onClose} />
       <div
@@ -30,7 +31,8 @@ export function Modal({ title, onClose, children, wide }) {
         </div>
         <div className="p-4 sm:p-5 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
