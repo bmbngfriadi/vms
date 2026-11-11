@@ -63,6 +63,11 @@ export default function BulkImportModal({
     setError('');
   };
 
+  const handleFileChange = (e) => {
+    const f = e.target.files?.[0];
+    handleFile(f);
+  };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -327,3 +332,4 @@ export default function BulkImportModal({
     document.body
   );
 }
+
