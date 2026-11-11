@@ -1162,7 +1162,7 @@ async function handleExcelExport(req, res) {
       { header: 'Perusahaan / Instansi', key: 'company', width: 24, align: 'left' },
       { header: 'No. WhatsApp', key: 'phone', width: 16, align: 'center' },
       { header: 'Departemen Tujuan', key: 'department', width: 22, align: 'left' },
-      { header: 'PIC / Tuan Rumah', key: 'pic', width: 22, align: 'left' },
+      { header: 'PIC', key: 'pic', width: 22, align: 'left' },
       { header: 'Keperluan Kunjungan', key: 'purpose', width: 28, align: 'left' },
       { header: 'Jml', key: 'visitors', width: 8, align: 'center' },
       { header: 'Plat Kendaraan', key: 'plate', width: 16, align: 'center' },

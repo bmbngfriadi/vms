@@ -6,7 +6,7 @@ import { useI18n } from '../lib/i18n.jsx';
 import { useDialog } from '../lib/dialog.jsx';
 
 const ROLES = [
-  ['PIC', 'PIC / Tuan Rumah'],
+  ['PIC', 'PIC'],
   ['SECURITY', 'Security'],
   ['MANAGEMENT', 'Management'],
   ['ADMIN', 'Administrator']

@@ -57,7 +57,7 @@ Anda telah dijadwalkan berkunjung ke kawasan industri *PT Cemindo Gemilang Tbk -
 📆 *Hari/Tanggal*  : ${fmtDate(date)}
 ⏰ *Waktu Rencana* : ${time || '09:00'} WIB
 🏛️ *Departemen*    : ${department}
-👤 *Tuan Rumah*    : ${picName || '-'}
+👤 *PIC*           : ${picName || '-'}
 🏢 *Instansi Tamu* : ${company || '-'}
 
 📌 *PETUNJUK KEDATANGAN:*

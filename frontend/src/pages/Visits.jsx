@@ -260,7 +260,7 @@ export default function Visits() {
                   </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">
-                      PIC Tuan Rumah
+                      PIC
                     </span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300 truncate block">
                       {v.picName || '-'}

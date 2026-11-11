@@ -167,7 +167,7 @@ export default function Pass() {
               <Row label={lang === 'en' ? 'Visitor Name' : 'Nama Tamu'} value={data.visitorName} />
               <Row label={lang === 'en' ? 'Company' : 'Perusahaan'} value={data.company || '-'} />
               <Row label={lang === 'en' ? 'Department' : 'Departemen'} value={data.department} />
-              <Row label={lang === 'en' ? 'Host PIC' : 'PIC Tuan Rumah'} value={data.picName || '-'} />
+              <Row label={lang === 'en' ? 'Host PIC' : 'PIC'} value={data.picName || '-'} />
               <Row label={lang === 'en' ? 'Visit No.' : 'No. Kunjungan'} value={data.visitNumber} mono />
               {data.checkInAt && (
                 <Row label={lang === 'en' ? 'Check-In' : 'Masuk'} value={`${fmtTime(data.checkInAt)} WIB`} />

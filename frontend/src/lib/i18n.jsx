@@ -229,7 +229,7 @@ const DICTIONARY = {
     'visits.col_number': 'No. Kunjungan',
     'visits.col_visitor': 'Tamu',
     'visits.col_dept': 'Departemen',
-    'visits.col_pic': 'PIC / Tuan Rumah',
+    'visits.col_pic': 'PIC',
     'visits.col_type': 'Tipe',
     'visits.col_status': 'Status',
     'visits.col_in': 'Masuk',
