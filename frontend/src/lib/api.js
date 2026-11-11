@@ -72,6 +72,10 @@ export const endpoints = {
   createUser: (p) => api.post('/master/users', p).then((r) => r.data),
   updateUser: (id, p) => api.put(`/master/users/${id}`, p).then((r) => r.data),
   deleteUser: (id) => api.delete(`/master/users/${id}`).then((r) => r.data),
+  downloadUserTemplate: () => api.get('/master/users/template', { responseType: 'blob' }),
+  importUsers: (p) => api.post('/master/users/import', p).then((r) => r.data),
+  downloadDeptTemplate: () => api.get('/master/departments/template', { responseType: 'blob' }),
+  importDepartments: (p) => api.post('/master/departments/import', p).then((r) => r.data),
 
   waStatus: () => api.get('/wa/status').then((r) => r.data),
   waReconnect: () => api.post('/wa/reconnect').then((r) => r.data),

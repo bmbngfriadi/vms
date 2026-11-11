@@ -1,6 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Loader2, X, Pencil, Trash2, Save, User as UserIcon } from 'lucide-react';
+import {
+  Plus,
+  Loader2,
+  X,
+  Pencil,
+  Trash2,
+  Save,
+  User as UserIcon,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Info,
+  Building2,
+  Users as UsersIcon
+} from 'lucide-react';
+import BulkImportModal from '../components/BulkImportModal.jsx';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useI18n } from '../lib/i18n.jsx';
 import { useDialog } from '../lib/dialog.jsx';
@@ -57,6 +74,8 @@ function Departments() {
   const [form, setForm] = useState({ name: '', code: '' });
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [error, setError] = useState('');
 
   const load = () =>
@@ -353,7 +372,65 @@ function Departments() {
             {t('action.save', 'Simpan')}
           </button>
         </form>
+
+        {/* Bulk Import Departemen */}
+        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Bulk Import Excel
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                setDownloadingTemplate(true);
+                try {
+                  const res = await endpoints.downloadDeptTemplate();
+                  const url = URL.createObjectURL(
+                    new Blob([res.data], {
+                      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    })
+                  );
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'Template_Master_Departemen.xlsx';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch (e) {
+                  customAlert({ title: 'Gagal', message: 'Gagal mengunduh template', type: 'error' });
+                } finally {
+                  setDownloadingTemplate(false);
+                }
+              }}
+              disabled={downloadingTemplate}
+              className="btn-ghost py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-800"
+            >
+              {downloadingTemplate ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+              <span>Template</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowImportModal(true)}
+              className="btn-ghost py-2 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60"
+            >
+              <Upload size={13} />
+              <span>Import</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {showImportModal && (
+        <BulkImportModal
+          title="Bulk Import Departemen"
+          subtitle="Data yang sudah ada (berdasarkan Nama/Kode) otomatis tertimpa"
+          templateFilename="Template_Master_Departemen.xlsx"
+          onDownloadTemplate={() => endpoints.downloadDeptTemplate()}
+          onImport={(payload) => endpoints.importDepartments(payload)}
+          onSuccess={() => load()}
+          onClose={() => setShowImportModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -364,6 +441,8 @@ function Users() {
   const [rows, setRows] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [error, setError] = useState('');
 
   const load = () => {
@@ -375,6 +454,10 @@ function Users() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDownloadTemplate = () => {
+    return endpoints.downloadUserTemplate();
+  };
 
   const handleDelete = async (u) => {
     const ok = await confirm({
@@ -401,9 +484,54 @@ function Users() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      {/* Action Toolbar: Unduh Template, Import Excel, dan Tambah Pengguna */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
         <button
-          className="btn-primary w-full sm:w-auto py-2.5 px-4 min-h-[44px] rounded-xl font-bold justify-center"
+          type="button"
+          onClick={async () => {
+            setDownloadingTemplate(true);
+            try {
+              const res = await endpoints.downloadUserTemplate();
+              const url = URL.createObjectURL(
+                new Blob([res.data], {
+                  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                })
+              );
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'Template_Master_Pengguna_PIC.xlsx';
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch (err) {
+              customAlert({
+                title: 'Gagal Unduh Template',
+                message: errMsg(err, 'Gagal mengunduh template Excel'),
+                type: 'error'
+              });
+            } finally {
+              setDownloadingTemplate(false);
+            }
+          }}
+          disabled={downloadingTemplate}
+          className="btn-ghost py-2.5 px-3.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 min-h-[44px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-slate-300 dark:hover:border-slate-700"
+          title="Unduh format template Excel resmi untuk pengisian data massal"
+        >
+          {downloadingTemplate ? <Loader2 size={16} className="animate-spin text-brand-600" /> : <Download size={16} className="text-brand-600 dark:text-brand-400" />}
+          <span>Unduh Template</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowImportModal(true)}
+          className="btn-ghost py-2.5 px-3.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 min-h-[44px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 shadow-xs"
+          title="Upload file Excel untuk import pengguna baru & otomatis menimpa (update) data lama"
+        >
+          <Upload size={16} />
+          <span>Import Data Excel</span>
+        </button>
+
+        <button
+          className="btn-primary py-2.5 px-4 min-h-[44px] rounded-xl font-bold justify-center flex items-center gap-2 shadow-sm"
           onClick={() => setEditing({})}
         >
           <Plus size={16} /> {t('master.btn_add_user', 'Tambah Pengguna')}
@@ -574,6 +702,20 @@ function Users() {
             setEditing(null);
             load();
           }}
+        />
+      )}
+
+      {showImportModal && (
+        <BulkImportModal
+          title="Bulk Import Pengguna & PIC"
+          subtitle="Data yang sudah ada (berdasarkan Email / Username) akan otomatis tertimpa"
+          templateFilename="Template_Master_Pengguna_PIC.xlsx"
+          onDownloadTemplate={handleDownloadTemplate}
+          onImport={(payload) => endpoints.importUsers(payload)}
+          onSuccess={() => {
+            load();
+          }}
+          onClose={() => setShowImportModal(false)}
         />
       )}
     </div>
