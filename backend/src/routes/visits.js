@@ -389,6 +389,7 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       type: 'GUEST_WALKIN_PASS',
       message: msg.guestWalkInPass({
         name: visitor.fullName,
+        company: visitor.company,
         visitNumber: visit.visitNumber,
         department: dept.name,
         passUrl: url
@@ -537,6 +538,7 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
       type: 'GUEST_PREREGISTER_PASS',
       message: msg.guestPreRegisteredPass({
         name: visitor.fullName,
+        company: visitor.company,
         visitNumber: visit.visitNumber,
         department: dept.name,
         picName: pic.name,

@@ -6,71 +6,100 @@ const fmtDate = (d) =>
 const fmtTime = (d) =>
   new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
 
+const DIVIDER = '━━━━━━━━━━━━━━━━━━━━━';
+
 /**
  * 1. Tamu walk-in: barcode awal (check-in) untuk ditunjukkan ke security.
  */
-export function guestWalkInPass({ name, visitNumber, department, passUrl }) {
-  return `*PENDAFTARAN KUNJUNGAN DITERIMA*
+export function guestWalkInPass({ name, company, visitNumber, department, passUrl }) {
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+🎫 *PENDAFTARAN KUNJUNGAN BERHASIL*
+${DIVIDER}
 
-Halo ${name},
+Halo, *${name}*!
+Pendaftaran kedatangan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah kami terima.
 
-Pendaftaran kunjungan Anda ke *PT Cemindo Gemilang Tbk - Plant Batam* telah kami terima.
+📋 *RINCIAN KUNJUNGAN:*
+🔖 *No. Registrasi* : *${visitNumber}*
+🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
+🏛️ *Departemen*     : ${department}
 
-No. Kunjungan : ${visitNumber}
-Departemen    : ${department}
+📌 *PANDUAN POS SECURITY:*
+1️⃣ Tunjukkan *gambar QR Code terlampir* kepada petugas Security di Pos Utama.
+2️⃣ Petugas akan memvalidasi data dan menyerahkan *Badge Tamu*.
+3️⃣ Wajib mematuhi standar Keselamatan & Kesehatan Kerja (K3) selama berada di kawasan pabrik.
 
-*Tunjukkan gambar barcode yang terlampir kepada petugas Security di pos gerbang untuk validasi.*
+🔗 *Akses Pass Digital Cadangan:*
+${passUrl}
 
-Halaman pass (cadangan): ${passUrl}
-
-Barcode ini hanya dapat digunakan satu kali. Mohon jangan membagikannya kepada orang lain.
-
-_Pesan otomatis - Visitor Management System_`;
+⚠️ _QR Code ini bersifat unik dan hanya berlaku untuk 1 kali validasi masuk._
+${DIVIDER}
+_Pesan Otomatis • Safety & Security Department_`;
 }
 
 /**
  * 2. Tamu pre-registered: barcode dikirim saat PIC membuat janji temu.
  */
-export function guestPreRegisteredPass({ name, visitNumber, department, picName, date, time, passUrl }) {
-  return `*UNDANGAN KUNJUNGAN - PT CEMINDO GEMILANG TBK*
+export function guestPreRegisteredPass({ name, company, visitNumber, department, picName, date, time, passUrl }) {
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+📅 *UNDANGAN KUNJUNGAN RESMI*
+${DIVIDER}
 
-Halo ${name},
+Halo, *${name}*!
+Anda telah dijadwalkan berkunjung ke kawasan industri *PT Cemindo Gemilang Tbk - Plant Batam*.
 
-Anda dijadwalkan berkunjung ke *Plant Batam*.
+📋 *RINCIAN JADWAL:*
+🔖 *No. Kunjungan* : *${visitNumber}*
+📆 *Hari/Tanggal*  : ${fmtDate(date)}
+⏰ *Waktu Rencana* : ${time || '09:00'} WIB
+🏛️ *Departemen*    : ${department}
+👤 *Tuan Rumah*    : ${picName || '-'}
+🏢 *Instansi Tamu* : ${company || '-'}
 
-No. Kunjungan : ${visitNumber}
-Hari/Tanggal  : ${fmtDate(date)}
-Perkiraan Jam : ${time || '-'}
-Departemen    : ${department}
-PIC / Tuan Rumah : ${picName || '-'}
+📌 *PETUNJUK KEDATANGAN:*
+• Tunjukkan *gambar QR Code terlampir* kepada petugas Security saat tiba di gerbang pabrik.
+• Harap hadir tepat waktu sesuai perkiraan jadwal kunjungan.
+• Gunakan pakaian kerja rapi, sepatu tertutup, dan patuhi standar K3 pabrik.
 
-*Tunjukkan gambar barcode yang terlampir kepada petugas Security saat tiba.*
+🔗 *Akses Pass Undangan Cadangan:*
+${passUrl}
 
-Halaman pass (cadangan): ${passUrl}
-
-Barcode hanya dapat digunakan satu kali.
-
-_Pesan otomatis - Visitor Management System_`;
+${DIVIDER}
+_Pesan Otomatis • Safety & Security Department_`;
 }
 
 /**
  * 3. Tamu sudah check-in: barcode baru untuk check-out.
  */
 export function guestCheckOutPass({ name, visitNumber, checkInAt, passUrl }) {
-  return `*ANDA TELAH CHECK-IN*
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+✅ *VALIDASI CHECK-IN BERHASIL*
+${DIVIDER}
 
-Halo ${name},
+Halo, *${name}*!
+Kedatangan Anda telah berhasil divalidasi oleh petugas Security. Selamat beraktivitas di area pabrik.
 
-Kedatangan Anda telah divalidasi oleh petugas Security.
-Waktu masuk : ${fmtTime(checkInAt)} WIB
+📋 *STATUS KUNJUNGAN:*
+🔖 *No. Kunjungan* : *${visitNumber}*
+🕒 *Waktu Masuk*   : *${fmtTime(checkInAt)} WIB*
+📍 *Lokasi Area*   : Kawasan Pabrik Plant Batam
 
-*Simpan gambar barcode yang terlampir. Barcode ini WAJIB ditunjukkan saat Anda keluar dari area pabrik.*
+⚠️ *PANDUAN KELUAR (CHECK-OUT):*
+• *Simpan gambar QR Code terlampir ini dengan baik.*
+• Barcode ini *WAJIB* ditunjukkan kepada petugas Security saat Anda akan keluar meninggalkan kawasan pabrik.
+• Kembalikan Badge Tamu kepada petugas Security sebelum meninggalkan gerbang.
 
-Halaman pass (cadangan): ${passUrl}
+🔗 *Akses Pass Keluar Cadangan:*
+${passUrl}
 
-Pastikan Anda melakukan check-out sebelum meninggalkan kawasan.
-
-_Pesan otomatis - Visitor Management System_`;
+${DIVIDER}
+_Pesan Otomatis • Safety & Security Department_`;
 }
 
 /**
@@ -79,76 +108,109 @@ _Pesan otomatis - Visitor Management System_`;
 export function guestCheckedOut({ name, visitNumber, checkInAt, checkOutAt }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
-  return `*CHECK-OUT BERHASIL*
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+🚪 *CHECK-OUT SELESAI*
+${DIVIDER}
 
-Halo ${name},
+Halo, *${name}*!
+Kunjungan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah resmi selesai.
 
-Kunjungan Anda (${visitNumber}) telah selesai.
-Masuk  : ${fmtTime(checkInAt)} WIB
-Keluar : ${fmtTime(checkOutAt)} WIB
-Durasi : ${dur}
+📋 *RINGKASAN KUNJUNGAN:*
+🔖 *No. Kunjungan* : *${visitNumber}*
+🕒 *Waktu Masuk*   : ${fmtTime(checkInAt)} WIB
+⏱️ *Waktu Keluar*  : ${fmtTime(checkOutAt)} WIB
+⏳ *Total Durasi*  : *${dur}*
 
-Terima kasih atas kunjungan Anda ke PT Cemindo Gemilang Tbk - Plant Batam.
+🙏 *Terima kasih atas kunjungan Anda.*
+Semoga urusan dan pertemuan Anda berjalan lancar. Utamakan selalu keselamatan dalam perjalanan.
 
-_Pesan otomatis - Visitor Management System_`;
+${DIVIDER}
+_Pesan Otomatis • Safety & Security Department_`;
 }
 
 /**
  * 5. PIC / tuan rumah: tamunya sudah masuk.
  */
 export function picGuestArrived({ picName, guestName, company, department, visitNumber, checkInAt, badge }) {
-  return `*TAMU ANDA TELAH TIBA*
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+🔔 *NOTIFIKASI: TAMU ANDA TELAH TIBA*
+${DIVIDER}
 
-Halo ${picName},
+Halo, *${picName}*!
+Tamu kunjungan Anda telah menyelesaikan proses registrasi di Pos Security dan saat ini berada di area pabrik:
 
-Tamu berikut telah check-in dan saat ini berada di area pabrik:
+📋 *RINCIAN DATA TAMU:*
+👤 *Nama Tamu*     : *${guestName}*
+🏢 *Instansi*      : ${company || 'Pribadi / Perorangan'}
+🏛️ *Departemen*    : ${department}
+🔖 *No. Kunjungan* : ${visitNumber}
+🏷️ *No. Badge*     : *${badge || '-'}*
+🕒 *Waktu Masuk*   : *${fmtTime(checkInAt)} WIB*
 
-Nama       : ${guestName}
-Perusahaan : ${company || '-'}
-Departemen : ${department}
-No. Kunjungan : ${visitNumber}
-Jam Masuk  : ${fmtTime(checkInAt)} WIB
-No. Badge  : ${badge || '-'}
+📢 *Tindakan Anda:*
+Mohon segera menemui atau berkoordinasi dengan tamu Anda di area lobi resepsionis.
 
-Mohon segera menemui tamu Anda di area resepsionis / lobi.
-
-_Pesan otomatis - Visitor Management System_`;
+${DIVIDER}
+_Pesan Otomatis • Visitor Management System_`;
 }
 
 /**
  * 6. PIC / tuan rumah: tamunya sudah keluar.
  */
 export function picGuestDeparted({ picName, guestName, company, visitNumber, checkInAt, checkOutAt }) {
-  return `*TAMU ANDA TELAH CHECK-OUT*
+  const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
+  const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+👋 *NOTIFIKASI: TAMU TELAH CHECK-OUT*
+${DIVIDER}
 
-Halo ${picName},
+Halo, *${picName}*!
+Kunjungan tamu Anda telah selesai dan tamu telah meninggalkan kawasan pabrik:
 
-Kunjungan berikut telah selesai:
+📋 *RINCIAN KUNJUNGAN:*
+👤 *Nama Tamu*     : *${guestName}*
+🏢 *Instansi*      : ${company || 'Pribadi / Perorangan'}
+🔖 *No. Kunjungan* : ${visitNumber}
+🕒 *Waktu Masuk*   : ${fmtTime(checkInAt)} WIB
+⏱️ *Waktu Keluar*  : ${fmtTime(checkOutAt)} WIB
+⏳ *Total Durasi*  : ${dur}
 
-Nama       : ${guestName}
-Perusahaan : ${company || '-'}
-No. Kunjungan : ${visitNumber}
-Masuk  : ${fmtTime(checkInAt)} WIB
-Keluar : ${fmtTime(checkOutAt)} WIB
+Seluruh data kunjungan telah diarsipkan ke dalam sistem.
 
-_Pesan otomatis - Visitor Management System_`;
+${DIVIDER}
+_Pesan Otomatis • Visitor Management System_`;
 }
 
 /**
  * 7. Management: ringkasan tamu masuk.
  */
 export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count }) {
-  return `*LAPORAN TAMU MASUK*
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+📊 *LAPORAN MONITORING: TAMU MASUK*
+${DIVIDER}
 
-Nama       : ${guestName}
-Perusahaan : ${company || '-'}
-Departemen : ${department}
-PIC        : ${picName || '-'}
-No. Kunjungan : ${visitNumber}
-Jumlah     : ${count || 1} orang
-Jam Masuk  : ${fmtTime(checkInAt)} WIB
+Pemberitahuan operasional kedatangan tamu di area pabrik:
 
-_Pesan otomatis - Visitor Management System_`;
+📋 *DETAIL KUNJUNGAN:*
+🔖 *No. Kunjungan* : *${visitNumber}*
+👤 *Nama Tamu*     : *${guestName}*
+🏢 *Instansi*      : ${company || 'Pribadi / Perorangan'}
+👥 *Jumlah Rombongan*: ${count || 1} orang
+🏛️ *Departemen*    : ${department}
+🎯 *PIC Dituju*    : ${picName || '-'}
+🕒 *Waktu Masuk*   : *${fmtTime(checkInAt)} WIB*
+📍 *Lokasi*        : Pos Gerbang Utama
+
+${DIVIDER}
+_Pesan Otomatis • Management Monitoring Feed_`;
 }
 
 /**
@@ -156,18 +218,27 @@ _Pesan otomatis - Visitor Management System_`;
  */
 export function managementDeparture({ guestName, company, department, picName, visitNumber, checkInAt, checkOutAt }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
-  return `*LAPORAN TAMU KELUAR*
+  const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+${DIVIDER}
+📈 *LAPORAN MONITORING: TAMU KELUAR*
+${DIVIDER}
 
-Nama       : ${guestName}
-Perusahaan : ${company || '-'}
-Departemen : ${department}
-PIC        : ${picName || '-'}
-No. Kunjungan : ${visitNumber}
-Masuk  : ${fmtTime(checkInAt)} WIB
-Keluar : ${fmtTime(checkOutAt)} WIB
-Durasi : ${Math.floor(mins / 60)} jam ${mins % 60} menit
+Pemberitahuan operasional tamu telah check-out dari kawasan pabrik:
 
-_Pesan otomatis - Visitor Management System_`;
+📋 *DETAIL KUNJUNGAN:*
+🔖 *No. Kunjungan* : *${visitNumber}*
+👤 *Nama Tamu*     : *${guestName}*
+🏢 *Instansi*      : ${company || 'Pribadi / Perorangan'}
+🏛️ *Departemen*    : ${department}
+🎯 *PIC Dituju*    : ${picName || '-'}
+🕒 *Waktu Masuk*   : ${fmtTime(checkInAt)} WIB
+⏱️ *Waktu Keluar*  : ${fmtTime(checkOutAt)} WIB
+⏳ *Durasi Total*  : *${dur}*
+
+${DIVIDER}
+_Pesan Otomatis • Management Monitoring Feed_`;
 }
 
 export { APP_URL };

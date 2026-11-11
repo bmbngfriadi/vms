@@ -141,13 +141,23 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
 
     // Kirim OTP melalui WhatsApp Gateway
     const waText =
-      `*VISITOR MANAGEMENT SYSTEM (VMS)*\n` +
-      `*PT CEMINDO GEMILANG TBK — PLANT BATAM*\n\n` +
-      `Halo *${user.name}*,\n` +
-      `Berikut adalah kode OTP untuk mereset kata sandi akun Anda:\n\n` +
-      `*${otp}*\n\n` +
-      `_Kode ini berlaku selama 15 menit._\n` +
-      `Jangan berikan kode ini kepada siapapun termasuk petugas. Jika Anda tidak merasa meminta reset kata sandi, abaikan pesan ini.`;
+      `🏭 *PT CEMINDO GEMILANG Tbk*\n` +
+      `📍 *Plant Batam — Security & Authentication*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔐 *KODE KEAMANAN (OTP) RESET SANDI*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `Halo, *${user.name}*!\n` +
+      `Permintaan untuk mengatur ulang kata sandi akun sistem VMS Anda telah diterima.\n\n` +
+      `🔑 *KODE VERIFIKASI ANDA:*\n` +
+      `┏━━━━━━━━━━━━━━┓\n` +
+      `   👉   *${otp}*   👈\n` +
+      `┗━━━━━━━━━━━━━━┛\n\n` +
+      `⏳ *Masa Berlaku Kode:* 15 Menit\n\n` +
+      `⚠️ *PERINGATAN KEAMANAN:*\n` +
+      `• *JANGAN* membagikan kode OTP ini kepada siapapun, termasuk pihak Security atau IT Support.\n` +
+      `• Jika Anda tidak merasa melakukan permintaan ini, abaikan pesan ini. Akun Anda tetap aman.\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Pesan Otomatis • IT & Security Department_`;
 
     notify({
       recipient: targetPhone,
@@ -237,14 +247,33 @@ router.post('/reset-password', forgotLimiter, async (req, res) => {
 
     // Kirim notifikasi konfirmasi ke WhatsApp
     if (user.phone) {
+      const nowStr = new Date().toLocaleString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta'
+      });
       notify({
         recipient: user.phone,
         type: 'PASSWORD_RESET_SUCCESS',
         message:
-          `*NOTIFIKASI KEAMANAN AKUN VMS*\n` +
-          `PT Cemindo Gemilang Tbk — Plant Batam\n\n` +
-          `Kata sandi akun Anda (*${user.name}*) telah berhasil diubah pada ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB.\n` +
-          `Jika Anda tidak melakukan perubahan ini, segera hubungi Administrator IT.`
+          `🏭 *PT CEMINDO GEMILANG Tbk*\n` +
+          `📍 *Plant Batam — Security & Authentication*\n` +
+          `━━━━━━━━━━━━━━━━━━━━━\n` +
+          `🛡️ *KATA SANDI BERHASIL DIPERBARUI*\n` +
+          `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `Halo, *${user.name}*!\n` +
+          `Kata sandi akun Visitor Management System (VMS) Anda telah berhasil diperbarui.\n\n` +
+          `📋 *RINCIAN AKTIVITAS:*\n` +
+          `👤 *Nama Akun* : ${user.name}\n` +
+          `🕒 *Waktu*     : ${nowStr} WIB\n` +
+          `📍 *Sistem*    : VMS Plant Batam\n\n` +
+          `⚠️ *Jika Anda TIDAK merasa melakukan perubahan ini:*\n` +
+          `Segera hubungi Administrator Sistem atau Departemen IT untuk mengamankan akun Anda.\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━\n` +
+          `_Pesan Otomatis • IT & Security Department_`
       });
     }
 

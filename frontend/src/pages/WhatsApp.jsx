@@ -28,7 +28,9 @@ export default function WhatsApp() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [testPhone, setTestPhone] = useState('');
-  const [testMsg, setTestMsg] = useState('Tes koneksi WhatsApp dari Visitor Management System.');
+  const [testMsg, setTestMsg] = useState(
+    '🏭 *PT CEMINDO GEMILANG Tbk*\n📍 *Plant Batam — WhatsApp Gateway*\n━━━━━━━━━━━━━━━━━━━━━\n✅ *UJI COBA KONEKSI BERHASIL*\n━━━━━━━━━━━━━━━━━━━━━\n\nPesan ini merupakan verifikasi bahwa gateway WhatsApp terhubung aktif dan siap mengirimkan barcode kunjungan serta notifikasi otomatis.'
+  );
   const [testResult, setTestResult] = useState(null);
   const [newRecipient, setNewRecipient] = useState({ name: '', phone: '', title: '' });
 

@@ -79,8 +79,8 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    endpoints.departments().then(setDepartments).catch(() => {});
-    endpoints.pics().then(setPics).catch(() => {});
+    endpoints.departments().then(setDepartments).catch(() => { });
+    endpoints.pics().then(setPics).catch(() => { });
   }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
