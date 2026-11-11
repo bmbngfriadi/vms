@@ -619,8 +619,8 @@ function CreateModal({ user, onClose, onCreated }) {
     phone: '',
     company: '',
     identityNumber: '',
-    departmentId: '',
-    picUserId: '',
+    departmentId: user?.role === 'ADMIN' ? '' : user?.departmentId || '',
+    picUserId: user?.role === 'ADMIN' ? '' : user?.id || '',
     purpose: '',
     scheduledDate: todayISO(),
     expectedTime: '09:00',
@@ -632,11 +632,35 @@ function CreateModal({ user, onClose, onCreated }) {
   const [created, setCreated] = useState(null);
 
   useEffect(() => {
-    endpoints.departments().then(setDepartments).catch(() => {});
-    endpoints.pics().then(setPics).catch(() => {});
+    endpoints.departments().then(setDepartments).catch(() => { });
+    endpoints.pics().then(setPics).catch(() => { });
   }, []);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  // Filter PIC agar hanya menampilkan staf di departemen yang dipilih
+  const filteredPics = form.departmentId
+    ? pics.filter(
+        (p) => p.departmentId === form.departmentId || p.department?.id === form.departmentId
+      )
+    : pics;
+
+  const handleDepartmentChange = (e) => {
+    const newDeptId = e.target.value;
+    setForm((prev) => {
+      // Jika PIC yang dipilih sebelumnya bukan dari departemen baru ini, reset pilihan PIC
+      const isPicStillValid = pics.some(
+        (p) =>
+          p.id === prev.picUserId &&
+          (p.departmentId === newDeptId || p.department?.id === newDeptId)
+      );
+      return {
+        ...prev,
+        departmentId: newDeptId,
+        picUserId: isPicStillValid ? prev.picUserId : ''
+      };
+    });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -699,7 +723,12 @@ function CreateModal({ user, onClose, onCreated }) {
           </div>
           <div className="w-full min-w-0">
             <label className="label">{t('register.department', 'Departemen *')}</label>
-            <select className="input" value={form.departmentId} onChange={set('departmentId')} required>
+            <select
+              className="input"
+              value={form.departmentId}
+              onChange={handleDepartmentChange}
+              required
+            >
               <option value="">— Pilih —</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -718,11 +747,18 @@ function CreateModal({ user, onClose, onCreated }) {
               onChange={set('picUserId')}
               disabled={user.role !== 'ADMIN'}
             >
-              <option value="">{user.role === 'ADMIN' ? '— Pilih PIC —' : user.name}</option>
+              <option value="">
+                {user.role === 'ADMIN'
+                  ? form.departmentId && filteredPics.length === 0
+                    ? '— Tidak ada PIC aktif di departemen ini —'
+                    : '— Pilih PIC —'
+                  : user.name}
+              </option>
               {user.role === 'ADMIN' &&
-                pics.map((p) => (
+                filteredPics.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} {p.department ? `· ${p.department.name}` : ''}
+                    {p.name}
+                    {!form.departmentId && p.department ? ` · ${p.department.name}` : ''}
                   </option>
                 ))}
             </select>

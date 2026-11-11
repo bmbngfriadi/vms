@@ -93,6 +93,7 @@ async function listPics(req, res) {
       phone: true,
       email: true,
       role: true,
+      departmentId: true,
       department: { select: { id: true, name: true } }
     },
     orderBy: { name: 'asc' }
