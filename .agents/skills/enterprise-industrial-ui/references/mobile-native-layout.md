@@ -18,16 +18,23 @@ Panduan arsitektur dan pola kode untuk menyulap web application menjadi **100% N
      - Toggle Bahasa (ID / EN) dengan padding `px-2.5 py-2` (`min-h-[38px]`).
      - Toggle Mode Terang/Gelap (`min-h-[38px] min-w-[38px]`).
      - Avatar Profil (`w-8 h-8 rounded-full`).
+   - Tombol aksi header di halaman (misal: Dashboard) pada layar smartphone ditata proporsional 2 kolom sejajar (`grid grid-cols-2 gap-2.5 w-full sm:w-auto`), jangan biarkan ada tombol ganjil yang melompat sendirian ke bawah.
 
 3. **ENLARGED BOTTOM NAVIGATION BAR (`h-[68px]`)**:
    - Bar navigasi bawah bergaya native app melayang di bagian paling bawah layar smartphone (`fixed bottom-0 inset-x-0 z-30`).
    - Tinggi bar: `68px` dengan latar kaca tembus pandang (*backdrop-blur-md*).
-   - Icon navigasi berukuran besar (`size={22}` strokeWidth={2.2}).
-   - Label teks navigasi `text-[11px] font-bold`.
-   - Area sentuhan per tombol: `min-h-[50px]` dengan transisi active pill indicator.
-   - Konten halaman (`main`) wajib memiliki padding bawah `pb-28 lg:pb-6` agar bagian bawah konten tidak terhalang oleh Bottom Bar.
+   - Icon navigasi berukuran besar (`size={21}` - `{22}` strokeWidth={2.2}).
+   - **Label teks navigasi WAJIB satu kata singkat** (contoh: *Home*, *Kunjungan*, *Laporan*, *Profil*, *Menu*). Hindari frasa 2 kata seperti "Data Kunjungan" yang akan pecah menjadi 2 baris canggung di layar smartphone.
+   - Area sentuhan per tombol: `min-h-[50px]` dengan transisi `active:scale-95`.
+   - Konten halaman (`main`) wajib memiliki padding bawah `pb-32 lg:pb-6` agar bagian bawah konten dan grafik tidak terhalang oleh Floating Button dan Bottom Bar.
 
-4. **NATIVE BOTTOM SHEET MODAL (PENGGANTI SIDEBAR)**:
+4. **MICRO-ANIMATIONS RINGAN (NATIVE FEEL)**:
+   - **Page Transition**: Transisi masuk halaman GPU-accelerated yang ringan (`.animate-page-enter`: `translateY(5px)` + `fade-in` 200ms).
+   - **Touch Feedback**: `active:scale-95` atau `active:scale-[0.98]` pada setiap tombol & kartu navigasi.
+   - **Live Status Pulse**: Dot status aktif (*Di Dalam Pabrik*) dilengkapi animasi radar kedip lembut (`animate-ping` / `animate-pulse`).
+   - **Data Chart Rise**: Batang diagram statistik naik perlahan dengan `transition-all duration-500 ease-out`.
+
+5. **NATIVE BOTTOM SHEET MODAL (PENGGANTI SIDEBAR)**:
    - Tombol ke-5 di Bottom Bar bernama **"Menu"** (ikon `MoreHorizontal`).
    - Ketika ditekan, membuka **Action Sheet / Bottom Sheet** yang meluncur halus dari bawah layar:
      - Indikator tarikan jari (*drag bar*: `w-12 h-1.5 rounded-full mx-auto mb-3`).
@@ -36,12 +43,12 @@ Panduan arsitektur dan pola kode untuk menyulap web application menjadi **100% N
      - Tombol ganti bahasa & mode gelap/terang.
      - Tombol keluar sistem (*Logout*) bergaya merah kontras.
 
-5. **FLOATING ACTION BUTTON (FAB)**:
+6. **FLOATING ACTION BUTTON (FAB)**:
    - Tombol aksi utama (misal: Scan Barcode, Transaksi Baru) dibuat melayang melingkar di atas bottom bar:
-     - Posisi: `fixed bottom-[82px] right-5 z-40 lg:hidden flex flex-col items-center`.
-     - Tombol: `w-15 h-15 rounded-full bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-slate-900`.
-     - Ikon: `size={28}` putih tebal di tengah.
-     - Label: teks `"Scan"` kecil di bawah tombol (`text-xs font-bold text-slate-800 dark:text-slate-100`).
+     - Posisi: `fixed bottom-[82px] right-4 sm:right-6 z-40 lg:hidden flex flex-col items-center`.
+     - Tombol: `w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-brand-500 hover:from-brand-700 text-white flex items-center justify-center shadow-xl shadow-brand-600/35 ring-4 ring-white dark:ring-slate-900`.
+     - Animasi: `active:scale-90 transition-all duration-150`.
+     - Label: teks `"Scan"` kecil tebal di bawah tombol.
      - **Aturan**: Tombol FAB ini **hanya muncul di halaman Dashboard / Home (`/`)**, tidak ditampilkan di halaman sub-menu agar tidak menghalangi konten form/tabel.
 
 ---

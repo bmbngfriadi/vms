@@ -43,8 +43,19 @@ export default function StatusBadge({ status }) {
   };
 
   return (
-    <span className={`badge border ${cfg.cls}`}>
-      {t(cfg.key, cfg.label)}
+    <span className={`badge border ${cfg.cls} transition-all`}>
+      {status === 'CHECKED_IN' && (
+        <span className="relative flex h-2 w-2 mr-0.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+      )}
+      {status === 'WAITING_VALIDATION' && (
+        <span className="relative flex h-2 w-2 mr-0.5">
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 animate-pulse" />
+        </span>
+      )}
+      <span>{t(cfg.key, cfg.label)}</span>
     </span>
   );
 }

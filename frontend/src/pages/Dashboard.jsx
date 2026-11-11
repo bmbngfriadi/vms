@@ -67,29 +67,33 @@ export default function Dashboard() {
             {t('dashboard.subtitle', 'Ringkasan aktivitas tamu dan operasional pabrik hari ini.')}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 w-full sm:w-auto">
           {/* Tombol QR Barcode Walk-In untuk Standee Pos Security */}
           <button
             type="button"
             onClick={() => setShowQrModal(true)}
-            className="btn-ghost text-xs font-bold text-brand-600 dark:text-brand-400"
+            className="btn-ghost text-xs font-bold text-brand-600 dark:text-brand-400 py-2.5 px-3 min-h-[42px] rounded-xl justify-center border border-slate-200 dark:border-slate-800 shadow-xs active:scale-95 transition-all"
             title="Tampilkan barcode statis untuk registrasi tamu walk-in"
           >
             <QrCode size={16} /> QR Walk-In
           </button>
 
+          {/* Di Desktop: Muncul di header. Di Mobile: Diwakili secara elegan oleh FAB Scan bulat di kanan bawah */}
           {['ADMIN', 'SECURITY'].includes(user?.role) && (
-            <Link to="/scan" className="btn-primary">
+            <Link
+              to="/scan"
+              className="hidden sm:inline-flex btn-primary py-2.5 px-4 text-xs font-bold rounded-xl justify-center shadow-xs active:scale-95 transition-all"
+            >
               <ScanLine size={16} /> {t('dashboard.btn_scan', 'Scan Barcode')}
             </Link>
           )}
 
           <button
-            className="btn-ghost"
+            className="btn-ghost py-2.5 px-3 min-h-[42px] text-xs font-bold text-slate-700 dark:text-slate-300 rounded-xl justify-center border border-slate-200 dark:border-slate-800 shadow-xs active:scale-95 transition-all"
             onClick={handleLogout}
             title="Keluar dari sistem"
           >
-            <LogOut size={16} /> {t('nav.logout', 'Keluar')}
+            <LogOut size={16} /> {t('nav.logout_btn', 'Keluar Sistem')}
           </button>
         </div>
       </div>
@@ -134,8 +138,8 @@ export default function Dashboard() {
               <div key={t.day} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
                 <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t.count}</div>
                 <div
-                  className={`w-9 rounded-t transition-all ${
-                    t.count > 0 ? 'bg-brand-500' : 'bg-slate-200 dark:bg-slate-800'
+                  className={`w-7 sm:w-9 rounded-t transition-all duration-500 ease-out ${
+                    t.count > 0 ? 'bg-brand-500 hover:bg-brand-600' : 'bg-slate-200 dark:bg-slate-800'
                   }`}
                   style={{ height: `${t.count > 0 ? Math.max(6, (t.count / maxTrend) * 110) : 4}px` }}
                 />

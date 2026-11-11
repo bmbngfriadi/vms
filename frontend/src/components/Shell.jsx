@@ -282,27 +282,29 @@ export default function Shell() {
           </div>
         </header>
 
-        {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar yang lebih besar */}
-        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-28 lg:pb-6">
+        {/* Konten Halaman dengan padding bawah khusus mobile agar tidak terhalang bottom bar dan FAB */}
+        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-32 lg:pb-6">
           <ErrorBoundary key={location.pathname}>
-            <Outlet />
+            <div key={location.pathname} className="animate-page-enter">
+              <Outlet />
+            </div>
           </ErrorBoundary>
         </main>
 
         {/* ================= FLOATING ACTION BUTTON (FAB) SCAN ================= */}
         {/* HANYA MUNCUL DI HALAMAN HOME ('/') PADA MOBILE VIEW (< lg) SESUAI PERMINTAAN USER */}
         {location.pathname === '/' && can('page.scan') && (
-          <div className="lg:hidden fixed bottom-[82px] right-5 z-40 flex flex-col items-center select-none">
+          <div className="lg:hidden fixed bottom-[82px] right-4 z-40 flex flex-col items-center select-none animate-in zoom-in-90 fade-in duration-200">
             <button
               type="button"
               onClick={() => navigate('/scan')}
-              className="w-15 h-15 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
+              className="w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 active:scale-90 text-white flex items-center justify-center shadow-xl shadow-brand-600/35 ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
               title="Scan Barcode Tamu"
               aria-label="Scan Barcode Tamu"
             >
-              <ScanLine size={28} strokeWidth={2.4} />
+              <ScanLine size={25} strokeWidth={2.4} />
             </button>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 drop-shadow-sm">
+            <span className="text-[10.5px] font-extrabold text-slate-800 dark:text-slate-200 mt-1 drop-shadow-xs tracking-tight">
               Scan
             </span>
           </div>
@@ -331,14 +333,14 @@ export default function Shell() {
             <NavLink
               to="/visits"
               className={({ isActive }) =>
-                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${isActive
+                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] active:scale-95 ${isActive
                   ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`
               }
             >
               <Users size={22} strokeWidth={2.2} />
-              <span>{t('nav.visits', 'Tamu')}</span>
+              <span className="truncate max-w-full">{t('nav.visits_short', 'Kunjungan')}</span>
             </NavLink>
           )}
 
@@ -362,14 +364,14 @@ export default function Shell() {
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${isActive
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] active:scale-95 ${isActive
                 ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
             <UserCheck size={22} strokeWidth={2.2} />
-            <span>{t('nav.profile', 'Profil')}</span>
+            <span className="truncate max-w-full">{t('nav.profile_short', 'Profil')}</span>
           </NavLink>
 
           {/* 5. Menu Lainnya (Buka Native Bottom Sheet Modal) */}
