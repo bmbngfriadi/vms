@@ -357,35 +357,29 @@ export default function Scan() {
                   )}
 
                   {result.visit.identityPhoto && (
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                    <div
+                      className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3 cursor-pointer group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 p-2 -mx-2 rounded-xl transition-colors"
+                      onClick={() =>
+                        setPreviewPhoto({
+                          photo: result.visit.identityPhoto,
+                          visitorName: result.visit.visitorName,
+                          identityNumber: result.visit.identityNumber,
+                          title: `Foto Identitas — ${result.visit.visitorName}`,
+                          visitNumber: result.visit.visitNumber
+                        })
+                      }
+                      title="Klik untuk melihat foto ukuran penuh"
+                    >
                       <img
                         src={result.visit.identityPhoto}
                         alt="Foto Identitas"
-                        className="w-20 h-14 object-cover rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-brand-500 transition-all shrink-0"
-                        onClick={() =>
-                          setPreviewPhoto({
-                            photo: result.visit.identityPhoto,
-                            title: `Foto Identitas — ${result.visit.visitorName}`,
-                            visitNumber: result.visit.visitNumber
-                          })
-                        }
-                        title="Klik untuk perbesar foto identitas"
+                        className="w-20 h-14 object-cover rounded-md border border-slate-200 dark:border-slate-700 group-hover:opacity-90 group-hover:ring-2 group-hover:ring-brand-500 transition-all shrink-0"
                       />
                       <div>
                         <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">Foto Identitas (KTP/SIM)</div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPreviewPhoto({
-                              photo: result.visit.identityPhoto,
-                              title: `Foto Identitas — ${result.visit.visitorName}`,
-                              visitNumber: result.visit.visitNumber
-                            })
-                          }
-                          className="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline mt-0.5 inline-block text-left"
-                        >
+                        <span className="text-xs text-brand-600 dark:text-brand-400 font-medium group-hover:underline mt-0.5 inline-block text-left">
                           Klik untuk melihat ukuran penuh
-                        </button>
+                        </span>
                       </div>
                     </div>
                   )}
@@ -500,9 +494,10 @@ export default function Scan() {
       </div>
       {previewPhoto && (
         <PhotoPreviewModal
+          photoUrl={previewPhoto.photo}
           photo={previewPhoto.photo}
-          title={previewPhoto.title}
-          subtitle={previewPhoto.visitNumber}
+          visitorName={previewPhoto.visitorName || previewPhoto.title}
+          identityNumber={previewPhoto.identityNumber || previewPhoto.visitNumber}
           onClose={() => setPreviewPhoto(null)}
         />
       )}

@@ -2,13 +2,28 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download, UserCheck, Shield } from 'lucide-react';
 
-export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumber, onClose }) {
-  if (!photoUrl) return null;
+export default function PhotoPreviewModal({
+  photoUrl,
+  photo,
+  url,
+  visitorName,
+  name,
+  title,
+  identityNumber,
+  nik,
+  subtitle,
+  onClose
+}) {
+  const currentPhoto = photoUrl || photo || url;
+  if (!currentPhoto) return null;
+
+  const currentName = visitorName || name || title || 'Tamu Pabrik';
+  const currentNik = identityNumber || nik || subtitle;
 
   const handleDownload = () => {
     const a = document.createElement('a');
-    a.href = photoUrl;
-    const cleanName = (visitorName || 'tamu').replace(/\s+/g, '_');
+    a.href = currentPhoto;
+    const cleanName = String(currentName).replace(/\s+/g, '_');
     a.download = `Foto_Identitas_${cleanName}.jpg`;
     a.click();
   };
@@ -34,7 +49,7 @@ export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumbe
                 Foto Identitas (KTP / SIM / Paspor)
               </h3>
               <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                {visitorName || 'Tamu Pabrik'} {identityNumber ? `· NIK: ${identityNumber}` : ''}
+                {currentName} {currentNik ? `· ${currentNik}` : ''}
               </div>
             </div>
           </div>
@@ -51,7 +66,7 @@ export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumbe
         {/* Viewport Foto Besar */}
         <div className="my-4 relative bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[220px] max-h-[60vh] p-2">
           <img
-            src={photoUrl}
+            src={currentPhoto}
             alt="Dokumen Identitas Tamu"
             className="w-auto h-auto max-h-[56vh] max-w-full object-contain rounded-xl select-none"
           />
