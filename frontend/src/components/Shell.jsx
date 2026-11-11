@@ -184,9 +184,14 @@ export default function Shell() {
 
   const items = NAV_ITEMS.filter((n) => n.feature === 'always' || can(n.feature));
 
-  // Menu tambahan untuk Bottom Sheet Mobile (menu sekunder selain Home, Tamu, Laporan, Profil)
+  // Menu tambahan untuk Bottom Sheet Mobile (termasuk Profil, Master Data, Gateway, Fitur)
   const secondaryMenuItems = [
-    ...(can('page.scan') ? [{ to: '/scan', label: t('nav.scan', 'Scan Barcode'), desc: 'Pindai barcode tamu kedatangan & kepulangan', icon: ScanLine }] : []),
+    {
+      to: '/profile',
+      label: t('nav.profile', 'Profil Saya'),
+      desc: 'Informasi akun, nomor WhatsApp & ganti kata sandi',
+      icon: UserCheck
+    },
     ...(can('page.master') ? [{ to: '/master', label: t('nav.master', 'Master Data'), desc: 'Kelola departemen, pengguna & PIC internal', icon: Database }] : []),
     ...(can('page.whatsapp') ? [{ to: '/whatsapp', label: t('nav.whatsapp', 'WhatsApp Gateway'), desc: 'Monitor sesi Baileys & riwayat pesan OTP', icon: MessageCircle }] : []),
     ...(can('page.features') ? [{ to: '/features', label: t('nav.features', 'Manajemen Fitur'), desc: 'Role permissions & kontrol modul sistem', icon: SlidersHorizontal }] : [])
@@ -293,28 +298,9 @@ export default function Shell() {
           </ErrorBoundary>
         </main>
 
-        {/* ================= FLOATING ACTION BUTTON (FAB) SCAN ================= */}
-        {/* HANYA MUNCUL DI HALAMAN HOME ('/') PADA MOBILE VIEW (< lg) SESUAI PERMINTAAN USER */}
-        {location.pathname === '/' && can('page.scan') && (
-          <div className="lg:hidden fixed bottom-[82px] right-4 z-40 flex flex-col items-center select-none animate-in zoom-in-90 fade-in duration-200">
-            <button
-              type="button"
-              onClick={() => navigate('/scan')}
-              className="w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 active:scale-90 text-white flex items-center justify-center shadow-xl shadow-brand-600/35 ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
-              title="Scan Barcode Tamu"
-              aria-label="Scan Barcode Tamu"
-            >
-              <ScanLine size={25} strokeWidth={2.4} />
-            </button>
-            <span className="text-[10.5px] font-extrabold text-slate-800 dark:text-slate-200 mt-1 drop-shadow-xs tracking-tight">
-              Scan
-            </span>
-          </div>
-        )}
-
         {/* ================= NATIVE MOBILE BOTTOM BAR ================= */}
-        {/* Menu Navigasi Bawah Lebih Besar, Lega & Mudah Di-klik Jari */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2 shadow-2xl h-[68px]">
+        {/* 5 Slot Navigasi: Home, Kunjungan, [SCAN FLOATING DOCK DI TENGAH], Laporan, Menu */}
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-1 shadow-2xl h-[68px]">
           {/* 1. Home / Dashboard */}
           <NavLink
             to="/"
@@ -326,45 +312,13 @@ export default function Shell() {
               }`
             }
           >
-            <LayoutDashboard size={22} strokeWidth={2.2} />
+            <LayoutDashboard size={21} strokeWidth={2.2} />
             <span>Home</span>
           </NavLink>
 
           {/* 2. Tamu / Kunjungan */}
-          {can('page.visits') && (
-            <NavLink
-              to="/visits"
-              className={({ isActive }) =>
-                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] active:scale-95 ${isActive
-                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`
-              }
-            >
-              <Users size={22} strokeWidth={2.2} />
-              <span className="truncate max-w-full">{t('nav.visits_short', 'Kunjungan')}</span>
-            </NavLink>
-          )}
-
-          {/* 3. Laporan */}
-          {can('page.reports') && (
-            <NavLink
-              to="/reports"
-              className={({ isActive }) =>
-                `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${isActive
-                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`
-              }
-            >
-              <FileText size={22} strokeWidth={2.2} />
-              <span>{t('nav.reports', 'Laporan')}</span>
-            </NavLink>
-          )}
-
-          {/* 4. Profil */}
           <NavLink
-            to="/profile"
+            to="/visits"
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] active:scale-95 ${isActive
                 ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
@@ -372,8 +326,54 @@ export default function Shell() {
               }`
             }
           >
-            <UserCheck size={22} strokeWidth={2.2} />
-            <span className="truncate max-w-full">{t('nav.profile_short', 'Profil')}</span>
+            <Users size={21} strokeWidth={2.2} />
+            <span className="truncate max-w-full">{t('nav.visits_short', 'Kunjungan')}</span>
+          </NavLink>
+
+          {/* 3. TOMBOL SCAN FLOATING DI TENGAH HALAMAN (DIPERBESAR & PROMINENT) */}
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <NavLink
+              to="/scan"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center -mt-6 sm:-mt-7 group select-none ${
+                  isActive ? 'scale-105' : 'active:scale-90 transition-transform'
+                }`
+              }
+              title="Scan Barcode Tamu"
+            >
+              <div
+                className={`w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-brand-600 via-brand-500 to-rose-500 text-white flex items-center justify-center shadow-xl ring-4 ring-white dark:ring-slate-900 transition-all ${
+                  location.pathname === '/scan'
+                    ? 'shadow-brand-600/70 ring-brand-100 dark:ring-brand-950 scale-105'
+                    : 'shadow-brand-600/40 group-hover:shadow-brand-600/60'
+                }`}
+              >
+                <ScanLine size={28} strokeWidth={2.4} />
+              </div>
+              <span
+                className={`text-[10px] font-extrabold mt-0.5 tracking-tight drop-shadow-xs transition-colors ${
+                  location.pathname === '/scan'
+                    ? 'text-brand-600 dark:text-brand-400'
+                    : 'text-slate-700 dark:text-slate-300 group-hover:text-brand-600'
+                }`}
+              >
+                Scan
+              </span>
+            </NavLink>
+          </div>
+
+          {/* 4. Laporan */}
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${isActive
+                ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`
+            }
+          >
+            <FileText size={21} strokeWidth={2.2} />
+            <span>{t('nav.reports', 'Laporan')}</span>
           </NavLink>
 
           {/* 5. Menu Lainnya (Buka Native Bottom Sheet Modal) */}
@@ -385,7 +385,7 @@ export default function Shell() {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
           >
-            <MoreHorizontal size={22} strokeWidth={2.2} />
+            <MoreHorizontal size={21} strokeWidth={2.2} />
             <span>Menu</span>
           </button>
         </nav>
@@ -406,7 +406,14 @@ export default function Shell() {
               <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
 
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2.5">
+                <div
+                  className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 active:scale-98 transition-all"
+                  onClick={() => {
+                    setShowMoreSheet(false);
+                    navigate('/profile');
+                  }}
+                  title="Buka Profil Saya"
+                >
                   <div className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-sm shadow-xs">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
