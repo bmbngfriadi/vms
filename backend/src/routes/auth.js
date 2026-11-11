@@ -143,9 +143,9 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
     const waText =
       `🏭 *PT CEMINDO GEMILANG Tbk*\n` +
       `📍 *Plant Batam — Security & Authentication*\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `─────────────────\n` +
       `🔐 *KODE KEAMANAN (OTP) RESET SANDI*\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `─────────────────\n\n` +
       `Halo, *${user.name}*!\n` +
       `Permintaan untuk mengatur ulang kata sandi akun sistem VMS Anda telah diterima.\n\n` +
       `🔑 *KODE VERIFIKASI ANDA:*\n` +
@@ -156,7 +156,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
       `⚠️ *PERINGATAN KEAMANAN:*\n` +
       `• *JANGAN* membagikan kode OTP ini kepada siapapun, termasuk pihak Security atau IT Support.\n` +
       `• Jika Anda tidak merasa melakukan permintaan ini, abaikan pesan ini. Akun Anda tetap aman.\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `─────────────────\n` +
       `_Pesan Otomatis, Visitor Management System_`;
 
     notify({
@@ -261,18 +261,18 @@ router.post('/reset-password', forgotLimiter, async (req, res) => {
         message:
           `🏭 *PT CEMINDO GEMILANG Tbk*\n` +
           `📍 *Plant Batam — Security & Authentication*\n` +
-          `━━━━━━━━━━━━━━━━━━━━━\n` +
+          `─────────────────\n` +
           `🛡️ *KATA SANDI BERHASIL DIPERBARUI*\n` +
-          `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `─────────────────\n\n` +
           `Halo, *${user.name}*!\n` +
           `Kata sandi akun Visitor Management System (VMS) Anda telah berhasil diperbarui.\n\n` +
           `📋 *RINCIAN AKTIVITAS:*\n` +
-          `👤 *Nama Akun* : ${user.name}\n` +
-          `🕒 *Waktu*     : ${nowStr} WIB\n` +
-          `📍 *Sistem*    : VMS Plant Batam\n\n` +
+          `• Nama Akun: *${user.name}*\n` +
+          `• Waktu: ${nowStr} WIB\n` +
+          `• Sistem: VMS Plant Batam\n\n` +
           `⚠️ *Jika Anda TIDAK merasa melakukan perubahan ini:*\n` +
           `Segera hubungi Administrator Sistem atau Departemen IT untuk mengamankan akun Anda.\n\n` +
-          `━━━━━━━━━━━━━━━━━━━━━\n` +
+          `─────────────────\n` +
           `_Pesan Otomatis, Visitor Management System_`
       });
     }

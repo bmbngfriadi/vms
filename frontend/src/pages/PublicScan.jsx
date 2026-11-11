@@ -32,17 +32,17 @@ export default function PublicScan() {
     if (!code) return;
 
     try {
-      const parsed = new URL(code);
-      if (parsed.pathname.startsWith('/pass/')) {
-        window.location.href = parsed.pathname;
+      if (code.startsWith('http://') || code.startsWith('https://')) {
+        window.location.href = code;
         return;
       }
     } catch {
       /* token mentah */
     }
 
-    // Kompatibilitas barcode lama yang hanya berisi token.
-    window.location.href = `/pass/${encodeURIComponent(code)}`;
+    // Kompatibilitas barcode jika hanya berisi token teks mentah
+    const basePath = (import.meta.env.VITE_BASE_PATH || '/vms/').replace(/\/$/, '');
+    window.location.href = `${basePath}/pass/${encodeURIComponent(code)}`;
   };
 
   const start = async () => {

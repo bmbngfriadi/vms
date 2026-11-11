@@ -6,7 +6,8 @@ const fmtDate = (d) =>
 const fmtTime = (d) =>
   new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' });
 
-const DIVIDER = '━━━━━━━━━━━━━━━━━━━━━';
+// Panjang divider 17 karakter pas untuk bubble chat WhatsApp di mobile tanpa wrap/offside
+const DIVIDER = '─────────────────';
 const FOOTER = '_Pesan Otomatis, Visitor Management System_';
 
 /**
@@ -16,24 +17,25 @@ export function guestWalkInPass({ name, company, visitNumber, department, purpos
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
-🟢 *PENDAFTARAN KUNJUNGAN BERHASIL*
+🟢 *PENDAFTARAN KUNJUNGAN (WALK-IN)*
 ${DIVIDER}
 
 Halo, *${name}*!
-Pendaftaran kedatangan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah kami terima.
+Pendaftaran kedatangan Anda di kawasan industri *PT Cemindo Gemilang Tbk - Plant Batam* telah berhasil.
 
 📋 *RINCIAN KUNJUNGAN:*
-🔖 *No. Registrasi* : *${visitNumber}*
-🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
-🏛️ *Departemen*     : ${department}
-📝 *Keperluan*      : ${purpose || '-'}
+• No. Registrasi: *${visitNumber}*
+• Nama Tamu: *${name}*
+• Instansi: ${company || 'Pribadi / Perorangan'}
+• Departemen: ${department}
+• Keperluan: ${purpose || '-'}
 
 📌 *PANDUAN POS SECURITY:*
-1️⃣ Tunjukkan *gambar QR Code terlampir* kepada petugas Security di Pos Utama.
-2️⃣ Petugas akan memvalidasi data dan menyerahkan *Badge Tamu*.
-3️⃣ Wajib mematuhi standar Keselamatan & Kesehatan Kerja (K3) selama berada di kawasan pabrik.
+1. Tunjukkan *gambar QR Code terlampir* kepada petugas Security di Pos Utama.
+2. Petugas akan memindai QR Code dan menyerahkan *Badge Tamu*.
+3. Wajib mematuhi standar Keselamatan & Kesehatan Kerja (K3) selama berada di kawasan pabrik.
 
-🔗 *Akses Pass Digital Cadangan:*
+🔗 *Akses Pass Digital:*
 ${passUrl}
 
 ⚠️ _QR Code ini bersifat unik dan hanya berlaku untuk 1 kali validasi masuk._
@@ -55,20 +57,20 @@ Halo, *${name}*!
 Anda telah dijadwalkan berkunjung ke kawasan industri *PT Cemindo Gemilang Tbk - Plant Batam*.
 
 📋 *RINCIAN JADWAL:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-📆 *Hari/Tanggal*   : ${fmtDate(date)}
-⏰ *Waktu Rencana*  : ${time || '09:00'} WIB
-🏛️ *Departemen*     : ${department}
-🎯 *PIC Dituju*     : ${picName || '-'}
-📝 *Keperluan*      : ${purpose || '-'}
-🏢 *Instansi Tamu*  : ${company || 'Pribadi / Perorangan'}
+• No. Kunjungan: *${visitNumber}*
+• Hari, Tanggal: ${fmtDate(date)}
+• Waktu Rencana: ${time || '09:00'} WIB
+• Departemen: ${department}
+• PIC Dituju: ${picName || '-'}
+• Keperluan: ${purpose || '-'}
+• Instansi: ${company || 'Pribadi / Perorangan'}
 
 📌 *PETUNJUK KEDATANGAN:*
-• Tunjukkan *gambar QR Code terlampir* kepada petugas Security saat tiba di gerbang pabrik.
-• Harap hadir tepat waktu sesuai perkiraan jadwal kunjungan.
-• Gunakan pakaian kerja rapi, sepatu tertutup, dan patuhi standar K3 pabrik.
+1. Tunjukkan *gambar QR Code terlampir* kepada petugas Security saat tiba di gerbang pabrik.
+2. Harap hadir tepat waktu sesuai perkiraan jadwal kunjungan.
+3. Gunakan pakaian kerja rapi, sepatu tertutup, dan patuhi standar K3 pabrik.
 
-🔗 *Akses Pass Undangan Cadangan:*
+🔗 *Akses Undangan Digital:*
 ${passUrl}
 
 ${DIVIDER}
@@ -89,17 +91,18 @@ Halo, *${name}*!
 Kedatangan Anda telah berhasil divalidasi oleh petugas Security. Selamat beraktivitas di area pabrik PT Cemindo Gemilang Tbk.
 
 📋 *STATUS KUNJUNGAN:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-📥 *Waktu Masuk*    : *${fmtTime(checkInAt)} WIB*
-📝 *Keperluan*      : ${purpose || '-'}
-📍 *Lokasi Area*    : Kawasan Pabrik Plant Batam
+• Status: 🟢 *Di Dalam Pabrik (Check-In)*
+• No. Kunjungan: *${visitNumber}*
+• Waktu Masuk: *${fmtTime(checkInAt)} WIB*
+• Keperluan: ${purpose || '-'}
+• Lokasi: Kawasan Pabrik Plant Batam
 
 ⚠️ *PANDUAN KELUAR (CHECK-OUT):*
-• *Simpan gambar QR Code terlampir ini dengan baik.*
-• Barcode ini *WAJIB* ditunjukkan kepada petugas Security saat Anda akan keluar meninggalkan kawasan pabrik.
-• Kembalikan Badge Tamu kepada petugas Security sebelum meninggalkan gerbang.
+1. *Simpan gambar QR Code terlampir ini dengan baik.*
+2. Barcode ini *WAJIB* ditunjukkan kepada petugas Security saat Anda akan keluar meninggalkan kawasan pabrik.
+3. Kembalikan Badge Tamu kepada petugas Security sebelum meninggalkan gerbang.
 
-🔗 *Akses Pass Keluar Cadangan:*
+🔗 *Akses Pass Keluar:*
 ${passUrl}
 
 ${DIVIDER}
@@ -122,11 +125,12 @@ Halo, *${name}*!
 Kunjungan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah resmi selesai.
 
 📋 *RINGKASAN KUNJUNGAN:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-📝 *Keperluan*      : ${purpose || '-'}
-📥 *Waktu Masuk*    : ${fmtTime(checkInAt)} WIB
-📤 *Waktu Keluar*   : ${fmtTime(checkOutAt)} WIB
-⏳ *Total Durasi*   : *${dur}*
+• Status: 🔴 *Telah Check-Out (Keluar)*
+• No. Kunjungan: *${visitNumber}*
+• Keperluan: ${purpose || '-'}
+• Waktu Masuk: ${fmtTime(checkInAt)} WIB
+• Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
+• Total Durasi: *${dur}*
 
 🙏 *Terima kasih atas kunjungan Anda.*
 Semoga urusan dan pertemuan Anda berjalan lancar. Utamakan selalu keselamatan dalam perjalanan.
@@ -146,16 +150,18 @@ ${DIVIDER}
 ${DIVIDER}
 
 Halo, *${picName}*!
-Tamu kunjungan Anda telah menyelesaikan proses registrasi di Pos Security dan saat ini berada di area pabrik:
+Tamu kunjungan Anda telah menyelesaikan validasi di Pos Security dan saat ini telah memasuki kawasan pabrik:
 
 📋 *RINCIAN DATA TAMU:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-👤 *Nama Tamu*      : *${guestName}*
-🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
-🏛️ *Departemen*     : ${department}
-📝 *Keperluan*      : ${purpose || '-'}
-🏷️ *No. Badge*      : *${badge || '-'}*
-📥 *Waktu Masuk*    : *${fmtTime(checkInAt)} WIB*
+• Status: 🟢 *Di Dalam Pabrik (Masuk)*
+• No. Kunjungan: *${visitNumber}*
+• Nama Tamu: *${guestName}*
+• Instansi: ${company || 'Pribadi / Perorangan'}
+• Departemen: ${department}
+• PIC Dituju: *${picName}*
+• Keperluan: ${purpose || '-'}
+• No. Badge: *${badge || '-'}*
+• Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 
 📢 *Tindakan Anda:*
 Mohon segera menemui atau berkoordinasi dengan tamu Anda di area lobi resepsionis.
@@ -177,19 +183,21 @@ ${DIVIDER}
 ${DIVIDER}
 
 Halo, *${picName}*!
-Kunjungan tamu Anda telah selesai dan tamu telah meninggalkan kawasan pabrik:
+Kunjungan tamu Anda telah selesai dan tamu telah resmi meninggalkan kawasan pabrik:
 
 📋 *RINCIAN KUNJUNGAN:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-👤 *Nama Tamu*      : *${guestName}*
-🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
-🏛️ *Departemen*     : ${department || '-'}
-📝 *Keperluan*      : ${purpose || '-'}
-📥 *Waktu Masuk*    : ${fmtTime(checkInAt)} WIB
-📤 *Waktu Keluar*   : ${fmtTime(checkOutAt)} WIB
-⏳ *Total Durasi*   : *${dur}*
+• Status: 🔴 *Telah Keluar Pabrik*
+• No. Kunjungan: *${visitNumber}*
+• Nama Tamu: *${guestName}*
+• Instansi: ${company || 'Pribadi / Perorangan'}
+• Departemen: ${department || '-'}
+• PIC Dituju: *${picName}*
+• Keperluan: ${purpose || '-'}
+• Waktu Masuk: ${fmtTime(checkInAt)} WIB
+• Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
+• Total Durasi: *${dur}*
 
-Seluruh data kunjungan telah diarsipkan ke dalam sistem.
+Seluruh riwayat kunjungan telah diarsipkan ke dalam sistem.
 
 ${DIVIDER}
 ${FOOTER}`;
@@ -208,15 +216,16 @@ ${DIVIDER}
 Pemberitahuan operasional kedatangan tamu di kawasan industri:
 
 📋 *DETAIL KUNJUNGAN:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-👤 *Nama Tamu*      : *${guestName}*
-🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
-👥 *Jumlah Orang*   : ${count || 1} orang
-🏛️ *Departemen*     : ${department}
-🎯 *PIC Dituju*     : ${picName || '-'}
-📝 *Keperluan*      : ${purpose || '-'}
-📥 *Waktu Masuk*    : *${fmtTime(checkInAt)} WIB*
-📍 *Lokasi Area*    : Pos Gerbang Utama
+• Status: 🟢 *Masuk Kawasan Pabrik*
+• No. Kunjungan: *${visitNumber}*
+• Nama Tamu: *${guestName}*
+• Instansi: ${company || 'Pribadi / Perorangan'}
+• Jumlah Orang: ${count || 1} orang
+• Departemen: ${department}
+• PIC Dituju: ${picName || '-'}
+• Keperluan: ${purpose || '-'}
+• Waktu Masuk: *${fmtTime(checkInAt)} WIB*
+• Lokasi Area: Pos Gerbang Utama
 
 ${DIVIDER}
 ${FOOTER}`;
@@ -237,16 +246,17 @@ ${DIVIDER}
 Pemberitahuan operasional tamu telah check-out dari kawasan industri:
 
 📋 *DETAIL KUNJUNGAN:*
-🔖 *No. Kunjungan*  : *${visitNumber}*
-👤 *Nama Tamu*      : *${guestName}*
-🏢 *Instansi*       : ${company || 'Pribadi / Perorangan'}
-👥 *Jumlah Orang*   : ${count || 1} orang
-🏛️ *Departemen*     : ${department}
-🎯 *PIC Dituju*     : ${picName || '-'}
-📝 *Keperluan*      : ${purpose || '-'}
-📥 *Waktu Masuk*    : ${fmtTime(checkInAt)} WIB
-📤 *Waktu Keluar*   : ${fmtTime(checkOutAt)} WIB
-⏳ *Durasi Total*   : *${dur}*
+• Status: 🔴 *Telah Check-Out (Keluar)*
+• No. Kunjungan: *${visitNumber}*
+• Nama Tamu: *${guestName}*
+• Instansi: ${company || 'Pribadi / Perorangan'}
+• Jumlah Orang: ${count || 1} orang
+• Departemen: ${department}
+• PIC Dituju: ${picName || '-'}
+• Keperluan: ${purpose || '-'}
+• Waktu Masuk: ${fmtTime(checkInAt)} WIB
+• Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
+• Durasi Total: *${dur}*
 
 ${DIVIDER}
 ${FOOTER}`;

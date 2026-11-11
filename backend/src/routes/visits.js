@@ -441,43 +441,182 @@ publicRouter.get('/pass/:token', async (req, res) => {
       include: { visit: { include: VISIT_INCLUDE } }
     });
 
-    if (!tokenRow) return res.status(404).json({ error: 'Pass tidak ditemukan' });
+    if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
 
     const visit = tokenRow.visit;
     const current = activeToken(visit, 'CHECK_OUT') || activeToken(visit, 'CHECK_IN');
 
-    if (!current) {
-      return res.json({
-        visitNumber: visit.visitNumber,
-        visitorName: visit.visitor.fullName,
-        company: visit.visitor.company,
-        department: visit.department.name,
-        picName: visit.picUser?.name || visit.picNameManual,
-        status: visit.status,
-        checkInAt: visit.checkInAt,
-        checkOutAt: visit.checkOutAt,
-        action: visit.status === 'CHECKED_OUT' ? 'DONE' : 'NONE',
-        qrDataUrl: null
+    let action = 'NONE';
+    if (visit.status === 'WAITING_VALIDATION' || visit.status === 'APPROVED') {
+      action = 'CHECK_IN';
+    } else if (visit.status === 'CHECKED_IN') {
+      action = 'CHECK_OUT';
+    } else if (visit.status === 'CHECKED_OUT') {
+      action = 'DONE';
+    }
+
+    // Ambil daftar PIC departemen untuk validasi langsung jika status check-in
+    let pics = [];
+    if (visit.departmentId && action === 'CHECK_IN') {
+      pics = await prisma.user.findMany({
+        where: {
+          departmentId: visit.departmentId,
+          isActive: true,
+          canReceiveVisits: true,
+          role: { in: ['PIC', 'ADMIN', 'MANAGEMENT'] }
+        },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' }
       });
     }
 
-    const action = current.type === 'CHECK_OUT' ? 'CHECK_OUT' : 'CHECK_IN';
-
     res.json({
+      id: visit.id,
+      token: req.params.token,
       visitNumber: visit.visitNumber,
       visitorName: visit.visitor.fullName,
       company: visit.visitor.company,
+      phone: visit.visitor.phone,
+      identityNumber: visit.visitor.identityNumber,
+      identityPhoto: visit.identityPhoto || visit.visitor.identityPhoto,
       department: visit.department.name,
+      departmentId: visit.departmentId,
+      picUserId: visit.picUserId,
       picName: visit.picUser?.name || visit.picNameManual,
+      purpose: visit.purpose,
+      numberOfVisitors: visit.numberOfVisitors || 1,
+      vehiclePlate: visit.vehiclePlate,
+      badgeNumber: visit.badgeNumber,
+      note: visit.note,
       status: visit.status,
       action,
-      qrDataUrl: await qrDataUrl(passUrl(current.token)),
+      pics,
+      qrDataUrl: current ? await qrDataUrl(passUrl(current.token)) : null,
       checkInAt: visit.checkInAt,
       checkOutAt: visit.checkOutAt
     });
   } catch (err) {
     console.error('[Pass] error:', err.message);
     res.status(500).json({ error: 'Gagal memuat pass' });
+  }
+});
+
+// ============================================================
+// PUBLIC VALIDATION: Check-In langsung dari scan open camera
+// ============================================================
+publicRouter.post('/pass/:token/check-in', async (req, res) => {
+  try {
+    const tokenRow = await prisma.qrToken.findUnique({
+      where: { token: req.params.token },
+      include: { visit: { include: VISIT_INCLUDE } }
+    });
+
+    if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
+    const existing = tokenRow.visit;
+
+    if (!['WAITING_VALIDATION', 'APPROVED'].includes(existing.status)) {
+      return res.status(409).json({
+        error:
+          existing.status === 'CHECKED_IN'
+            ? 'Tamu sudah tercatat check-in di dalam pabrik'
+            : `Kunjungan berstatus ${existing.status} tidak dapat divalidasi`
+      });
+    }
+
+    const { picUserId, badgeNumber, note } = req.body || {};
+    const picId = picUserId || existing.picUserId;
+    if (!picId) return res.status(400).json({ error: 'PIC / Orang yang dituju wajib dipilih' });
+
+    const pic = await prisma.user.findUnique({ where: { id: picId } });
+    if (!pic || !pic.isActive) return res.status(400).json({ error: 'PIC tidak valid atau tidak aktif' });
+
+    const checkOutToken = newToken();
+    const now = new Date();
+
+    const visit = await prisma.$transaction(async (tx) => {
+      await tx.qrToken.updateMany({
+        where: { visitId: existing.id, type: 'CHECK_IN', isUsed: false },
+        data: { isUsed: true, usedAt: now }
+      });
+
+      await tx.qrToken.create({
+        data: { visitId: existing.id, token: checkOutToken, type: 'CHECK_OUT' }
+      });
+
+      return tx.visit.update({
+        where: { id: existing.id },
+        data: {
+          status: 'CHECKED_IN',
+          checkInAt: now,
+          picUserId: pic.id,
+          badgeNumber: badgeNumber ? String(badgeNumber).trim() : null,
+          note: note || existing.note
+        },
+        include: VISIT_INCLUDE
+      });
+    });
+
+    await notifyCheckIn(visit, req);
+
+    res.json({
+      ok: true,
+      status: 'CHECKED_IN',
+      action: 'CHECK_OUT',
+      nextPassToken: checkOutToken,
+      checkInAt: visit.checkInAt,
+      badgeNumber: visit.badgeNumber,
+      message: 'Validasi Masuk Berhasil! Tamu resmi diizinkan memasuki kawasan pabrik.'
+    });
+  } catch (err) {
+    console.error('[PublicCheckIn] error:', err);
+    res.status(500).json({ error: 'Gagal memproses check-in: ' + err.message });
+  }
+});
+
+// ============================================================
+// PUBLIC VALIDATION: Check-Out langsung dari scan open camera
+// ============================================================
+publicRouter.post('/pass/:token/check-out', async (req, res) => {
+  try {
+    const tokenRow = await prisma.qrToken.findUnique({
+      where: { token: req.params.token },
+      include: { visit: { include: VISIT_INCLUDE } }
+    });
+
+    if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
+    const existing = tokenRow.visit;
+
+    if (existing.status !== 'CHECKED_IN') {
+      return res.status(409).json({ error: 'Tamu belum check-in atau sudah menyelesaikan check-out' });
+    }
+
+    const now = new Date();
+
+    const visit = await prisma.$transaction(async (tx) => {
+      await tx.qrToken.updateMany({
+        where: { visitId: existing.id, type: 'CHECK_OUT', isUsed: false },
+        data: { isUsed: true, usedAt: now }
+      });
+
+      return tx.visit.update({
+        where: { id: existing.id },
+        data: { status: 'CHECKED_OUT', checkOutAt: now },
+        include: VISIT_INCLUDE
+      });
+    });
+
+    await notifyCheckOut(visit);
+
+    res.json({
+      ok: true,
+      status: 'CHECKED_OUT',
+      action: 'DONE',
+      checkOutAt: visit.checkOutAt,
+      message: 'Check-Out Berhasil! Kunjungan tamu telah selesai.'
+    });
+  } catch (err) {
+    console.error('[PublicCheckOut] error:', err);
+    res.status(500).json({ error: 'Gagal memproses check-out: ' + err.message });
   }
 });
 
