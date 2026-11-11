@@ -212,19 +212,24 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
               <input className="input" value={form.picNameManual} onChange={set('picNameManual')} />
             </div>
           )}
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">Tanggal Rencana *</label>
             <input
               type="date"
-              className="input"
+              className="input w-full max-w-full min-w-0"
               value={form.scheduledDate}
               onChange={set('scheduledDate')}
               required
             />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">Perkiraan Jam</label>
-            <input type="time" className="input" value={form.expectedTime} onChange={set('expectedTime')} />
+            <input
+              type="time"
+              className="input w-full max-w-full min-w-0"
+              value={form.expectedTime}
+              onChange={set('expectedTime')}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="label">Keperluan *</label>

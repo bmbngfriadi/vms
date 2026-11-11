@@ -179,7 +179,7 @@ export default function Visits() {
           </select>
           <input
             type="date"
-            className="input"
+            className="input w-full max-w-full min-w-0"
             value={date}
             onChange={(e) => {
               setDate(e.target.value);
@@ -678,12 +678,12 @@ function CreateModal({ user, onClose, onCreated }) {
   return (
     <Modal title={t('visits.btn_preregister', 'Buat Janji Temu Tamu')} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full min-w-0">
+          <div className="sm:col-span-2 w-full min-w-0">
             <label className="label">{t('register.full_name', 'Nama Tamu *')}</label>
             <input className="input" value={form.fullName} onChange={set('fullName')} required />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('register.phone', 'No. WhatsApp Tamu *')}</label>
             <input
               className="input"
@@ -693,11 +693,11 @@ function CreateModal({ user, onClose, onCreated }) {
               required
             />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('register.company', 'Perusahaan')}</label>
             <input className="input" value={form.company} onChange={set('company')} />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('register.department', 'Departemen *')}</label>
             <select className="input" value={form.departmentId} onChange={set('departmentId')} required>
               <option value="">— Pilih —</option>
@@ -708,7 +708,7 @@ function CreateModal({ user, onClose, onCreated }) {
               ))}
             </select>
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">
               PIC {user.role === 'ADMIN' ? '(boleh pilih PIC lain)' : '(Anda)'}
             </label>
@@ -727,25 +727,30 @@ function CreateModal({ user, onClose, onCreated }) {
                 ))}
             </select>
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">Tanggal *</label>
             <input
               type="date"
-              className="input"
+              className="input w-full max-w-full min-w-0"
               value={form.scheduledDate}
               onChange={set('scheduledDate')}
               required
             />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">Perkiraan Jam</label>
-            <input type="time" className="input" value={form.expectedTime} onChange={set('expectedTime')} />
+            <input
+              type="time"
+              className="input w-full max-w-full min-w-0"
+              value={form.expectedTime}
+              onChange={set('expectedTime')}
+            />
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 w-full min-w-0">
             <label className="label">{t('register.purpose', 'Keperluan *')}</label>
             <textarea className="input min-h-[70px]" value={form.purpose} onChange={set('purpose')} required />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('register.visitors_count', 'Jumlah Orang')}</label>
             <input
               type="number"
@@ -755,7 +760,7 @@ function CreateModal({ user, onClose, onCreated }) {
               onChange={set('numberOfVisitors')}
             />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('register.vehicle_plate', 'No. Polisi')}</label>
             <input className="input" value={form.vehiclePlate} onChange={set('vehiclePlate')} />
           </div>

@@ -10,6 +10,29 @@
   body {
     @apply bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased;
   }
+
+  /* Mencegah input tanggal & waktu WebKit / iOS Safari (iPhone) overflow / offside */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+  }
+
+  /* Ratakan teks nilai tanggal/jam ke kiri di iPhone dan atur line-height agar proporsional */
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    min-height: 1.4em;
+  }
 }
 
 @layer components {
@@ -22,7 +45,7 @@
   }
 
   .input {
-    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 sm:py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500 dark:bg-slate-800/90 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-600 transition-colors min-h-[42px] sm:min-h-[38px];
+    @apply w-full max-w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 sm:py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 disabled:bg-slate-100 disabled:text-slate-500 dark:bg-slate-800/90 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-900 dark:disabled:text-slate-600 transition-colors min-h-[42px] sm:min-h-[38px] box-border;
   }
 
   .btn {

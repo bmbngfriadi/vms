@@ -97,14 +97,24 @@ export default function Reports() {
       </div>
 
       <div className="card p-4">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end w-full min-w-0">
+          <div className="w-full min-w-0">
             <label className="label">{t('reports.from_date', 'Dari tanggal')}</label>
-            <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input
+              type="date"
+              className="input w-full max-w-full min-w-0"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <label className="label">{t('reports.to_date', 'Sampai tanggal')}</label>
-            <input type="date" className="input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <input
+              type="date"
+              className="input w-full max-w-full min-w-0"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
           </div>
           <div>
             <label className="label">{t('reports.status', 'Status')}</label>
