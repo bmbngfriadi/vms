@@ -13,7 +13,7 @@ const FOOTER = '_Pesan Otomatis, Visitor Management System_';
 /**
  * 1. Tamu walk-in: barcode awal (check-in) untuk ditunjukkan ke security.
  */
-export function guestWalkInPass({ name, company, visitNumber, department, purpose, passUrl }) {
+export function guestWalkInPass({ name, company, visitNumber, department, purpose }) {
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -35,9 +35,6 @@ Pendaftaran kedatangan Anda di kawasan industri *PT Cemindo Gemilang Tbk - Plant
 2. Petugas akan memindai QR Code dan menyerahkan *Badge Tamu*.
 3. Wajib mematuhi standar Keselamatan & Kesehatan Kerja (K3) selama berada di kawasan pabrik.
 
-🔗 *Akses Pass Digital:*
-${passUrl}
-
 ⚠️ _QR Code ini bersifat unik dan hanya berlaku untuk 1 kali validasi masuk._
 ${DIVIDER}
 ${FOOTER}`;
@@ -46,7 +43,7 @@ ${FOOTER}`;
 /**
  * 2. Tamu pre-registered: barcode dikirim saat PIC membuat janji temu.
  */
-export function guestPreRegisteredPass({ name, company, visitNumber, department, picName, purpose, date, time, passUrl }) {
+export function guestPreRegisteredPass({ name, company, visitNumber, department, picName, purpose, date, time }) {
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -70,9 +67,6 @@ Anda telah dijadwalkan berkunjung ke kawasan industri *PT Cemindo Gemilang Tbk -
 2. Harap hadir tepat waktu sesuai perkiraan jadwal kunjungan.
 3. Gunakan pakaian kerja rapi, sepatu tertutup, dan patuhi standar K3 pabrik.
 
-🔗 *Akses Undangan Digital:*
-${passUrl}
-
 ${DIVIDER}
 ${FOOTER}`;
 }
@@ -80,7 +74,7 @@ ${FOOTER}`;
 /**
  * 3. Tamu sudah check-in: barcode baru untuk check-out.
  */
-export function guestCheckOutPass({ name, visitNumber, checkInAt, purpose, passUrl }) {
+export function guestCheckOutPass({ name, visitNumber, checkInAt, purpose }) {
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -101,9 +95,6 @@ Kedatangan Anda telah berhasil divalidasi oleh petugas Security. Selamat berakti
 1. *Simpan gambar QR Code terlampir ini dengan baik.*
 2. Barcode ini *WAJIB* ditunjukkan kepada petugas Security saat Anda akan keluar meninggalkan kawasan pabrik.
 3. Kembalikan Badge Tamu kepada petugas Security sebelum meninggalkan gerbang.
-
-🔗 *Akses Pass Keluar:*
-${passUrl}
 
 ${DIVIDER}
 ${FOOTER}`;

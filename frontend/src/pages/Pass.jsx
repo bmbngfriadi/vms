@@ -18,7 +18,9 @@ import {
   Car,
   FileText,
   BadgeCheck,
-  QrCode
+  QrCode,
+  Sparkles,
+  Smartphone
 } from 'lucide-react';
 import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
@@ -81,7 +83,13 @@ export default function Pass() {
         note: note.trim()
       });
       setActionSuccessMsg(res.message || 'Validasi Check-In Berhasil! Tamu resmi diizinkan masuk.');
-      await load(true);
+      setData((prev) => ({
+        ...prev,
+        status: 'CHECKED_IN',
+        action: 'CHECKIN_SUCCESS',
+        checkInAt: res.checkInAt || new Date().toISOString(),
+        badgeNumber: res.badgeNumber || badgeNumber.trim()
+      }));
     } catch (err) {
       setActionErrorMsg(errMsg(err, 'Gagal memproses validasi check-in'));
     } finally {
@@ -98,7 +106,12 @@ export default function Pass() {
     try {
       const res = await endpoints.publicCheckOut(token, { note: note.trim() });
       setActionSuccessMsg(res.message || 'Check-Out Berhasil! Kunjungan tamu telah selesai.');
-      await load(true);
+      setData((prev) => ({
+        ...prev,
+        status: 'CHECKED_OUT',
+        action: 'CHECKOUT_SUCCESS',
+        checkOutAt: res.checkOutAt || new Date().toISOString()
+      }));
     } catch (err) {
       setActionErrorMsg(errMsg(err, 'Gagal memproses check-out tamu'));
     } finally {
@@ -132,8 +145,9 @@ export default function Pass() {
   }
 
   const isCheckInAction = data.action === 'CHECK_IN';
+  const isCheckInSuccess = data.action === 'CHECKIN_SUCCESS' || data.action === 'ALREADY_CHECKED_IN';
   const isCheckOutAction = data.action === 'CHECK_OUT';
-  const isDone = data.status === 'CHECKED_OUT';
+  const isDone = data.action === 'CHECKOUT_SUCCESS' || data.action === 'ALREADY_CHECKED_OUT' || data.status === 'CHECKED_OUT';
 
   // Hitung durasi jika tamu sudah check-in
   const calcDuration = () => {
@@ -220,9 +234,11 @@ export default function Pass() {
               )}
               <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                 {isDone
-                  ? 'Kunjungan Telah Selesai'
+                  ? 'Kunjungan Telah Selesai (Check-Out)'
                   : isCheckOutAction
-                  ? 'Tamu di Dalam Pabrik — Siap Check-Out'
+                  ? 'Validasi Keluar Tamu (Check-Out)'
+                  : isCheckInSuccess
+                  ? 'Tamu Resmi Masuk (Check-In Sukses)'
                   : 'Validasi Masuk Tamu (Check-In)'}
               </span>
             </div>
@@ -236,7 +252,7 @@ export default function Pass() {
                   : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800'
               }`}
             >
-              {data.status}
+              {isCheckInSuccess ? 'DI DALAM PABRIK' : data.status}
             </span>
           </div>
 
@@ -314,7 +330,7 @@ export default function Pass() {
               )}
             </div>
 
-            {/* ================= AKSI 1: CHECK-IN LANGSUNG (TANPA LOGIN) ================= */}
+            {/* ================= TAMPILAN 1: FORM CHECK-IN LANGSUNG ================= */}
             {isCheckInAction && (
               <form onSubmit={handleCheckIn} className="space-y-3.5 pt-1">
                 <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-3">
@@ -389,7 +405,55 @@ export default function Pass() {
               </form>
             )}
 
-            {/* ================= AKSI 2: CHECK-OUT LANGSUNG (TANPA LOGIN) ================= */}
+            {/* ================= TAMPILAN 2: KONFIRMASI CHECK-IN BERHASIL ================= */}
+            {isCheckInSuccess && (
+              <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+                <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center space-y-2.5">
+                  <div className="w-13 h-13 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 mx-auto flex items-center justify-center shadow-xs">
+                    <CheckCircle2 size={30} />
+                  </div>
+                  <div>
+                    <div className="text-base font-extrabold text-emerald-950 dark:text-emerald-100">
+                      Validasi Masuk Berhasil!
+                    </div>
+                    <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium mt-0.5">
+                      Tamu resmi diizinkan memasuki kawasan pabrik PT Cemindo Gemilang Tbk.
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-emerald-200/70 dark:border-emerald-800/70 grid grid-cols-2 gap-2 text-xs text-left">
+                    <div className="bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-xl border border-emerald-200/60 dark:border-emerald-900/60">
+                      <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block font-medium">Waktu Masuk:</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {fmtTime(data.checkInAt)} WIB
+                      </span>
+                    </div>
+                    <div className="bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-xl border border-emerald-200/60 dark:border-emerald-900/60">
+                      <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block font-medium">Badge Diberikan:</span>
+                      <span className="font-mono font-bold text-brand-600 dark:text-brand-400 text-xs sm:text-sm">
+                        {data.badgeNumber ? `Badge #${data.badgeNumber}` : 'Tanpa Badge'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Petunjuk Security & Tamu untuk Keluar Pabrik */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 space-y-2 text-xs text-blue-950 dark:text-blue-100">
+                  <div className="font-bold flex items-center gap-1.5 text-blue-800 dark:text-blue-200">
+                    <Smartphone size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Instruksi Kepulangan / Check-Out:</span>
+                  </div>
+                  <p className="text-[11.5px] leading-relaxed text-blue-900 dark:text-blue-200">
+                    Barcode khusus <strong>Check-Out</strong> telah otomatis dikirimkan ke nomor WhatsApp tamu.
+                  </p>
+                  <div className="p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/50 border border-blue-200/70 dark:border-blue-800 text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
+                    🛡️ <strong>Aturan Security:</strong> Saat tamu hendak keluar kawasan pabrik, petugas Security <strong>wajib memindai Barcode Check-Out</strong> yang dikirimkan ke tamu tersebut untuk memunculkan tombol konfirmasi keluar dan memvalidasi kepulangan tamu.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================= TAMPILAN 3: FORM CHECK-OUT LANGSUNG (DARI BARCODE CHECKOUT) ================= */}
             {isCheckOutAction && (
               <div className="space-y-3.5 pt-1">
                 <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 space-y-2 text-xs">
@@ -434,21 +498,38 @@ export default function Pass() {
               </div>
             )}
 
-            {/* ================= STATUS 3: SELESAI (CHECKED-OUT) ================= */}
+            {/* ================= TAMPILAN 4: KONFIRMASI CHECK-OUT SELESAI ================= */}
             {isDone && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
-                  <CheckCircle2 size={26} />
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center space-y-2.5 animate-in fade-in duration-200">
+                <div className="w-13 h-13 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs">
+                  <CheckCircle2 size={28} />
                 </div>
-                <div className="text-sm font-bold text-slate-800 dark:text-white">
-                  Kunjungan Telah Resmi Selesai
+                <div>
+                  <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                    Check-Out Berhasil · Kunjungan Selesai
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Tamu telah resmi meninggalkan kawasan pabrik PT Cemindo Gemilang Tbk.
+                  </div>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Tamu telah tercatat keluar pada{' '}
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    {fmtTime(data.checkOutAt)} WIB
-                  </span>{' '}
-                  (Total Durasi: {calcDuration()}).
+
+                <div className="pt-2 border-t border-slate-200/70 dark:border-slate-700/70 grid grid-cols-2 gap-2 text-xs text-left">
+                  <div className="bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-[10.5px] text-slate-400 block font-medium">Waktu Keluar:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {fmtTime(data.checkOutAt)} WIB
+                    </span>
+                  </div>
+                  <div className="bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-[10.5px] text-slate-400 block font-medium">Total Durasi:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {calcDuration()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 pt-1">
+                  ✓ Fisik Badge Tamu telah diserahkan kembali ke Pos Security.
                 </div>
               </div>
             )}
@@ -469,7 +550,7 @@ export default function Pass() {
                   <div className="mt-3 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700 inline-block animate-in fade-in duration-150">
                     <img src={data.qrDataUrl} alt="Barcode Pass" className="w-48 h-48 mx-auto rounded-xl bg-white p-2 shadow-xs" />
                     <p className="text-[11px] text-slate-500 mt-2">
-                      {isCheckOutAction ? 'Barcode Check-Out Tamu' : 'Barcode Check-In Tamu'}
+                      {data.tokenType === 'CHECK_OUT' ? 'Barcode Check-Out Tamu' : 'Barcode Check-In Tamu'}
                     </p>
                   </div>
                 )}

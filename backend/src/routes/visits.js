@@ -444,15 +444,25 @@ publicRouter.get('/pass/:token', async (req, res) => {
     if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
 
     const visit = tokenRow.visit;
-    const current = activeToken(visit, 'CHECK_OUT') || activeToken(visit, 'CHECK_IN');
+    const tokenType = tokenRow.type; // 'CHECK_IN' | 'CHECK_OUT'
 
     let action = 'NONE';
-    if (visit.status === 'WAITING_VALIDATION' || visit.status === 'APPROVED') {
-      action = 'CHECK_IN';
-    } else if (visit.status === 'CHECKED_IN') {
-      action = 'CHECK_OUT';
-    } else if (visit.status === 'CHECKED_OUT') {
-      action = 'DONE';
+    if (tokenType === 'CHECK_IN') {
+      if (['WAITING_VALIDATION', 'APPROVED'].includes(visit.status) && !tokenRow.isUsed) {
+        action = 'CHECK_IN';
+      } else if (visit.status === 'CHECKED_IN') {
+        action = 'ALREADY_CHECKED_IN';
+      } else if (visit.status === 'CHECKED_OUT') {
+        action = 'ALREADY_CHECKED_OUT';
+      }
+    } else if (tokenType === 'CHECK_OUT') {
+      if (visit.status === 'CHECKED_IN' && !tokenRow.isUsed) {
+        action = 'CHECK_OUT';
+      } else if (visit.status === 'CHECKED_OUT' || tokenRow.isUsed) {
+        action = 'CHECKOUT_SUCCESS';
+      } else {
+        action = 'INVALID';
+      }
     }
 
     // Ambil daftar PIC departemen untuk validasi langsung jika status check-in
@@ -473,6 +483,8 @@ publicRouter.get('/pass/:token', async (req, res) => {
     res.json({
       id: visit.id,
       token: req.params.token,
+      tokenType,
+      isUsed: tokenRow.isUsed,
       visitNumber: visit.visitNumber,
       visitorName: visit.visitor.fullName,
       company: visit.visitor.company,
@@ -491,7 +503,7 @@ publicRouter.get('/pass/:token', async (req, res) => {
       status: visit.status,
       action,
       pics,
-      qrDataUrl: current ? await qrDataUrl(passUrl(current.token)) : null,
+      qrDataUrl: await qrDataUrl(passUrl(tokenRow.token, req)),
       checkInAt: visit.checkInAt,
       checkOutAt: visit.checkOutAt
     });
@@ -512,6 +524,16 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
     });
 
     if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
+
+    // ATURAN KETAT: Hanya token tipe CHECK_IN dan belum pernah digunakan yang boleh validasi masuk
+    if (tokenRow.type !== 'CHECK_IN') {
+      return res.status(400).json({ error: 'Barcode ini bukan barcode validasi masuk (Check-In)' });
+    }
+
+    if (tokenRow.isUsed) {
+      return res.status(409).json({ error: 'Barcode check-in ini sudah pernah divalidasi sebelumnya' });
+    }
+
     const existing = tokenRow.visit;
 
     if (!['WAITING_VALIDATION', 'APPROVED'].includes(existing.status)) {
@@ -561,11 +583,10 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
     res.json({
       ok: true,
       status: 'CHECKED_IN',
-      action: 'CHECK_OUT',
-      nextPassToken: checkOutToken,
+      action: 'CHECKIN_SUCCESS',
       checkInAt: visit.checkInAt,
       badgeNumber: visit.badgeNumber,
-      message: 'Validasi Masuk Berhasil! Tamu resmi diizinkan memasuki kawasan pabrik.'
+      message: 'Validasi Check-In Berhasil! Tamu resmi diizinkan memasuki kawasan pabrik.'
     });
   } catch (err) {
     console.error('[PublicCheckIn] error:', err);
@@ -584,6 +605,18 @@ publicRouter.post('/pass/:token/check-out', async (req, res) => {
     });
 
     if (!tokenRow) return res.status(404).json({ error: 'Barcode pass tidak valid atau tidak ditemukan' });
+
+    // ATURAN KETAT: Hanya token tipe CHECK_OUT dan belum pernah digunakan yang boleh validasi keluar
+    if (tokenRow.type !== 'CHECK_OUT') {
+      return res.status(400).json({
+        error: 'Barcode ini bukan barcode check-out. Harap scan barcode khusus check-out yang dikirimkan ke WhatsApp tamu saat keluar.'
+      });
+    }
+
+    if (tokenRow.isUsed) {
+      return res.status(409).json({ error: 'Barcode check-out ini sudah pernah digunakan' });
+    }
+
     const existing = tokenRow.visit;
 
     if (existing.status !== 'CHECKED_IN') {
@@ -610,7 +643,7 @@ publicRouter.post('/pass/:token/check-out', async (req, res) => {
     res.json({
       ok: true,
       status: 'CHECKED_OUT',
-      action: 'DONE',
+      action: 'CHECKOUT_SUCCESS',
       checkOutAt: visit.checkOutAt,
       message: 'Check-Out Berhasil! Kunjungan tamu telah selesai.'
     });

@@ -141,30 +141,25 @@ export default function Register() {
             <div className="mt-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-3 text-left">
               <p className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-200 leading-relaxed flex items-start gap-1.5">
                 <Sparkles size={14} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <span>{t('register.success_note', 'Simpan halaman ini. Barcode juga dikirim ke WhatsApp Anda. Setelah Security memvalidasi, barcode baru untuk keluar akan muncul otomatis di halaman pass.')}</span>
+                <span>
+                  {t(
+                    'register.success_note',
+                    'Simpan barcode ini atau periksa gambar barcode yang telah dikirimkan ke WhatsApp Anda. Tunjukkan barcode kepada petugas Security di Pos Utama saat tiba.'
+                  )}
+                </span>
               </p>
             </div>
 
-            <div className="mt-6 space-y-2">
-              <Link
-                to={`/pass/${result.passToken}`}
-                className="btn-primary w-full py-3 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl shadow-md flex items-center justify-center gap-2"
-                onClick={() => setResult(null)}
-              >
-                <QrCode size={17} />
-                <span>{t('register.btn_open_pass', 'Buka Halaman Pass')}</span>
-                <ArrowRight size={16} />
-              </Link>
-
+            <div className="mt-6">
               <button
                 type="button"
                 onClick={() => {
                   setResult(null);
                   setForm(EMPTY);
                 }}
-                className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 py-2 transition-colors font-medium"
+                className="btn-secondary w-full py-3 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center justify-center gap-2"
               >
-                ← {t('register.btn_register_another', 'Daftarkan Tamu Lain')}
+                <span>← {t('register.btn_register_another', 'Daftarkan Tamu Lain')}</span>
               </button>
             </div>
           </div>
