@@ -101,7 +101,7 @@ export default function Register() {
           {/* Header Brand */}
           <div className="flex items-center justify-center gap-2.5 mb-2">
             <div className="bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
-              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-8 w-auto" />
+              <img src="/logo.png" alt="PT Cemindo Gemilang Tbk" className="h-8 w-auto" />
             </div>
             <div className="text-left">
               <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
@@ -181,11 +181,11 @@ export default function Register() {
         <header className="mb-3 sm:mb-5 flex items-center justify-between gap-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <div className="bg-white dark:bg-slate-800 p-1 sm:p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
-              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-7 sm:h-8 w-auto" />
+              <img src="/logo.png" alt="PT Cemindo Gemilang Tbk" className="h-7 sm:h-8 w-auto" />
             </div>
             <div className="min-w-0">
               <div className="text-[12px] sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
-                PT Cemindo Gemilang
+                PT Cemindo Gemilang Tbk
               </div>
               <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                 Plant Batam · {t('register.badge', 'Pendaftaran Tamu')}

@@ -31,11 +31,11 @@ function SidebarBrand() {
     <div className="px-5 pt-5 pb-4 border-b border-slate-200/80 dark:border-slate-800">
       <div className="flex items-center gap-2.5">
         <div className="bg-white dark:bg-slate-800 p-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
-          <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-8 w-auto" />
+          <img src="/logo.png" alt="PT Cemindo Gemilang Tbk" className="h-8 w-auto" />
         </div>
         <div className="min-w-0">
           <div className="text-[12.5px] font-bold text-slate-900 dark:text-white leading-tight">
-            PT CEMINDO GEMILANG
+            PT CEMINDO GEMILANG Tbk
           </div>
           <div className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">
             Visitor Management · Batam
@@ -241,11 +241,11 @@ export default function Shell() {
           <div className="flex items-center gap-2.5">
             {/* Logo untuk Mobile */}
             <div className="lg:hidden bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
-              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-8 w-auto" />
+              <img src="/logo.png" alt="PT Cemindo Gemilang Tbk" className="h-8 w-auto" />
             </div>
             <div className="flex flex-col">
               <span className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                PT Cemindo Gemilang
+                PT Cemindo Gemilang Tbk
               </span>
               <span className="text-[10.5px] text-slate-500 dark:text-slate-400">
                 Visitor Management · Batam

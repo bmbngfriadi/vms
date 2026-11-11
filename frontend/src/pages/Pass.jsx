@@ -86,11 +86,11 @@ export default function Pass() {
         <header className="flex items-center justify-between gap-2 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
-              <img src="/logo.png" alt="PT Cemindo Gemilang" className="h-7 w-auto" />
+              <img src="/logo.png" alt="PT Cemindo Gemilang Tbk" className="h-7 w-auto" />
             </div>
             <div className="min-w-0">
               <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate">
-                PT Cemindo Gemilang
+                PT Cemindo Gemilang Tbk
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                 Plant Batam · Visitor Pass

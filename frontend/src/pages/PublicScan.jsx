@@ -91,7 +91,7 @@ export default function PublicScan() {
             <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
             <div>
               <div className="text-sm font-semibold text-slate-900">Scan Visitor Pass</div>
-              <div className="text-xs text-slate-500">PT Cemindo Gemilang · Plant Batam</div>
+              <div className="text-xs text-slate-500">PT Cemindo Gemilang Tbk · Plant Batam</div>
             </div>
           </div>
           <Link to="/login" className="btn-ghost text-xs shrink-0">

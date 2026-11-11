@@ -70,7 +70,7 @@ const DICTIONARY = {
     'nav.mode_dark': 'Mode Gelap',
 
     // App Branding
-    'app.title': 'PT CEMINDO GEMILANG',
+    'app.title': 'PT CEMINDO GEMILANG Tbk',
     'app.subtitle': 'Visitor Management · Batam',
     'app.welcome': 'Selamat Datang',
     'app.install': 'Install Aplikasi',
@@ -312,7 +312,7 @@ const DICTIONARY = {
     'nav.mode_dark': 'Dark Mode',
 
     // App Branding
-    'app.title': 'PT CEMINDO GEMILANG',
+    'app.title': 'PT CEMINDO GEMILANG Tbk',
     'app.subtitle': 'Visitor Management · Batam',
     'app.welcome': 'Welcome',
     'app.install': 'Install Application',

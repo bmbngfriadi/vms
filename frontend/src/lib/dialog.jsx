@@ -142,7 +142,7 @@ export function DialogProvider({ children }) {
                     {dialogState.title}
                   </h3>
                   <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    PT Cemindo Gemilang · Sistem Konfirmasi
+                    PT Cemindo Gemilang Tbk · Sistem Konfirmasi
                   </p>
                 </div>
               </div>
