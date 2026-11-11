@@ -81,7 +81,18 @@ export const endpoints = {
   waReconnect: () => api.post('/wa/reconnect').then((r) => r.data),
   waRestart: () => api.post('/wa/restart').then((r) => r.data),
   waLogout: () => api.post('/wa/logout').then((r) => r.data),
-  waTest: (phone, message) => api.post('/wa/test', { phone, message }).then((r) => r.data),
+  waTest: (phoneOrPayload, message) => {
+    const payload = typeof phoneOrPayload === 'object' && phoneOrPayload !== null
+      ? phoneOrPayload
+      : { phone: phoneOrPayload, message };
+    return api.post('/wa/test', payload).then((r) => r.data);
+  },
+  waSendTest: (phoneOrPayload, message) => {
+    const payload = typeof phoneOrPayload === 'object' && phoneOrPayload !== null
+      ? phoneOrPayload
+      : { phone: phoneOrPayload, message };
+    return api.post('/wa/test', payload).then((r) => r.data);
+  },
   waLogs: () => api.get('/wa/logs').then((r) => r.data),
   waResend: (id) => api.post(`/wa/logs/${id}/resend`).then((r) => r.data),
   recipients: () => api.get('/wa/recipients').then((r) => r.data),
