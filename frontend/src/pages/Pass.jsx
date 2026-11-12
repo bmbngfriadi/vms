@@ -26,6 +26,7 @@ import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
 import { useI18n } from '../lib/i18n.jsx';
 import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
+import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
 
 export default function Pass() {
   const { token } = useParams();
@@ -40,6 +41,8 @@ export default function Pass() {
   const [selectedPicId, setSelectedPicId] = useState('');
   const [badgeNumber, setBadgeNumber] = useState('');
   const [note, setNote] = useState('');
+  const [securityPhoto, setSecurityPhoto] = useState('');
+  const [securityIdentityNumber, setSecurityIdentityNumber] = useState('');
   const [actionBusy, setActionBusy] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
   const [actionErrorMsg, setActionErrorMsg] = useState('');
@@ -54,6 +57,7 @@ export default function Pass() {
         setData(d);
         if (d.picUserId) setSelectedPicId(d.picUserId);
         if (d.badgeNumber) setBadgeNumber(d.badgeNumber);
+        if (d.identityNumber) setSecurityIdentityNumber(d.identityNumber);
         setError('');
       })
       .catch((e) => setError(errMsg(e, 'Pass tidak ditemukan atau barcode tidak valid')))
@@ -76,11 +80,20 @@ export default function Pass() {
     setActionErrorMsg('');
     setActionSuccessMsg('');
 
+    // Validasi identitas tamu: wajib ada jika PIC belum melampirkannya
+    if (!data.identityPhoto && !securityPhoto) {
+      setActionErrorMsg('Foto identitas tamu (KTP/SIM/Paspor) wajib diambil oleh Security sebelum konfirmasi masuk.');
+      setActionBusy(false);
+      return;
+    }
+
     try {
       const res = await endpoints.publicCheckIn(token, {
         picUserId: selectedPicId || data.picUserId,
         badgeNumber: badgeNumber.trim(),
-        note: note.trim()
+        note: note.trim(),
+        identityPhoto: securityPhoto || undefined,
+        identityNumber: (securityIdentityNumber || data.identityNumber || '').trim() || undefined
       });
       setActionSuccessMsg(res.message || 'Validasi Check-In Berhasil! Tamu resmi diizinkan masuk.');
       setData((prev) => ({
@@ -88,7 +101,9 @@ export default function Pass() {
         status: 'CHECKED_IN',
         action: 'CHECKIN_SUCCESS',
         checkInAt: res.checkInAt || new Date().toISOString(),
-        badgeNumber: res.badgeNumber || badgeNumber.trim()
+        badgeNumber: res.badgeNumber || badgeNumber.trim(),
+        identityPhoto: securityPhoto || prev.identityPhoto,
+        identityNumber: securityIdentityNumber || prev.identityNumber
       }));
     } catch (err) {
       setActionErrorMsg(errMsg(err, 'Gagal memproses validasi check-in'));
@@ -301,7 +316,7 @@ export default function Pass() {
               </div>
 
               {/* Thumbnail Foto Identitas (Bisa di-tap untuk perbesar) */}
-              {data.identityPhoto && (
+              {data.identityPhoto ? (
                 <div
                   className="pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center gap-3 cursor-pointer group hover:bg-slate-100/60 dark:hover:bg-slate-750/60 p-1.5 rounded-xl transition-colors"
                   onClick={() =>
@@ -327,6 +342,13 @@ export default function Pass() {
                     </div>
                   </div>
                 </div>
+              ) : (
+                <div className="pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center gap-2 p-1.5 text-xs text-amber-700 dark:text-amber-300">
+                  <AlertCircle size={15} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span className="font-medium">
+                    Foto identitas belum dilampirkan oleh PIC (Security wajib mengambil foto fisik tamu).
+                  </span>
+                </div>
               )}
             </div>
 
@@ -338,6 +360,53 @@ export default function Pass() {
                     <BadgeCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>Langkah Validasi Masuk Petugas Security:</span>
                   </div>
+
+                  {/* Wajib ambil foto identitas jika PIC belum melampirkan */}
+                  {!data.identityPhoto && (
+                    <div className="p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-xs font-bold text-amber-950 dark:text-amber-100">
+                            Identitas Tamu Belum Dilampirkan oleh PIC
+                          </div>
+                          <div className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed mt-0.5">
+                            Petugas Security wajib mengambil foto identitas (KTP/SIM/Paspor) fisik tamu dan memastikan nomor identitas terisi sebelum mengonfirmasi kedatangan tamu.
+                          </div>
+                        </div>
+                      </div>
+
+                      <IdentityPhotoCapture
+                        value={securityPhoto}
+                        onChange={(photo) => setSecurityPhoto(photo)}
+                        onNikDetected={(detectedNik) => {
+                          if (!securityIdentityNumber) setSecurityIdentityNumber(detectedNik);
+                        }}
+                        label="Ambil Foto KTP/SIM/Paspor Tamu (Wajib) *"
+                        required
+                      />
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="label text-[11px] font-bold mb-0">
+                            Nomor Identitas (KTP/SIM/Paspor) <span className="text-red-500">*</span>
+                          </label>
+                          {securityIdentityNumber && (
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded">
+                              Terbaca Otomatis
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          className="input text-xs py-2 px-3 rounded-xl font-mono bg-white dark:bg-slate-900"
+                          value={securityIdentityNumber}
+                          onChange={(e) => setSecurityIdentityNumber(e.target.value)}
+                          placeholder="Masukkan nomor identitas tamu..."
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Pilih PIC jika belum terpilih atau ingin dialihkan */}
                   <div>

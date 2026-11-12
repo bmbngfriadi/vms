@@ -6,6 +6,7 @@ import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import VisitEditModal from '../components/VisitEditModal.jsx';
 import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
 import WalkInQrModal from '../components/WalkInQrModal.jsx';
+import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
 import { useAuth } from '../lib/auth.jsx';
 import { useI18n } from '../lib/i18n.jsx';
 import { useDialog } from '../lib/dialog.jsx';
@@ -619,6 +620,7 @@ function CreateModal({ user, onClose, onCreated }) {
     phone: '',
     company: '',
     identityNumber: '',
+    identityPhoto: '',
     departmentId: user?.role === 'ADMIN' ? '' : user?.departmentId || '',
     picUserId: user?.role === 'ADMIN' ? '' : user?.id || '',
     purpose: '',
@@ -720,6 +722,42 @@ function CreateModal({ user, onClose, onCreated }) {
           <div className="w-full min-w-0">
             <label className="label">{t('register.company', 'Perusahaan')}</label>
             <input className="input" value={form.company} onChange={set('company')} />
+          </div>
+
+          {/* Foto Identitas Tamu (Opsional saat buat janji) */}
+          <div className="sm:col-span-2 w-full min-w-0">
+            <IdentityPhotoCapture
+              value={form.identityPhoto}
+              onChange={(photo) => setForm((c) => ({ ...c, identityPhoto: photo }))}
+              onNikDetected={(detectedNik) => {
+                setForm((c) => ({
+                  ...c,
+                  identityNumber: detectedNik
+                }));
+              }}
+              label="Foto Identitas (KTP/SIM/Paspor) — Opsional"
+              required={false}
+            />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Jika belum ada foto, petugas Security akan mengambil foto fisik identitas saat tamu tiba di pos gerbang.
+            </p>
+          </div>
+
+          <div className="sm:col-span-2 w-full min-w-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="label mb-0">No. Identitas (KTP/SIM/Paspor)</label>
+              {form.identityNumber && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
+                  Terbaca / Diisi
+                </span>
+              )}
+            </div>
+            <input
+              className="input font-mono"
+              value={form.identityNumber}
+              onChange={set('identityNumber')}
+              placeholder="Nomor identitas (opsional)..."
+            />
           </div>
           <div className="w-full min-w-0">
             <label className="label">{t('register.department', 'Departemen *')}</label>

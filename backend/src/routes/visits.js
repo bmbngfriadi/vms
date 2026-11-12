@@ -545,12 +545,23 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
       });
     }
 
-    const { picUserId, badgeNumber, note } = req.body || {};
+    const { picUserId, badgeNumber, note, identityNumber, identityPhoto } = req.body || {};
     const picId = picUserId || existing.picUserId;
     if (!picId) return res.status(400).json({ error: 'PIC / Orang yang dituju wajib dipilih' });
 
     const pic = await prisma.user.findUnique({ where: { id: picId } });
     if (!pic || !pic.isActive) return res.status(400).json({ error: 'PIC tidak valid atau tidak aktif' });
+
+    // Validasi identitas tamu: jika PIC belum melampirkan foto identitas, Security wajib melampirkannya saat check-in
+    const existingPhoto = existing.identityPhoto || existing.visitor?.identityPhoto;
+    const finalPhoto = identityPhoto || existingPhoto || null;
+    const finalNumber = identityNumber ? String(identityNumber).trim() : (existing.visitor?.identityNumber || null);
+
+    if (!finalPhoto) {
+      return res.status(400).json({
+        error: 'Foto identitas tamu (KTP/SIM/Paspor) belum ada. Petugas Security wajib mengambil foto identitas tamu.'
+      });
+    }
 
     const checkOutToken = newToken();
     const now = new Date();
@@ -565,11 +576,22 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
         data: { visitId: existing.id, token: checkOutToken, type: 'CHECK_OUT' }
       });
 
+      if (identityPhoto || identityNumber) {
+        await tx.visitor.update({
+          where: { id: existing.visitorId },
+          data: {
+            ...(identityNumber ? { identityNumber: finalNumber } : {}),
+            ...(identityPhoto ? { identityPhoto: finalPhoto } : {})
+          }
+        });
+      }
+
       return tx.visit.update({
         where: { id: existing.id },
         data: {
           status: 'CHECKED_IN',
           checkInAt: now,
+          identityPhoto: finalPhoto,
           picUserId: pic.id,
           badgeNumber: badgeNumber ? String(badgeNumber).trim() : null,
           note: note || existing.note
@@ -659,8 +681,20 @@ publicRouter.post('/pass/:token/check-out', async (req, res) => {
 
 router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat membuat janji temu'), async (req, res) => {
   try {
-    const { fullName, phone, company, identityNumber, departmentId, picUserId, purpose, scheduledDate, expectedTime, numberOfVisitors, vehiclePlate } =
-      req.body || {};
+    const {
+      fullName,
+      phone,
+      company,
+      identityNumber,
+      identityPhoto,
+      departmentId,
+      picUserId,
+      purpose,
+      scheduledDate,
+      expectedTime,
+      numberOfVisitors,
+      vehiclePlate
+    } = req.body || {};
 
     if (!fullName || !phone || !purpose || !scheduledDate) {
       return res.status(400).json({ error: 'Nama tamu, nomor WhatsApp, keperluan, dan tanggal wajib diisi' });
@@ -687,7 +721,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         data: {
           fullName: fullName.trim(),
           company: company ? company.trim() : visitor.company,
-          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber
+          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber,
+          identityPhoto: identityPhoto || visitor.identityPhoto
         }
       });
     } else {
@@ -696,7 +731,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
           fullName: fullName.trim(),
           phone: cleanPhone,
           company: company ? company.trim() : null,
-          identityNumber: identityNumber ? String(identityNumber).trim() : null
+          identityNumber: identityNumber ? String(identityNumber).trim() : null,
+          identityPhoto: identityPhoto || null
         }
       });
     }
@@ -711,6 +747,7 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         visitorId: visitor.id,
         visitType: 'PRE_REGISTERED',
         status: 'APPROVED',
+        identityPhoto: identityPhoto || visitor.identityPhoto || null,
         departmentId: dept.id,
         picUserId: pic.id,
         purpose: purpose.trim(),
