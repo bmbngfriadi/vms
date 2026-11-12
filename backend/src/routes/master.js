@@ -279,7 +279,7 @@ router.get('/users/template', authenticate, allow(['ADMIN']), async (req, res) =
     const sampleData = [
       [1, 'Bambang Friadi', 'bambang.friadi', 'bambang.friadi@cemindo.com', 'ADMIN', 'IT', '081363331467', 'cemindo123', 'AKTIF', 'YA'],
       [2, 'Agus Jatmiko Utomo', 'agus.jatmiko', 'agus.jatmiko@cemindo.com', 'PIC', 'Finance', '081270001122', 'cemindo123', 'AKTIF', 'YA'],
-      [3, 'Security Pos Utama', 'security.gate', 'security.gate@cemindo.com', 'SECURITY', 'Security', '081270003344', 'cemindo123', 'AKTIF', 'TIDAK'],
+      [3, 'Security POS 1', 'security.gate', 'security.gate@cemindo.com', 'SECURITY', 'Security', '081270003344', 'cemindo123', 'AKTIF', 'TIDAK'],
       [4, 'Bernardus Fernando', 'bernardus.saputra', 'bernardus.saputra@cemindo.com', 'PIC', 'HRGA', '081363335566', '', 'AKTIF', 'YA']
     ];
 

@@ -31,7 +31,7 @@ Pendaftaran kedatangan Anda di kawasan industri *PT Cemindo Gemilang Tbk - Plant
 • Keperluan: ${purpose || '-'}
 
 📌 *PANDUAN POS SECURITY:*
-1. Tunjukkan *gambar QR Code terlampir* kepada petugas Security di Pos Utama.
+1. Tunjukkan *gambar QR Code terlampir* kepada petugas Security di POS 1.
 2. Petugas akan memindai QR Code dan menyerahkan *Badge Tamu*.
 3. Wajib mematuhi standar Keselamatan & Kesehatan Kerja (K3) selama berada di kawasan pabrik.
 
@@ -216,7 +216,7 @@ Pemberitahuan operasional kedatangan tamu di kawasan industri:
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
-• Lokasi Area: Pos Gerbang Utama
+• Lokasi Area: POS 1
 
 ${DIVIDER}
 ${FOOTER}`;
@@ -248,6 +248,7 @@ Pemberitahuan operasional tamu telah check-out dari kawasan industri:
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
 • Durasi Total: *${dur}*
+• Lokasi Area: POS 1
 
 ${DIVIDER}
 ${FOOTER}`;
