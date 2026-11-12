@@ -42,6 +42,7 @@ export const endpoints = {
   publicPics: (departmentId) =>
     api.get('/public/pics', { params: { departmentId } }).then((r) => r.data),
   publicRegister: (payload) => api.post('/public/register', payload).then((r) => r.data),
+  publicLookupVisitor: (payload) => api.post('/public/lookup-visitor', payload).then((r) => r.data),
   publicPass: (token) => api.get(`/public/pass/${token}`).then((r) => r.data),
   publicCheckIn: (token, payload) => api.post(`/public/pass/${token}/check-in`, payload).then((r) => r.data),
   publicCheckOut: (token, payload) => api.post(`/public/pass/${token}/check-out`, payload).then((r) => r.data),

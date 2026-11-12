@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -13,10 +13,14 @@ import {
   Briefcase,
   FileCheck2,
   Building2,
-  Sparkles
+  Sparkles,
+  ShieldCheck,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
+import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
 import { useTheme } from '../lib/theme.jsx';
 import { useI18n } from '../lib/i18n.jsx';
 
@@ -44,12 +48,71 @@ export default function Register() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
+  // Status auto-lookup tamu berulang (returning visitor)
+  const [returningVisitor, setReturningVisitor] = useState(null);
+  const [useExistingPhoto, setUseExistingPhoto] = useState(true);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [previewPhotoModal, setPreviewPhotoModal] = useState(false);
+
   useEffect(() => {
     endpoints
       .publicDepartments()
       .then(setDepartments)
       .catch(() => setError(t('register.error_load_dept', 'Gagal memuat daftar departemen. Periksa koneksi.')));
   }, [t]);
+
+  // Auto-lookup database: jika nama lengkap dan nomor WhatsApp cocok dengan database,
+  // tampilkan foto identitas dan data KTP tamu yang tersimpan tanpa perlu foto ulang.
+  useEffect(() => {
+    const trimmedName = (form.fullName || '').trim().toLowerCase();
+    const cleanPhone = (form.phone || '').replace(/\D/g, '');
+
+    if (trimmedName.length < 3 || cleanPhone.length < 8) {
+      if (returningVisitor) {
+        setReturningVisitor(null);
+        setUseExistingPhoto(false);
+        setForm((curr) => ({ ...curr, identityPhoto: '' }));
+      }
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLookupLoading(true);
+      try {
+        const res = await endpoints.publicLookupVisitor({
+          fullName: form.fullName,
+          phone: form.phone
+        });
+
+        if (res?.found && res?.visitor?.identityPhoto) {
+          setReturningVisitor(res.visitor);
+          setUseExistingPhoto(true);
+          setForm((curr) => ({
+            ...curr,
+            identityPhoto: res.visitor.identityPhoto,
+            identityNumber: curr.identityNumber || res.visitor.identityNumber || '',
+            company: curr.company || res.visitor.company || ''
+          }));
+        } else {
+          // Jika nama atau nomor WA tidak cocok dengan database
+          if (returningVisitor) {
+            setReturningVisitor(null);
+            setUseExistingPhoto(false);
+            setForm((curr) => ({
+              ...curr,
+              identityPhoto: ''
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('[LookupVisitor Error]', err);
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [form.fullName, form.phone]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -156,6 +219,8 @@ export default function Register() {
                 onClick={() => {
                   setResult(null);
                   setForm(EMPTY);
+                  setReturningVisitor(null);
+                  setUseExistingPhoto(false);
                 }}
                 className="btn-secondary w-full py-3 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center justify-center gap-2"
               >
@@ -255,7 +320,21 @@ export default function Register() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="label">{t('register.phone', 'Nomor WhatsApp *')}</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="label mb-0">{t('register.phone', 'Nomor WhatsApp *')}</label>
+                    {lookupLoading && (
+                      <span className="text-[11px] text-brand-600 dark:text-brand-400 flex items-center gap-1 font-medium">
+                        <Loader2 size={12} className="animate-spin" />
+                        Mengecek data tamu...
+                      </span>
+                    )}
+                    {!lookupLoading && returningVisitor && useExistingPhoto && (
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                        <ShieldCheck size={13} />
+                        Tamu Terdaftar Ditemukan
+                      </span>
+                    )}
+                  </div>
                   <input
                     className="input text-sm py-2.5 px-3 rounded-xl font-mono"
                     value={form.phone}
@@ -269,19 +348,112 @@ export default function Register() {
                   </p>
                 </div>
 
-                {/* Kolom Foto Identitas (Mandatory) - Kamera Langsung & Upload File */}
+                {/* Kolom Foto Identitas (Otomatis terisi jika tamu berulang dengan Nama & WhatsApp cocok) */}
                 <div className="sm:col-span-2">
-                  <IdentityPhotoCapture
-                    value={form.identityPhoto}
-                    onChange={(photo) => setForm((curr) => ({ ...curr, identityPhoto: photo }))}
-                    onNikDetected={(detectedNik) => {
-                      setForm((curr) => ({
-                        ...curr,
-                        identityNumber: detectedNik
-                      }));
-                    }}
-                    required
-                  />
+                  {returningVisitor && useExistingPhoto ? (
+                    <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/30 p-3.5 sm:p-4 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-200">
+                            Data Identitas Ditemukan
+                          </span>
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full">
+                          Tamu Terdaftar
+                        </span>
+                      </div>
+
+                      <div className="flex items-start sm:items-center justify-between gap-3 bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewPhotoModal(true)}
+                            className="relative group shrink-0 cursor-pointer overflow-hidden rounded-xl border border-emerald-300 dark:border-emerald-700 shadow-xs"
+                            title="Klik untuk melihat foto lebih besar"
+                          >
+                            <img
+                              src={form.identityPhoto || returningVisitor.identityPhoto}
+                              alt="Foto Identitas Tersimpan"
+                              className="w-16 h-12 sm:w-20 sm:h-14 object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <Eye size={15} />
+                            </div>
+                          </button>
+
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white truncate">
+                              {form.fullName}
+                            </p>
+                            <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                              {form.identityNumber ? `No. Identitas: ${form.identityNumber}` : 'Foto Identitas Tersedia'}
+                            </p>
+                            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">
+                              ✓ Foto KTP otomatis digunakan, tidak perlu foto manual lagi
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewPhotoModal(true)}
+                            className="btn-ghost text-xs p-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+                            title="Lihat foto"
+                          >
+                            <Eye size={14} />
+                            <span className="hidden sm:inline">Lihat</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUseExistingPhoto(false);
+                              setForm((curr) => ({ ...curr, identityPhoto: '' }));
+                            }}
+                            className="btn-ghost text-xs p-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+                            title="Foto Ulang atau Ganti Foto"
+                          >
+                            <RefreshCw size={14} />
+                            <span className="hidden sm:inline">Foto Ulang</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {returningVisitor && !useExistingPhoto && (
+                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-200">
+                          <span>Mengambil / mengunggah foto baru untuk tamu ini.</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUseExistingPhoto(true);
+                              setForm((curr) => ({
+                                ...curr,
+                                identityPhoto: returningVisitor.identityPhoto,
+                                identityNumber: curr.identityNumber || returningVisitor.identityNumber || ''
+                              }));
+                            }}
+                            className="text-brand-600 dark:text-brand-400 font-bold hover:underline"
+                          >
+                            ← Gunakan Foto Tersimpan
+                          </button>
+                        </div>
+                      )}
+                      <IdentityPhotoCapture
+                        value={form.identityPhoto}
+                        onChange={(photo) => setForm((curr) => ({ ...curr, identityPhoto: photo }))}
+                        onNikDetected={(detectedNik) => {
+                          setForm((curr) => ({
+                            ...curr,
+                            identityNumber: detectedNik
+                          }));
+                        }}
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -453,6 +625,16 @@ export default function Register() {
           © {new Date().getFullYear()} PT Cemindo Gemilang Tbk — Visitor Management System
         </p>
       </div>
+
+      {/* Modal Preview Foto Identitas KTP */}
+      {previewPhotoModal && (
+        <PhotoPreviewModal
+          photoUrl={form.identityPhoto || returningVisitor?.identityPhoto}
+          visitorName={form.fullName}
+          identityNumber={form.identityNumber}
+          onClose={() => setPreviewPhotoModal(false)}
+        />
+      )}
     </div>
   );
 }

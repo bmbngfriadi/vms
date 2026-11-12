@@ -297,6 +297,72 @@ publicRouter.post('/ocr-id', async (req, res) => {
 });
 
 // ============================================================
+// PUBLIC: auto-lookup data tamu berulang berdasarkan nama & WhatsApp
+// ============================================================
+
+publicRouter.post('/lookup-visitor', async (req, res) => {
+  try {
+    const { fullName, phone } = req.body || {};
+    if (!fullName || !phone) {
+      return res.json({ found: false });
+    }
+
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanPhone) {
+      return res.json({ found: false });
+    }
+
+    const cleanInputName = String(fullName).trim().toLowerCase();
+    if (cleanInputName.length < 2) {
+      return res.json({ found: false });
+    }
+
+    const visitors = await prisma.visitor.findMany({
+      where: { phone: cleanPhone },
+      include: {
+        visits: {
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+          select: { identityPhoto: true, createdAt: true }
+        }
+      }
+    });
+
+    const matched = visitors.find(
+      (v) => (v.fullName || '').trim().toLowerCase() === cleanInputName
+    );
+
+    if (!matched) {
+      return res.json({ found: false });
+    }
+
+    const storedPhoto =
+      matched.identityPhoto ||
+      matched.visits?.find((vi) => !!vi.identityPhoto)?.identityPhoto ||
+      null;
+
+    if (!storedPhoto) {
+      return res.json({ found: false });
+    }
+
+    return res.json({
+      found: true,
+      visitor: {
+        id: matched.id,
+        fullName: matched.fullName,
+        phone: matched.phone,
+        company: matched.company || '',
+        identityNumber: matched.identityNumber || '',
+        identityPhoto: storedPhoto
+      }
+    });
+  } catch (err) {
+    console.error('[LookupVisitor Error]', err.message);
+    return res.json({ found: false });
+  }
+});
+
+// ============================================================
 // PUBLIC: pendaftaran tamu walk-in (tanpa janji)
 // ============================================================
 
@@ -327,13 +393,51 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Nama, nomor WhatsApp, departemen, PIC, dan keperluan wajib diisi' });
     }
 
-    if (!identityPhoto) {
-      return res.status(400).json({ error: 'Foto identitas (KTP/SIM/Paspor) wajib dilampirkan' });
-    }
-
     const cleanPhone = normalizePhone(phone);
     if (!cleanPhone) {
       return res.status(400).json({ error: 'Nomor WhatsApp tidak valid. Contoh: 081234567890' });
+    }
+
+    const cleanName = String(fullName).trim().toLowerCase();
+
+    // Verifikasi apakah tamu sudah pernah berkunjung sebelumnya dengan nama & WA sama
+    const existingVisitors = await prisma.visitor.findMany({
+      where: { phone: cleanPhone },
+      include: {
+        visits: {
+          orderBy: { createdAt: 'desc' },
+          take: 2,
+          select: { identityPhoto: true }
+        }
+      }
+    });
+
+    const matchedVisitor = existingVisitors.find(
+      (v) => (v.fullName || '').trim().toLowerCase() === cleanName
+    );
+
+    let finalPhoto = identityPhoto || null;
+    let finalNik = identityNumber ? String(identityNumber).trim() : null;
+
+    if (matchedVisitor) {
+      // Tamu berulang terverifikasi
+      if (!finalPhoto) {
+        finalPhoto =
+          matchedVisitor.identityPhoto ||
+          matchedVisitor.visits?.find((vi) => !!vi.identityPhoto)?.identityPhoto ||
+          null;
+      }
+      if (!finalNik) {
+        finalNik = matchedVisitor.identityNumber || null;
+      }
+    } else {
+      // Tamu baru atau nama berbeda dengan data yang ada pada nomor WhatsApp ini
+      if (!finalPhoto) {
+        return res.status(400).json({
+          error:
+            'Nama lengkap atau nomor WhatsApp belum terdaftar / berbeda. Tamu diwajibkan mengambil/mengunggah foto identitas.'
+        });
+      }
     }
 
     const dept = await prisma.department.findUnique({ where: { id: departmentId } });
@@ -354,15 +458,14 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       return res.status(400).json({ error: 'PIC tidak valid atau tidak berada di departemen yang dipilih' });
     }
 
-    let visitor = await prisma.visitor.findFirst({ where: { phone: cleanPhone } });
-    if (visitor) {
+    let visitor;
+    if (matchedVisitor) {
       visitor = await prisma.visitor.update({
-        where: { id: visitor.id },
+        where: { id: matchedVisitor.id },
         data: {
-          fullName: fullName.trim(),
-          company: company ? company.trim() : visitor.company,
-          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber,
-          identityPhoto: identityPhoto || visitor.identityPhoto
+          company: company ? company.trim() : matchedVisitor.company,
+          identityNumber: finalNik || matchedVisitor.identityNumber,
+          identityPhoto: finalPhoto || matchedVisitor.identityPhoto
         }
       });
     } else {
@@ -371,8 +474,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
           fullName: fullName.trim(),
           phone: cleanPhone,
           company: company ? company.trim() : null,
-          identityNumber: identityNumber ? String(identityNumber).trim() : null,
-          identityPhoto: identityPhoto || null
+          identityNumber: finalNik,
+          identityPhoto: finalPhoto
         }
       });
     }
@@ -393,7 +496,7 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         scheduledDate: new Date(),
         numberOfVisitors: Number(numberOfVisitors) > 0 ? Number(numberOfVisitors) : 1,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
-        identityPhoto: identityPhoto || null,
+        identityPhoto: finalPhoto,
         tokens: { create: { token, type: 'CHECK_IN' } }
       },
       include: VISIT_INCLUDE
