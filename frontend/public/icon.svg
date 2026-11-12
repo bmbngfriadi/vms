@@ -1,164 +1,139 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Squircle Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b" />
-      <stop offset="100%" stop-color="#0f172a" />
-    </linearGradient>
+    <!-- Soft App Icon Drop Shadow -->
+    <filter id="tileShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.12" />
+    </filter>
 
-    <!-- Red Cemindo Ambient Glow -->
-    <radialGradient id="redGlow" cx="50%" cy="30%" r="55%">
-      <stop offset="0%" stop-color="#b91c1c" stop-opacity="0.35" />
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
-    </radialGradient>
-
-    <!-- Cemindo Red Banner Gradient -->
-    <linearGradient id="redBanner" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#991b1b" />
-      <stop offset="50%" stop-color="#b91c1c" />
-      <stop offset="100%" stop-color="#dc2626" />
-    </linearGradient>
-
-    <!-- Metal Clip Gradient -->
-    <linearGradient id="metalClip" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#f1f5f9" />
-      <stop offset="50%" stop-color="#cbd5e1" />
-      <stop offset="100%" stop-color="#64748b" />
-    </linearGradient>
-
-    <!-- Card Background Gradient -->
-    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <!-- Subtle Inner Gradient for White Tile -->
+    <linearGradient id="tileGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" />
       <stop offset="100%" stop-color="#f8fafc" />
     </linearGradient>
 
-    <!-- Shield Badge Gradient -->
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#dc2626" />
-      <stop offset="100%" stop-color="#991b1b" />
-    </linearGradient>
-
-    <!-- Metallic Bezel Gradient -->
-    <linearGradient id="bezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Kiosk Body Gradient -->
+    <linearGradient id="kioskGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#f1f5f9" />
     </linearGradient>
 
-    <!-- Filters for Soft Drop Shadows -->
-    <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="130%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.45" />
-    </filter>
+    <!-- Screen Bezel Gradient -->
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
 
-    <filter id="badgeShadow" x="-20%" y="-20%" width="145%" height="145%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.5" />
-    </filter>
+    <!-- Cemindo Red Accent Gradient -->
+    <linearGradient id="vmsRed" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="50%" stop-color="#dc2626" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
 
-    <clipPath id="cardClip">
-      <rect x="106" y="105" width="300" height="360" rx="24" />
-    </clipPath>
-    <clipPath id="photoClip">
-      <rect x="130" y="203" width="90" height="100" rx="12" />
-    </clipPath>
+    <!-- Red Screen Ambient Glow -->
+    <radialGradient id="screenGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
+    </radialGradient>
   </defs>
 
-  <!-- 1. Base Squircle Container -->
-  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bgGrad)" stroke="#334155" stroke-width="2" />
-  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#redGlow)" />
+  <!-- 1. PWA App Icon Tile: Crisp White Rounded Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#tileGrad)" stroke="#e2e8f0" stroke-width="4" filter="url(#tileShadow)" />
 
-  <!-- 2. Lanyard Straps -->
-  <path d="M 170 16 L 240 98" stroke="#b91c1c" stroke-width="17" stroke-linecap="round" />
-  <path d="M 170 16 L 240 98" stroke="#f1f5f9" stroke-width="4" stroke-linecap="round" />
-  <path d="M 342 16 L 272 98" stroke="#b91c1c" stroke-width="17" stroke-linecap="round" />
-  <path d="M 342 16 L 272 98" stroke="#f1f5f9" stroke-width="4" stroke-linecap="round" />
+  <!-- 2. Kiosk Station Base Plate (Sturdy Horizontal Pedestal) -->
+  <path d="M 120 408 L 380 408 C 386 408 390 412 390 418 L 390 422 C 390 426 386 428 380 428 L 120 428 C 114 428 110 426 110 422 L 110 418 C 110 412 114 408 120 408 Z" fill="#1e293b" />
 
-  <!-- Metal Buckle / Clip -->
-  <rect x="234" y="89" width="44" height="22" rx="7" fill="url(#metalClip)" stroke="#334155" stroke-width="1.5" />
-  <ellipse cx="256" cy="98" rx="8" ry="4" fill="#0f172a" />
+  <!-- 3. Main Kiosk Terminal Body (Vertical Cabinet) -->
+  <!-- Chamfered / Slanted Modern Head Silhouette -->
+  <path d="
+    M 152 408 
+    L 152 140 
+    Q 152 108 184 104 
+    L 300 92 
+    Q 326 90 326 116 
+    L 326 408 
+    Z" 
+    fill="url(#kioskGrad)" 
+    stroke="#1e293b" 
+    stroke-width="14" 
+    stroke-linejoin="round" 
+    stroke-linecap="round" 
+  />
 
-  <!-- 3. Visitor ID Card Pass -->
-  <rect x="106" y="105" width="300" height="360" rx="24" fill="url(#cardGrad)" stroke="#cbd5e1" stroke-width="2" filter="url(#cardShadow)" />
-  
-  <!-- Lanyard Slot Hole in Card -->
-  <rect x="234" y="113" width="44" height="9" rx="4.5" fill="#0f172a" />
+  <!-- Top Accent Cap / Status Bezel -->
+  <path d="M 156 142 L 322 125" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
 
-  <!-- Card Content (Clipped) -->
-  <g clip-path="url(#cardClip)">
-    <!-- Red Cemindo Header Banner -->
-    <rect x="106" y="132" width="300" height="68" fill="url(#redBanner)" />
-    <line x1="106" y1="142" x2="406" y2="142" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" />
-    <line x1="106" y1="190" x2="406" y2="190" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5" />
+  <!-- 4. Interactive Scanner Display Screen -->
+  <rect x="180" y="148" width="118" height="168" rx="16" fill="url(#screenGrad)" stroke="#334155" stroke-width="6" />
+  <rect x="180" y="148" width="118" height="168" rx="16" fill="url(#screenGlow)" />
 
-    <text x="256" y="157" fill="#ffffff" font-family="Arial, sans-serif" font-weight="900" font-size="16" letter-spacing="1.5" text-anchor="middle">VISITOR PASS</text>
-    <text x="256" y="181" fill="#fecaca" font-family="Arial, sans-serif" font-weight="700" font-size="8.5" letter-spacing="0.8" text-anchor="middle">PT CEMINDO GEMILANG TBK</text>
+  <!-- 5. Central VMS Emblem: Bold Red Visitor Pass & QR / Scan Glyph -->
+  <!-- Stylized Visitor Card & Smart QR Scan in Cemindo Red -->
+  <g transform="translate(239, 232)">
+    <!-- ID Card Silhouette / Shield Outline -->
+    <path d="M -30 -52 L 30 -52 C 36 -52 40 -48 40 -42 L 40 40 C 40 46 36 50 30 50 L -30 50 C -36 50 -40 46 -40 40 L -40 -42 C -40 -48 -36 -52 -30 -52 Z" 
+          fill="none" stroke="url(#vmsRed)" stroke-width="7" stroke-linejoin="round" />
+
+    <!-- Lanyard / Badge Clip Slot -->
+    <rect x="-14" y="-47" width="28" height="6" rx="3" fill="url(#vmsRed)" />
+
+    <!-- QR Matrix Finder Corners inside Badge -->
+    <!-- Top-Left Target -->
+    <rect x="-28" y="-32" width="18" height="18" rx="3" fill="url(#vmsRed)" />
+    <rect x="-24" y="-28" width="10" height="10" rx="1.5" fill="#ffffff" />
+    <rect x="-21" y="-25" width="4" height="4" fill="url(#vmsRed)" />
+
+    <!-- Top-Right Target -->
+    <rect x="10" y="-32" width="18" height="18" rx="3" fill="url(#vmsRed)" />
+    <rect x="14" y="-28" width="10" height="10" rx="1.5" fill="#ffffff" />
+    <rect x="17" y="-25" width="4" height="4" fill="url(#vmsRed)" />
+
+    <!-- Bottom-Left Target -->
+    <rect x="-28" y="12" width="18" height="18" rx="3" fill="url(#vmsRed)" />
+    <rect x="-24" y="16" width="10" height="10" rx="1.5" fill="#ffffff" />
+    <rect x="-21" y="19" width="4" height="4" fill="url(#vmsRed)" />
+
+    <!-- Bottom-Right Smart Chip / Wave -->
+    <rect x="12" y="14" width="14" height="14" rx="2" fill="url(#vmsRed)" />
+
+    <!-- Laser Scan Beam Across the Screen -->
+    <line x1="-38" y1="-2" x2="38" y2="-2" stroke="#ef4444" stroke-width="4" stroke-linecap="round" />
+    <circle cx="0" cy="-2" r="3" fill="#ffffff" />
   </g>
 
-  <!-- 4. Visitor Photo / Identity Box -->
-  <rect x="130" y="215" width="90" height="100" rx="12" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5" />
-  
-  <g clip-path="url(#photoClip)">
-    <!-- Avatar silhouette -->
-    <circle cx="175" cy="249" r="18" fill="#64748b" />
-    <ellipse cx="175" cy="292" rx="38" ry="26" fill="#475569" />
-    <!-- Red Cemindo Accent Tie -->
-    <polygon points="175,275 168,291 175,305 182,291" fill="#b91c1c" />
-  </g>
+  <!-- 6. Indicator Status Lights (Green Check & Red Scan) -->
+  <circle cx="218" cy="344" r="6" fill="#10b981" stroke="#047857" stroke-width="1.5" />
+  <circle cx="260" cy="344" r="6" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5" />
 
-  <!-- 5. Guest Information Bars -->
-  <!-- Name Pill -->
-  <rect x="235" y="221" width="135" height="12" rx="6" fill="#b91c1c" />
-  <!-- Company Bar -->
-  <rect x="235" y="243" width="110" height="9" rx="4.5" fill="#475569" />
-  <!-- Destination Bar -->
-  <rect x="235" y="259" width="122" height="8" rx="4" fill="#94a3b8" />
-  <!-- Date / Pass Bar -->
-  <rect x="235" y="274" width="85" height="7" rx="3.5" fill="#cbd5e1" />
+  <!-- 7. Ticket / Thermal Pass Print Dispenser Slot -->
+  <rect x="194" y="366" width="90" height="9" rx="4.5" fill="#1e293b" />
+  <line x1="204" y1="384" x2="274" y2="384" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
 
-  <!-- Validated Status Chip -->
-  <rect x="235" y="290" width="65" height="18" rx="9" fill="#fee2e2" stroke="#f87171" stroke-width="1" />
-  <text x="267" y="302" fill="#b91c1c" font-family="Arial, sans-serif" font-weight="800" font-size="7" letter-spacing="0.5" text-anchor="middle">VALIDATED</text>
+  <!-- 8. Side Handheld Barcode Scanner / Docked Unit (Matching User Reference Image!) -->
+  <!-- Docking Bracket on Kiosk Right Wall -->
+  <rect x="326" y="184" width="16" height="34" rx="4" fill="#334155" stroke="#1e293b" stroke-width="3" />
 
-  <!-- 6. Divider Line -->
-  <line x1="126" y1="332" x2="386" y2="332" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4 3" />
+  <!-- Handheld Scanner Head & Grip -->
+  <!-- Scanner Head -->
+  <path d="M 342 168 L 368 160 C 374 158 380 162 381 168 L 385 194 C 386 200 382 206 376 208 L 350 216 Z" 
+        fill="#f8fafc" stroke="#1e293b" stroke-width="11" stroke-linejoin="round" />
+  <!-- Scanner Window (Red Glass Sensor) -->
+  <path d="M 370 166 L 379 198" stroke="#ef4444" stroke-width="5" stroke-linecap="round" />
 
-  <!-- 7. Barcode Lines -->
-  <g fill="#1e293b">
-    <rect x="130" y="347" width="3.5" height="38" fill="#b91c1c" />
-    <rect x="136" y="347" width="2" height="38" />
-    <rect x="140" y="347" width="6" height="38" fill="#b91c1c" />
-    <rect x="148" y="347" width="2.5" height="38" />
-    <rect x="153" y="347" width="4" height="38" fill="#b91c1c" />
-    <rect x="160" y="347" width="7" height="38" />
-    <rect x="170" y="347" width="3" height="38" fill="#b91c1c" />
-    <rect x="175" y="347" width="5" height="38" />
-    <rect x="182" y="347" width="2" height="38" fill="#b91c1c" />
-    <rect x="186" y="347" width="6" height="38" />
-    <rect x="194" y="347" width="4" height="38" fill="#b91c1c" />
-    <rect x="200" y="347" width="3" height="38" />
-    <rect x="205" y="347" width="7.5" height="38" fill="#b91c1c" />
-    <rect x="215" y="347" width="2.5" height="38" />
-    <rect x="220" y="347" width="4.5" height="38" fill="#b91c1c" />
-    <rect x="227" y="347" width="5.5" height="38" />
-    <rect x="235" y="347" width="3" height="38" fill="#b91c1c" />
-    <rect x="240" y="347" width="6.5" height="38" />
-    <rect x="249" y="347" width="3.5" height="38" fill="#b91c1c" />
-    <rect x="255" y="347" width="4" height="38" />
-    <rect x="261" y="347" width="7" height="38" fill="#b91c1c" />
-    <rect x="270" y="347" width="2.5" height="38" />
-    <rect x="275" y="347" width="5" height="38" fill="#b91c1c" />
-    <rect x="282" y="347" width="2" height="38" />
-    <rect x="286" y="347" width="6" height="38" fill="#b91c1c" />
-    <rect x="294" y="347" width="3" height="38" />
-    <rect x="299" y="347" width="4" height="38" fill="#b91c1c" />
-    <rect x="305" y="347" width="5" height="38" />
-  </g>
-  <text x="203" y="396" fill="#64748b" font-family="Courier, monospace" font-weight="700" font-size="7.5" text-anchor="middle">* VMS-CEMINDO-BATAM-2026 *</text>
+  <!-- Scanner Handle / Wand -->
+  <path d="M 352 216 L 348 268 C 347 274 352 280 358 281 L 366 282 C 372 283 377 278 378 272 L 382 210" 
+        fill="#ffffff" stroke="#1e293b" stroke-width="11" stroke-linejoin="round" />
 
-  <!-- 8. Floating Security Shield Emblem (Bottom Right) -->
-  <g filter="url(#badgeShadow)">
-    <circle cx="382" cy="436" r="40" fill="url(#bezelGrad)" />
-    <circle cx="382" cy="436" r="35" fill="url(#shieldGrad)" />
-    <!-- Checkmark -->
-    <path d="M 365 437 L 377 449 L 399 423" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
-  </g>
+  <!-- Coiled Industrial Cable (Connecting Scanner to Kiosk Base) -->
+  <path d="
+    M 363 282 
+    C 368 318, 396 324, 388 358 
+    C 382 386, 350 388, 332 376 
+    C 324 371, 326 360, 326 352" 
+    fill="none" 
+    stroke="#1e293b" 
+    stroke-width="10" 
+    stroke-linecap="round" 
+    stroke-linejoin="round" 
+  />
 </svg>
-
