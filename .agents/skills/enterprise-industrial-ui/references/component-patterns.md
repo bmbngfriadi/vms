@@ -179,91 +179,108 @@ export default function Shell() {
           </div>
         </header>
 
-        {/* Content Viewport with pb-28 for Mobile Bottom Bar */}
-        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-28 lg:pb-6">
+        {/* Content Viewport with pb-32 for Mobile Bottom Bar & Floating Center Dock */}
+        <main className="flex-1 p-3.5 sm:p-4 lg:p-6 max-w-[1400px] w-full mx-auto pb-32 lg:pb-6">
           <Outlet />
         </main>
 
-        {/* ================= 3. FLOATING ACTION BUTTON (FAB) SCAN ================= */}
-        {location.pathname === '/' && (
-          <div className="lg:hidden fixed bottom-[82px] right-5 z-40 flex flex-col items-center select-none">
-            <button
-              onClick={() => navigate('/scan')}
-              className="w-15 h-15 rounded-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white flex items-center justify-center shadow-2xl ring-4 ring-white dark:ring-slate-900 transition-all duration-150"
-              title="Scan Barcode"
-            >
-              <ScanLine size={28} strokeWidth={2.4} />
-            </button>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-1 drop-shadow-sm">
-              Scan
-            </span>
-          </div>
-        )}
-
-        {/* ================= 4. NATIVE MOBILE BOTTOM BAR (h-[68px]) ================= */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2 shadow-2xl h-[68px]">
+        {/* ================= 3. NATIVE MOBILE BOTTOM BAR DENGAN CENTER FLOATING DOCK ================= */}
+        {/* Tepat 5 Slot: 1. Home, 2. Kunjungan, 3. [FLOATING ACTION DOCK DI TENGAH], 4. Laporan, 5. Menu */}
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-1 shadow-2xl h-[68px]">
+          {/* 1. Home / Dashboard */}
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
-                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+                isActive
+                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
-            <LayoutDashboard size={22} strokeWidth={2.2} />
+            <LayoutDashboard size={21} strokeWidth={2.2} />
             <span>Home</span>
           </NavLink>
 
+          {/* 2. Operasional / Kunjungan */}
           <NavLink
             to="/visits"
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
-                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] active:scale-95 ${
+                isActive
+                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
-            <Users size={22} strokeWidth={2.2} />
-            <span>Tamu</span>
+            <Users size={21} strokeWidth={2.2} />
+            <span className="truncate max-w-full">Kunjungan</span>
           </NavLink>
 
+          {/* 3. TOMBOL AKSI UTAMA FLOATING DI TENGAH (DIPERBESAR & ERGONOMIS) */}
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <NavLink
+              to="/scan"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center -mt-6 sm:-mt-7 group select-none ${
+                  isActive ? 'scale-105' : 'active:scale-90 transition-transform'
+                }`
+              }
+              title="Aksi Utama / Scan Barcode"
+            >
+              <div
+                className={`w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-brand-600 via-brand-500 to-rose-500 text-white flex items-center justify-center shadow-xl ring-4 ring-white dark:ring-slate-900 transition-all ${
+                  location.pathname === '/scan'
+                    ? 'shadow-brand-600/70 ring-brand-100 dark:ring-brand-950 scale-105'
+                    : 'shadow-brand-600/40 group-hover:shadow-brand-600/60'
+                }`}
+              >
+                <ScanLine size={28} strokeWidth={2.4} />
+              </div>
+              <span
+                className={`text-[10px] font-extrabold mt-0.5 tracking-tight drop-shadow-xs transition-colors ${
+                  location.pathname === '/scan'
+                    ? 'text-brand-600 dark:text-brand-400'
+                    : 'text-slate-700 dark:text-slate-300 group-hover:text-brand-600'
+                }`}
+              >
+                Scan
+              </span>
+            </NavLink>
+          </div>
+
+          {/* 4. Laporan / Riwayat */}
           <NavLink
             to="/reports"
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
-                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+                isActive
+                  ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`
             }
           >
-            <FileText size={22} strokeWidth={2.2} />
+            <FileText size={21} strokeWidth={2.2} />
             <span>Laporan</span>
           </NavLink>
 
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
-                isActive ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
-              }`
-            }
-          >
-            <UserRound size={22} strokeWidth={2.2} />
-            <span>Profil</span>
-          </NavLink>
-
+          {/* 5. Menu Lainnya (Buka Native Bottom Sheet Modal) */}
           <button
             type="button"
             onClick={() => setShowMoreSheet(true)}
             className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl text-[11px] font-bold transition-all min-h-[50px] ${
-              showMoreSheet ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40' : 'text-slate-600 dark:text-slate-400'
+              showMoreSheet
+                ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-950/40'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <MoreHorizontal size={22} strokeWidth={2.2} />
+            <MoreHorizontal size={21} strokeWidth={2.2} />
             <span>Menu</span>
           </button>
         </nav>
 
-        {/* ================= 5. NATIVE MOBILE BOTTOM SHEET ================= */}
+        {/* ================= 4. NATIVE MOBILE BOTTOM SHEET ================= */}
         {showMoreSheet && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div
@@ -276,8 +293,15 @@ export default function Shell() {
 
               {/* User Summary Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-sm">
+                <div
+                  className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 active:scale-98 transition-all"
+                  onClick={() => {
+                    setShowMoreSheet(false);
+                    navigate('/profile');
+                  }}
+                  title="Buka Profil Saya"
+                >
+                  <div className="w-9 h-9 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-sm shadow-xs">
                     {user?.name?.charAt(0) || 'U'}
                   </div>
                   <div>
@@ -400,4 +424,166 @@ export default function Shell() {
     </div>
   </div>
 </div>
+```
+
+---
+
+## 3. Pola Smart Returning User / Auto-Lookup Identitas
+
+Ketika membangun sistem operasional publik/karyawan/tamu, gunakan pola deteksi otomatis data tersimpan berdasarkan Nama + Nomor Telepon/WhatsApp agar pengguna tidak perlu input berulang atau foto ulang kartu fisiknya:
+
+```jsx
+{/* Jika data ditemukan di database, tampilkan Kartu Terverifikasi */}
+{returningUser && useExistingPhoto ? (
+  <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/30 p-3.5 sm:p-4 shadow-xs space-y-3">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-1.5">
+        <ShieldCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span className="text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-200">
+          Data Identitas Ditemukan
+        </span>
+      </div>
+      <span className="text-[10px] sm:text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2.5 py-0.5 rounded-full">
+        Terdaftar
+      </span>
+    </div>
+
+    <div className="flex items-start sm:items-center justify-between gap-3 bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60">
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={() => setPreviewPhotoModal(true)}
+          className="relative group shrink-0 cursor-pointer overflow-hidden rounded-xl border border-emerald-300 dark:border-emerald-700 shadow-xs"
+        >
+          <img
+            src={returningUser.photoUrl}
+            alt="Kartu Identitas"
+            className="w-16 h-12 sm:w-20 sm:h-14 object-cover group-hover:scale-105 transition-transform"
+          />
+          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+            <Eye size={15} />
+          </div>
+        </button>
+
+        <div className="min-w-0">
+          <p className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white truncate">
+            {returningUser.fullName}
+          </p>
+          <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+            {returningUser.identityNumber ? `No: ${returningUser.identityNumber}` : 'Foto Tersedia'}
+          </p>
+          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">
+            ✓ Data tersimpan otomatis digunakan, tidak perlu foto manual lagi
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => setPreviewPhotoModal(true)}
+          className="btn-ghost text-xs p-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+        >
+          <Eye size={14} />
+          <span className="hidden sm:inline">Lihat</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setUseExistingPhoto(false)}
+          className="btn-ghost text-xs p-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+        >
+          <RefreshCw size={14} />
+          <span className="hidden sm:inline">Foto Ulang</span>
+        </button>
+      </div>
+    </div>
+  </div>
+) : (
+  <IdentityPhotoCapture required />
+)}
+```
+
+---
+
+## 4. Pola Form Input Tanggal & Jam Anti-Offside (iOS Safari Fix)
+
+Gunakan pola berikut agar input tanggal dan jam di iOS Safari tidak melar keluar batas layar:
+
+```jsx
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+  <div className="min-w-0 flex-1">
+    <label className="label">Tanggal *</label>
+    <input
+      type="date"
+      className="input text-sm py-2.5 px-3 rounded-xl w-full min-w-0 max-w-full appearance-none box-border"
+      value={form.date}
+      onChange={(e) => setForm({ ...form, date: e.target.value })}
+      required
+    />
+  </div>
+
+  <div className="min-w-0 flex-1">
+    <label className="label">Jam *</label>
+    <input
+      type="time"
+      className="input text-sm py-2.5 px-3 rounded-xl font-mono w-full min-w-0 max-w-full appearance-none box-border"
+      value={form.time}
+      onChange={(e) => setForm({ ...form, time: e.target.value })}
+      required
+    />
+  </div>
+</div>
+```
+
+---
+
+## 5. Pola Modal Pratinjau Foto Resolusi Penuh (`PhotoPreviewModal.jsx`)
+
+Komponen modal portal di level `z-[90]` untuk inspeksi KTP, foto kendaraan, atau bukti fisik:
+
+```jsx
+import React from 'react';
+import { createPortal } from 'react-dom';
+import { X, Download, Shield } from 'lucide-react';
+
+export default function PhotoPreviewModal({ photoUrl, visitorName, identityNumber, onClose }) {
+  if (!photoUrl) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-5">
+      <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
+              <Shield size={20} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                Foto Dokumen Identitas
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {visitorName} {identityNumber ? `· NIK: ${identityNumber}` : ''}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="my-4 bg-slate-950 rounded-2xl p-2 flex items-center justify-center overflow-hidden min-h-[220px]">
+          <img src={photoUrl} alt="Pratinjau" className="max-h-[60vh] max-w-full object-contain rounded-xl" />
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <button onClick={onClose} className="btn-ghost py-2 px-4 text-xs font-bold rounded-xl">
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 ```

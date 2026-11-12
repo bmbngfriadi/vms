@@ -124,6 +124,17 @@ export default {
   .badge {
     @apply inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider;
   }
+
+  /* iOS Safari Mobile Form Input Safeguards */
+  input[type='date'],
+  input[type='time'] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }
 ```
 
@@ -138,3 +149,25 @@ export default {
 | **Danger / Rejected** | `bg-red-50 text-red-700 border-red-200` | `dark:bg-red-950/60 dark:text-red-300 dark:border-red-900/50` | Ditolak, Dibatalkan, Terputus, Gagal Kirim |
 | **Neutral / Muted** | `bg-slate-100 text-slate-700 border-slate-200` | `dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700` | Nonaktif, Selesai Diperiksa, Arsip |
 | **Brand Highlight** | `bg-brand-50 text-brand-700 border-brand-200` | `dark:bg-brand-950/60 dark:text-brand-300 dark:border-brand-900/50` | Identitas Nomor, Role Admin, Tag Khusus |
+
+---
+
+## 5. Standar Notifikasi WhatsApp & Pesan Operasional
+
+Agar pesan WhatsApp yang dikirimkan oleh sistem tidak terpotong atau berantakan pada layar smartphone pengguna:
+1. **Header Baku**:
+   ```text
+   🏭 *PT CEMINDO GEMILANG Tbk*
+   📍 *Plant Batam — <Nama Modul/Sistem>*
+   ```
+2. **Divider Anti-Offside**:
+   - WAJIB tepat 17 karakter monospaced: `─────────────────`.
+   - Jangan gunakan garis lebih dari 20 karakter karena akan melar ke bawah (*wrap line/offside*) di HP dengan setting font besar.
+3. **Pembeda Ikon Status**:
+   - 🟢 untuk pesan kedatangan / proses masuk / check-in / aktif.
+   - 🔴 untuk pesan kepulangan / selesai / check-out / tertutup.
+   - 📅 untuk undangan jadwal resmi.
+4. **Standardisasi Lokasi**:
+   - Lokasi pos penjagaan ditulis baku: `POS 1` (bukan string acak).
+5. **Footer Standar**:
+   - `_Pesan Otomatis, <Nama Sistem>_` (misal: `_Pesan Otomatis, Visitor Management System_`).

@@ -20,13 +20,26 @@ Panduan arsitektur dan pola kode untuk menyulap web application menjadi **100% N
      - Avatar Profil (`w-8 h-8 rounded-full`).
    - Tombol aksi header di halaman (misal: Dashboard) pada layar smartphone ditata proporsional 2 kolom sejajar (`grid grid-cols-2 gap-2.5 w-full sm:w-auto`), jangan biarkan ada tombol ganjil yang melompat sendirian ke bawah.
 
-3. **ENLARGED BOTTOM NAVIGATION BAR (`h-[68px]`)**:
+3. **ENLARGED BOTTOM NAVIGATION BAR DENGAN TOMBOL FLOATING DOCK DI TENGAH (`h-[68px]`)**:
    - Bar navigasi bawah bergaya native app melayang di bagian paling bawah layar smartphone (`fixed bottom-0 inset-x-0 z-30`).
-   - Tinggi bar: `68px` dengan latar kaca tembus pandang (*backdrop-blur-md*).
-   - Icon navigasi berukuran besar (`size={21}` - `{22}` strokeWidth={2.2}).
-   - **Label teks navigasi WAJIB satu kata singkat** (contoh: *Home*, *Kunjungan*, *Laporan*, *Profil*, *Menu*). Hindari frasa 2 kata seperti "Data Kunjungan" yang akan pecah menjadi 2 baris canggung di layar smartphone.
+   - Tinggi bar: `68px` dengan latar kaca tembus pandang (*backdrop-blur-md*) dan border atas `border-t border-slate-200 dark:border-slate-800`.
+   - **Tepat 5 Slot Navigasi**:
+     1. **Slot 1 (Kiri Luar)**: Home / Dashboard (ikon `LayoutDashboard`, label `Home`).
+     2. **Slot 2 (Kiri Dalam)**: Operasional / Kunjungan / Transaksi (ikon `Users`, label `Kunjungan`).
+     3. **Slot 3 (TENGAH - FLOATING ACTION DOCK)**:
+        - Tombol aksi utama melayang menembus ke atas bar (`-mt-6 sm:-mt-7`).
+        - Bentuk melingkar besar (`w-14 h-14 sm:w-15 sm:h-15 rounded-full`).
+        - Warna gradient merah korporat: `bg-gradient-to-tr from-brand-600 via-brand-500 to-rose-500 text-white`.
+        - Cincin pelindung tebal agar kontras di atas bar: `ring-4 ring-white dark:ring-slate-900`.
+        - Shadow menonjol: `shadow-xl shadow-brand-600/40`.
+        - Ikon berukuran besar (`size={28}` strokeWidth={2.4}).
+        - Label teks tebal di bawah tombol (misal: `Scan` atau `Buat`).
+     4. **Slot 4 (Kanan Dalam)**: Laporan / Riwayat (ikon `FileText`, label `Laporan`).
+     5. **Slot 5 (Kanan Luar)**: Menu Lainnya (ikon `MoreHorizontal`, label `Menu`) untuk membuka Native Bottom Sheet.
+   - **Menu Profil Pengguna**: Dipindahkan ke dalam Bottom Sheet Menu agar susunan 5 ikon di Bottom Bar tetap simetris, presisi, dan tidak padat sesak.
+   - **Label teks navigasi WAJIB satu kata singkat** (contoh: *Home*, *Kunjungan*, *Scan*, *Laporan*, *Menu*).
    - Area sentuhan per tombol: `min-h-[50px]` dengan transisi `active:scale-95`.
-   - Konten halaman (`main`) wajib memiliki padding bawah `pb-32 lg:pb-6` agar bagian bawah konten dan grafik tidak terhalang oleh Floating Button dan Bottom Bar.
+   - Konten halaman (`main`) wajib memiliki padding bawah `pb-32 lg:pb-6` agar bagian bawah konten, formulir, dan grafik tidak terhalang oleh Floating Button dan Bottom Bar.
 
 4. **MICRO-ANIMATIONS RINGAN (NATIVE FEEL)**:
    - **Page Transition**: Transisi masuk halaman GPU-accelerated yang ringan (`.animate-page-enter`: `translateY(5px)` + `fade-in` 200ms).
@@ -43,13 +56,22 @@ Panduan arsitektur dan pola kode untuk menyulap web application menjadi **100% N
      - Tombol ganti bahasa & mode gelap/terang.
      - Tombol keluar sistem (*Logout*) bergaya merah kontras.
 
-6. **FLOATING ACTION BUTTON (FAB)**:
-   - Tombol aksi utama (misal: Scan Barcode, Transaksi Baru) dibuat melayang melingkar di atas bottom bar:
-     - Posisi: `fixed bottom-[82px] right-4 sm:right-6 z-40 lg:hidden flex flex-col items-center`.
-     - Tombol: `w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-brand-500 hover:from-brand-700 text-white flex items-center justify-center shadow-xl shadow-brand-600/35 ring-4 ring-white dark:ring-slate-900`.
-     - Animasi: `active:scale-90 transition-all duration-150`.
-     - Label: teks `"Scan"` kecil tebal di bawah tombol.
-     - **Aturan**: Tombol FAB ini **hanya muncul di halaman Dashboard / Home (`/`)**, tidak ditampilkan di halaman sub-menu agar tidak menghalangi konten form/tabel.
+6. **FLOATING CENTER DOCK BUTTON (TOMBOL TENGAH MELAYANG)**:
+   - Tombol aksi primer (misal: Scan Barcode, Transaksi Baru, Check-In) diintegrasikan langsung di tengah Bottom Navigation Bar:
+     - Struktur: Slot ke-3 di tengah `<nav>` bar mobile.
+     - Posisi vertikal: `-mt-6 sm:-mt-7` melayang di atas bar bawah.
+     - Dimensi: `w-14 h-14 sm:w-15 sm:h-15 rounded-full`.
+     - Styling: `bg-gradient-to-tr from-brand-600 via-brand-500 to-rose-500 text-white flex items-center justify-center shadow-xl ring-4 ring-white dark:ring-slate-900`.
+     - Animasi: `active:scale-90 transition-transform`.
+     - Keunggulan: Mudah dijangkau kedua jempol pengguna (kiri maupun kanan), ergonomis, dan tidak menumpuk di atas konten sudut kanan.
+
+7. **IOS SAFARI & MOBILE INPUT OVERFLOW SAFEGUARD**:
+   - Khusus input `type="date"` dan `type="time"`, iOS Safari sering memperbesar lebar (*overflow / offside*) jika tidak di-lock secara ketat.
+   - Aturan wajib pada setiap input tanggal dan jam:
+     - Gunakan wrapper dengan `min-w-0 flex-1`.
+     - Tambahkan kelas: `w-full min-w-0 max-w-full appearance-none -webkit-appearance: none; box-sizing: border-box;`.
+     - Atur padding proporsional: `px-3 py-2.5 rounded-xl min-h-[42px]`.
+     - Hindari teks placeholder panjang pada input tanggal/jam karena bertabrakan dengan picker bawaan iOS/Android.
 
 ---
 
