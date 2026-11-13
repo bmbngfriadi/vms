@@ -159,7 +159,7 @@ export default function Login() {
         </div>
 
         <div className="relative z-10 text-[11px] text-white/60">
-          © {new Date().getFullYear()} PT Cemindo Gemilang Tbk — Versi Enterprise
+          © {new Date().getFullYear()} PT Cemindo Gemilang Tbk — Plant Batam
         </div>
 
         {/* Pola latar belakang industrial halus */}
@@ -215,44 +215,40 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setLoginType('all')}
-                  className={`flex-1 py-1.5 rounded-md transition-colors ${
-                    loginType === 'all'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${loginType === 'all'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
                 >
                   {t('login.tab_all', 'Smart')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLoginType('email')}
-                  className={`flex-1 py-1.5 rounded-md transition-colors ${
-                    loginType === 'email'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${loginType === 'email'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
                 >
                   Email
                 </button>
                 <button
                   type="button"
                   onClick={() => setLoginType('username')}
-                  className={`flex-1 py-1.5 rounded-md transition-colors ${
-                    loginType === 'username'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${loginType === 'username'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
                 >
                   Username
                 </button>
                 <button
                   type="button"
                   onClick={() => setLoginType('phone')}
-                  className={`flex-1 py-1.5 rounded-md transition-colors ${
-                    loginType === 'phone'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${loginType === 'phone'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
                 >
                   WhatsApp
                 </button>
@@ -264,10 +260,10 @@ export default function Login() {
                     {loginType === 'email'
                       ? 'Email'
                       : loginType === 'username'
-                      ? 'Username'
-                      : loginType === 'phone'
-                      ? 'Nomor WhatsApp'
-                      : t('login.identifier_label', 'Email / Username / No. HP')}
+                        ? 'Username'
+                        : loginType === 'phone'
+                          ? 'Nomor WhatsApp'
+                          : t('login.identifier_label', 'Email / Username / No. HP')}
                   </label>
                   <div className="relative">
                     <input
