@@ -817,15 +817,47 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
     const dept = await prisma.department.findUnique({ where: { id: deptId } });
     if (!dept || !dept.isActive) return res.status(400).json({ error: 'Departemen tujuan tidak valid' });
 
-    let visitor = await prisma.visitor.findFirst({ where: { phone: cleanPhone } });
-    if (visitor) {
+    const cleanName = String(fullName).trim().toLowerCase();
+
+    // Verifikasi apakah tamu sudah pernah berkunjung sebelumnya dengan nama & WA sama
+    const existingVisitors = await prisma.visitor.findMany({
+      where: { phone: cleanPhone },
+      include: {
+        visits: {
+          orderBy: { createdAt: 'desc' },
+          take: 2,
+          select: { identityPhoto: true }
+        }
+      }
+    });
+
+    const matchedVisitor = existingVisitors.find(
+      (v) => (v.fullName || '').trim().toLowerCase() === cleanName
+    );
+
+    let finalPhoto = identityPhoto || null;
+    let finalNik = identityNumber ? String(identityNumber).trim() : null;
+
+    if (matchedVisitor) {
+      if (!finalPhoto) {
+        finalPhoto =
+          matchedVisitor.identityPhoto ||
+          matchedVisitor.visits?.find((vi) => !!vi.identityPhoto)?.identityPhoto ||
+          null;
+      }
+      if (!finalNik) {
+        finalNik = matchedVisitor.identityNumber || null;
+      }
+    }
+
+    let visitor;
+    if (matchedVisitor) {
       visitor = await prisma.visitor.update({
-        where: { id: visitor.id },
+        where: { id: matchedVisitor.id },
         data: {
-          fullName: fullName.trim(),
-          company: company ? company.trim() : visitor.company,
-          identityNumber: identityNumber ? String(identityNumber).trim() : visitor.identityNumber,
-          identityPhoto: identityPhoto || visitor.identityPhoto
+          company: company ? company.trim() : matchedVisitor.company,
+          identityNumber: finalNik || matchedVisitor.identityNumber,
+          identityPhoto: finalPhoto || matchedVisitor.identityPhoto
         }
       });
     } else {
@@ -834,8 +866,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
           fullName: fullName.trim(),
           phone: cleanPhone,
           company: company ? company.trim() : null,
-          identityNumber: identityNumber ? String(identityNumber).trim() : null,
-          identityPhoto: identityPhoto || null
+          identityNumber: finalNik,
+          identityPhoto: finalPhoto
         }
       });
     }
@@ -850,7 +882,7 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         visitorId: visitor.id,
         visitType: 'PRE_REGISTERED',
         status: 'APPROVED',
-        identityPhoto: identityPhoto || visitor.identityPhoto || null,
+        identityPhoto: finalPhoto,
         departmentId: dept.id,
         picUserId: pic.id,
         purpose: purpose.trim(),
