@@ -759,6 +759,12 @@ publicRouter.get('/pass/:token', async (req, res) => {
       picName: visit.picUser?.name || visit.picNameManual,
       purpose: visit.purpose,
       numberOfVisitors: visit.numberOfVisitors || 1,
+      guestNames: normalizeGuestNames(
+        visit.guestNames,
+        visit.visitor?.fullName,
+        visit.badgeNumber,
+        visit.numberOfVisitors
+      ),
       vehiclePlate: visit.vehiclePlate,
       badgeNumber: visit.badgeNumber,
       note: visit.note,

@@ -20,7 +20,8 @@ import {
   BadgeCheck,
   QrCode,
   Sparkles,
-  Smartphone
+  Smartphone,
+  Users
 } from 'lucide-react';
 import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
@@ -40,6 +41,7 @@ export default function Pass() {
   // State untuk form validasi Security
   const [selectedPicId, setSelectedPicId] = useState('');
   const [badgeNumber, setBadgeNumber] = useState('');
+  const [badgesList, setBadgesList] = useState([]);
   const [note, setNote] = useState('');
   const [securityPhoto, setSecurityPhoto] = useState('');
   const [securityIdentityNumber, setSecurityIdentityNumber] = useState('');
@@ -58,6 +60,25 @@ export default function Pass() {
         if (d.picUserId) setSelectedPicId(d.picUserId);
         if (d.badgeNumber) setBadgeNumber(d.badgeNumber);
         if (d.identityNumber) setSecurityIdentityNumber(d.identityNumber);
+
+        const count = Math.max(
+          1,
+          parseInt(d.numberOfVisitors, 10) || 1,
+          Array.isArray(d.guestNames) ? d.guestNames.length : 0
+        );
+        const guests = Array.isArray(d.guestNames) ? d.guestNames : [];
+        let initBadges = [];
+        for (let i = 0; i < count; i++) {
+          const g = guests[i];
+          let b = '';
+          if (typeof g === 'object' && g?.badge) {
+            b = g.badge;
+          } else if (i === 0 && d.badgeNumber) {
+            b = d.badgeNumber;
+          }
+          initBadges.push(b);
+        }
+        setBadgesList(initBadges);
         setError('');
       })
       .catch((e) => setError(errMsg(e, 'Pass tidak ditemukan atau barcode tidak valid')))
@@ -72,6 +93,49 @@ export default function Pass() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  const handleBadgeChange = (idx, value) => {
+    setBadgesList((prev) => {
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
+  };
+
+  const totalVisitors = Math.max(
+    1,
+    parseInt(data?.numberOfVisitors, 10) || 1,
+    Array.isArray(data?.guestNames) ? data.guestNames.length : 0
+  );
+
+  const displayGuests = [];
+  if (data) {
+    const rawGuests = Array.isArray(data.guestNames) ? data.guestNames : [];
+    for (let i = 0; i < totalVisitors; i++) {
+      const raw = rawGuests[i];
+      let name = '';
+      let badgeVal = '';
+      let isLeader = i === 0;
+
+      if (typeof raw === 'string') {
+        name = raw.trim();
+      } else if (typeof raw === 'object' && raw) {
+        name = (raw.name || '').trim();
+        badgeVal = raw.badge || '';
+        if (raw.isLeader !== undefined) isLeader = raw.isLeader;
+      }
+
+      if (!name) {
+        name = i === 0 ? (data.visitorName || 'Penanggung Jawab') : `Tamu ${i + 1}`;
+      }
+
+      displayGuests.push({
+        name,
+        badge: badgeVal || (i === 0 ? (data.badgeNumber || '') : ''),
+        isLeader
+      });
+    }
+  }
 
   // Handler Konfirmasi Check-In (Tamu Masuk)
   const handleCheckIn = async (e) => {
@@ -88,9 +152,18 @@ export default function Pass() {
     }
 
     try {
+      const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim();
+      const payloadGuests = displayGuests.map((g, idx) => ({
+        name: g.name,
+        badge: badgesList[idx] ? String(badgesList[idx]).trim() : '',
+        isLeader: g.isLeader
+      }));
+
       const res = await endpoints.publicCheckIn(token, {
         picUserId: selectedPicId || data.picUserId,
-        badgeNumber: badgeNumber.trim(),
+        badgeNumber: badgeSummary,
+        badges: badgesList,
+        guestNames: payloadGuests,
         note: note.trim(),
         identityPhoto: securityPhoto || undefined,
         identityNumber: (securityIdentityNumber || data.identityNumber || '').trim() || undefined
@@ -101,7 +174,8 @@ export default function Pass() {
         status: 'CHECKED_IN',
         action: 'CHECKIN_SUCCESS',
         checkInAt: res.checkInAt || new Date().toISOString(),
-        badgeNumber: res.badgeNumber || badgeNumber.trim(),
+        badgeNumber: res.badgeNumber || badgeSummary,
+        guestNames: payloadGuests,
         identityPhoto: securityPhoto || prev.identityPhoto,
         identityNumber: securityIdentityNumber || prev.identityNumber
       }));
@@ -309,11 +383,44 @@ export default function Pass() {
                   <span className="text-[11px] text-slate-400 block">No. Identitas (NIK):</span>
                   <span className="font-mono text-slate-700 dark:text-slate-300">{data.identityNumber || '-'}</span>
                 </div>
+                <div>
+                  <span className="text-[11px] text-slate-400 block">Jumlah Tamu:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{totalVisitors} orang</span>
+                </div>
                 <div className="col-span-2">
                   <span className="text-[11px] text-slate-400 block">Keperluan:</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200 italic">{data.purpose || '-'}</span>
                 </div>
               </div>
+
+              {/* Daftar Tamu Masuk jika rombongan */}
+              {totalVisitors > 1 && (
+                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1.5">
+                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Users size={13} className="text-brand-500" />
+                    <span>Daftar Seluruh Tamu ({totalVisitors} Orang):</span>
+                  </div>
+                  <div className="bg-white/80 dark:bg-slate-900/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                    {displayGuests.map((g, idx) => (
+                      <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span>{idx + 1}. {g.name}</span>
+                          {g.isLeader && (
+                            <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                              PJ
+                            </span>
+                          )}
+                        </div>
+                        {g.badge ? (
+                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded font-mono font-bold shrink-0">
+                            Badge: {g.badge}
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Thumbnail Foto Identitas (Bisa di-tap untuk perbesar) */}
               {data.identityPhoto ? (
@@ -432,17 +539,52 @@ export default function Pass() {
                   </div>
 
                   {/* Input Nomor Badge Tamu */}
-                  <div>
-                    <label className="label text-[11px] font-bold mb-1">
-                      Nomor Badge Tamu (Diserahkan ke Tamu)
-                    </label>
-                    <input
-                      className="input text-xs py-2 px-3 rounded-xl font-mono bg-white dark:bg-slate-900"
-                      value={badgeNumber}
-                      onChange={(e) => setBadgeNumber(e.target.value)}
-                      placeholder="Contoh: 012"
-                    />
-                  </div>
+                  {totalVisitors > 1 ? (
+                    <div className="space-y-2">
+                      <label className="label text-[11px] font-bold mb-0 flex items-center justify-between">
+                        <span>Nomor Badge Setiap Tamu ({totalVisitors} Tamu)</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Diserahkan per orang</span>
+                      </label>
+                      <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
+                        {displayGuests.map((g, idx) => (
+                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                            <div className="text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5 min-w-[140px] truncate">
+                              <span className="font-semibold">{idx + 1}. {g.name}</span>
+                              {g.isLeader && (
+                                <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  PJ
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-1 max-w-xs">
+                              <span className="text-[11px] text-slate-400 shrink-0 font-medium">Badge:</span>
+                              <input
+                                className="input text-xs py-1.5 px-3 font-mono font-bold bg-white dark:bg-slate-900"
+                                placeholder={`Contoh: B-${String(idx + 1).padStart(2, '0')}`}
+                                value={badgesList[idx] || ''}
+                                onChange={(e) => handleBadgeChange(idx, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="label text-[11px] font-bold mb-1">
+                        Nomor Badge Tamu (Diserahkan ke Tamu)
+                      </label>
+                      <input
+                        className="input text-xs py-2 px-3 rounded-xl font-mono bg-white dark:bg-slate-900 font-bold"
+                        value={badgesList[0] !== undefined ? badgesList[0] : badgeNumber}
+                        onChange={(e) => {
+                          setBadgeNumber(e.target.value);
+                          handleBadgeChange(0, e.target.value);
+                        }}
+                        placeholder="Contoh: 012"
+                      />
+                    </div>
+                  )}
 
                   {/* Catatan Pos Security (Opsional) */}
                   <div>
@@ -539,13 +681,33 @@ export default function Pass() {
                       <span className="text-[11px] text-slate-500 block">Durasi Berada di Area:</span>
                       <span className="font-bold text-amber-700 dark:text-amber-300">{calcDuration()}</span>
                     </div>
-                    {data.badgeNumber && (
-                      <div className="col-span-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/60">
-                        <span className="text-[11px] text-slate-500 block">Badge yang Harus Dikembalikan:</span>
-                        <span className="font-mono font-extrabold text-sm text-brand-600 dark:text-brand-400">
-                          Badge #{data.badgeNumber}
+                    {totalVisitors > 1 ? (
+                      <div className="col-span-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/60 space-y-2">
+                        <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 block">
+                          Daftar Badge yang Wajib Dikembalikan ({totalVisitors} Tamu):
                         </span>
+                        <div className="space-y-1.5">
+                          {displayGuests.map((g, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/80 dark:bg-slate-900/70 border border-amber-200/50 dark:border-amber-900/50 text-xs">
+                              <span className="font-medium text-slate-800 dark:text-slate-200">
+                                {idx + 1}. {g.name} {g.isLeader && '(PJ)'}
+                              </span>
+                              <span className="font-mono font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded border border-brand-200/60 dark:border-brand-900/60">
+                                {g.badge || '-'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                    ) : (
+                      data.badgeNumber && (
+                        <div className="col-span-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/60">
+                          <span className="text-[11px] text-slate-500 block">Badge yang Harus Dikembalikan:</span>
+                          <span className="font-mono font-extrabold text-sm text-brand-600 dark:text-brand-400">
+                            Badge #{data.badgeNumber}
+                          </span>
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
