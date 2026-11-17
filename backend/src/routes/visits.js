@@ -318,7 +318,10 @@ publicRouter.post('/lookup-visitor', async (req, res) => {
     }
 
     const visitors = await prisma.visitor.findMany({
-      where: { phone: cleanPhone },
+      where: {
+        phone: cleanPhone,
+        visits: { some: {} }
+      },
       include: {
         visits: {
           orderBy: { createdAt: 'desc' },
@@ -332,13 +335,13 @@ publicRouter.post('/lookup-visitor', async (req, res) => {
       (v) => (v.fullName || '').trim().toLowerCase() === cleanInputName
     );
 
-    if (!matched) {
+    if (!matched || !matched.visits || matched.visits.length === 0) {
       return res.json({ found: false });
     }
 
     const storedPhoto =
-      matched.identityPhoto ||
       matched.visits?.find((vi) => !!vi.identityPhoto)?.identityPhoto ||
+      matched.identityPhoto ||
       null;
 
     if (!storedPhoto) {
@@ -1365,12 +1368,35 @@ router.delete(
     try {
       const visit = await prisma.visit.findUnique({
         where: { id: req.params.id },
-        select: { id: true, visitNumber: true }
+        select: { id: true, visitNumber: true, visitorId: true }
       });
       if (!visit) return res.status(404).json({ error: 'Kunjungan tidak ditemukan' });
 
       // Token QR ikut terhapus (onDelete: Cascade), log notifikasi diset null.
       await prisma.visit.delete({ where: { id: visit.id } });
+
+      // Sinkronkan atau bersihkan record visitor terkait
+      if (visit.visitorId) {
+        const remainingVisits = await prisma.visit.findMany({
+          where: { visitorId: visit.visitorId },
+          select: { id: true, identityPhoto: true }
+        });
+
+        if (remainingVisits.length === 0) {
+          // Jika tidak ada riwayat kunjungan tersisa, hapus data visitor
+          await prisma.visitor.delete({ where: { id: visit.visitorId } }).catch(() => {});
+        } else {
+          // Jika masih ada kunjungan tersisa, sinkronkan foto identitas dari kunjungan tersisa
+          const latestVisitWithPhoto = remainingVisits.find((v) => !!v.identityPhoto);
+          await prisma.visitor.update({
+            where: { id: visit.visitorId },
+            data: {
+              identityPhoto: latestVisitWithPhoto ? latestVisitWithPhoto.identityPhoto : null
+            }
+          }).catch(() => {});
+        }
+      }
+
       res.json({ ok: true, id: visit.id, visitNumber: visit.visitNumber });
     } catch (err) {
       console.error('[Visits] delete error:', err.message);
