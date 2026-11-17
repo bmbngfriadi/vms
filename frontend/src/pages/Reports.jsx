@@ -76,8 +76,13 @@ export default function Reports() {
     }
   };
 
-  const totalOnsite = rows.filter((r) => r.status === 'CHECKED_IN').length;
-  const totalDone = rows.filter((r) => r.status === 'CHECKED_OUT').length;
+  const totalVisitorsCount = rows.reduce((acc, r) => acc + (r.numberOfVisitors || 1), 0);
+  const totalOnsite = rows
+    .filter((r) => r.status === 'CHECKED_IN')
+    .reduce((acc, r) => acc + (r.numberOfVisitors || 1), 0);
+  const totalDone = rows
+    .filter((r) => r.status === 'CHECKED_OUT')
+    .reduce((acc, r) => acc + (r.numberOfVisitors || 1), 0);
   const avgDuration = (() => {
     const list = rows.filter((r) => r.durationMinutes != null);
     if (!list.length) return '-';
@@ -145,16 +150,16 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MiniStat label={t('reports.stat_total', 'Total Kunjungan')} value={rows.length} />
-        <MiniStat label={t('reports.stat_onsite', 'Masih di Dalam')} value={totalOnsite} />
+        <MiniStat label={t('reports.stat_total', 'Total Tamu Masuk')} value={`${totalVisitorsCount} orang`} />
+        <MiniStat label={t('reports.stat_onsite', 'Masih di Dalam Pabrik')} value={`${totalOnsite} orang`} />
         <MiniStat label={t('reports.stat_duration', 'Rata-rata Durasi')} value={avgDuration} />
       </div>
 
       {error && <div className="card p-4 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
       <div className="card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-200">
-          {t('reports.details', 'Rincian Data')} ({rows.length} baris)
+        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+          <span>{t('reports.details', 'Rincian Data')} ({totalVisitorsCount} orang tamu / {rows.length} sesi kunjungan)</span>
         </div>
 
         {/* ================= CARD LIST KHUSUS MOBILE VIEW (< md) ================= */}
@@ -186,8 +191,13 @@ export default function Reports() {
                 </div>
 
                 <div>
-                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight">
-                    {v.visitorName}
+                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight flex items-center flex-wrap gap-1.5">
+                    <span>{v.visitorName}</span>
+                    {(v.numberOfVisitors || 1) > 1 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                        Total {v.numberOfVisitors} orang
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {v.company || 'Pribadi / Perorangan'}
@@ -311,7 +321,16 @@ export default function Reports() {
                 rows.map((v) => (
                   <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                     <td className="td font-mono text-xs">{v.visitNumber}</td>
-                    <td className="td font-medium text-slate-800 dark:text-slate-200">{v.visitorName}</td>
+                    <td className="td font-medium text-slate-800 dark:text-slate-200">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{v.visitorName}</span>
+                        {(v.numberOfVisitors || 1) > 1 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                            +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="td text-slate-600 dark:text-slate-400">{v.company || '-'}</td>
                     <td className="td text-slate-600 dark:text-slate-400">{v.department?.name || '-'}</td>
                     <td className="td text-slate-600 dark:text-slate-400">{v.picName}</td>

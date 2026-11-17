@@ -116,7 +116,7 @@ export default function Visits() {
             {t('visits.title', 'Data Kunjungan Tamu')}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {total} {t('visits.subtitle', 'kunjungan tercatat dalam sistem')}
+            {total} {t('visits.subtitle', 'tamu tercatat dalam sistem')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -241,8 +241,13 @@ export default function Visits() {
 
                 {/* Info Tamu */}
                 <div>
-                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight">
-                    {v.visitorName}
+                  <div className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight flex items-center flex-wrap gap-1.5">
+                    <span>{v.visitorName}</span>
+                    {(v.numberOfVisitors || 1) > 1 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                        Total {v.numberOfVisitors} orang
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {v.company || 'Pribadi / Perorangan'}
@@ -379,7 +384,14 @@ export default function Visits() {
                   >
                     <td className="td font-mono text-xs">{v.visitNumber}</td>
                     <td className="td">
-                      <div className="font-medium text-slate-800 dark:text-slate-200">{v.visitorName}</div>
+                      <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5 flex-wrap">
+                        <span>{v.visitorName}</span>
+                        {(v.numberOfVisitors || 1) > 1 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">
+                            +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{v.company || '-'}</div>
                     </td>
                     <td className="td text-slate-600 dark:text-slate-300">{v.department?.name || '-'}</td>
