@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   AlertCircle,
@@ -50,6 +50,7 @@ export default function Pass() {
   const [actionErrorMsg, setActionErrorMsg] = useState('');
   const [previewPhoto, setPreviewPhoto] = useState(null);
   const [showQrCard, setShowQrCard] = useState(false);
+  const initialLoadedRef = useRef(false);
 
   const load = (silent = false) => {
     if (!silent) setLoading(true);
@@ -57,28 +58,35 @@ export default function Pass() {
       .publicPass(token)
       .then((d) => {
         setData(d);
-        if (d.picUserId) setSelectedPicId(d.picUserId);
-        if (d.badgeNumber) setBadgeNumber(d.badgeNumber);
-        if (d.identityNumber) setSecurityIdentityNumber(d.identityNumber);
 
-        const count = Math.max(
-          1,
-          parseInt(d.numberOfVisitors, 10) || 1,
-          Array.isArray(d.guestNames) ? d.guestNames.length : 0
-        );
-        const guests = Array.isArray(d.guestNames) ? d.guestNames : [];
-        let initBadges = [];
-        for (let i = 0; i < count; i++) {
-          const g = guests[i];
-          let b = '';
-          if (typeof g === 'object' && g?.badge) {
-            b = g.badge;
-          } else if (i === 0 && d.badgeNumber) {
-            b = d.badgeNumber;
+        // Hanya inisialisasi state form saat pemuatan awal (initial load),
+        // JANGAN menimpa data yang sedang diketik oleh Security saat polling latar belakang (setiap 8 detik)!
+        if (!initialLoadedRef.current) {
+          initialLoadedRef.current = true;
+          if (d.picUserId) setSelectedPicId(d.picUserId);
+          if (d.badgeNumber) setBadgeNumber(d.badgeNumber);
+          if (d.identityNumber) setSecurityIdentityNumber(d.identityNumber);
+
+          const count = Math.max(
+            1,
+            parseInt(d.numberOfVisitors, 10) || 1,
+            Array.isArray(d.guestNames) ? d.guestNames.length : 0
+          );
+          const guests = Array.isArray(d.guestNames) ? d.guestNames : [];
+          let initBadges = [];
+          for (let i = 0; i < count; i++) {
+            const g = guests[i];
+            let b = '';
+            if (typeof g === 'object' && g?.badge) {
+              b = g.badge;
+            } else if (i === 0 && d.badgeNumber) {
+              b = d.badgeNumber;
+            }
+            initBadges.push(b);
           }
-          initBadges.push(b);
+          setBadgesList(initBadges);
         }
-        setBadgesList(initBadges);
+
         setError('');
       })
       .catch((e) => setError(errMsg(e, 'Pass tidak ditemukan atau barcode tidak valid')))
@@ -88,6 +96,7 @@ export default function Pass() {
   };
 
   useEffect(() => {
+    initialLoadedRef.current = false;
     load();
     const id = setInterval(() => load(true), 8000);
     return () => clearInterval(id);
