@@ -130,7 +130,19 @@ export default function Register() {
   };
 
   const handleVisitorsCountChange = (e) => {
-    const val = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 1));
+    const raw = e.target.value;
+    if (raw === '') {
+      setForm((curr) => {
+        const names = [curr.fullName || ''];
+        return { ...curr, numberOfVisitors: '', guestNames: names };
+      });
+      return;
+    }
+
+    const parsed = parseInt(raw, 10);
+    if (isNaN(parsed)) return;
+
+    const val = Math.max(1, Math.min(50, parsed));
     setForm((curr) => {
       const names = [...(curr.guestNames || [''])];
       names[0] = curr.fullName || '';
@@ -141,6 +153,17 @@ export default function Register() {
         names.length = val;
       }
       return { ...curr, numberOfVisitors: val, guestNames: names };
+    });
+  };
+
+  const handleVisitorsCountBlur = () => {
+    setForm((curr) => {
+      const val = parseInt(curr.numberOfVisitors, 10);
+      if (!val || val < 1) {
+        const names = [curr.fullName || ''];
+        return { ...curr, numberOfVisitors: 1, guestNames: names };
+      }
+      return curr;
     });
   };
 
@@ -180,7 +203,12 @@ export default function Register() {
       return;
     }
 
-    const visitorsCount = Number(form.numberOfVisitors) || 1;
+    const visitorsCount = parseInt(form.numberOfVisitors, 10);
+    if (!visitorsCount || visitorsCount < 1) {
+      setError('Jumlah orang wajib diisi (minimal 1 orang).');
+      window.scrollTo({ top: 600, behavior: 'smooth' });
+      return;
+    }
     if (visitorsCount > 1) {
       for (let i = 1; i < visitorsCount; i++) {
         const companionName = (form.guestNames?.[i] || '').trim();
@@ -637,9 +665,11 @@ export default function Register() {
                     min="1"
                     max="50"
                     required
+                    placeholder="1"
                     className="input text-sm py-2.5 px-3 rounded-xl font-bold text-brand-600 dark:text-brand-400"
                     value={form.numberOfVisitors}
                     onChange={handleVisitorsCountChange}
+                    onBlur={handleVisitorsCountBlur}
                   />
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                     Total seluruh orang yang masuk dalam rombongan (min. 1 orang)
@@ -665,7 +695,7 @@ export default function Register() {
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                     <Users size={14} className="text-brand-500" />
-                    Daftar Nama Seluruh Tamu Masuk ({form.numberOfVisitors} Orang)
+                    Daftar Nama Seluruh Tamu Masuk ({form.numberOfVisitors || 1} Orang)
                   </label>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
