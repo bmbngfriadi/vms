@@ -64,70 +64,103 @@ const activeToken = (visit, type) => {
   return list.length ? list[0] : null;
 };
 
-export function normalizeGuestNames(guestNames, fallbackName = '', fallbackBadge = '') {
+export function normalizeGuestNames(guestNames, fallbackName = '', fallbackBadge = '', count = 1) {
+  const targetCount = Math.max(1, parseInt(count, 10) || 1);
+  let list = [];
+
   if (Array.isArray(guestNames) && guestNames.length > 0) {
-    return guestNames.map((g, idx) => {
+    list = guestNames.map((g, idx) => {
       if (typeof g === 'string') {
+        const clean = g.trim();
         return {
-          name: g.trim(),
+          name: clean || (idx === 0 ? (fallbackName || 'Tamu 1') : `Tamu ${idx + 1}`),
           badge: idx === 0 ? (fallbackBadge || '') : '',
           isLeader: idx === 0
         };
       }
+      const rawName = (g?.name || '').trim();
       return {
-        name: (g?.name || '').trim(),
+        name: rawName || (idx === 0 ? (fallbackName || 'Tamu 1') : `Tamu ${idx + 1}`),
         badge: g?.badge || (idx === 0 ? (fallbackBadge || '') : ''),
         isLeader: g?.isLeader !== undefined ? g.isLeader : idx === 0
       };
-    }).filter((item) => item.name);
-  }
-  if (fallbackName) {
-    return [{
+    });
+  } else if (fallbackName) {
+    list = [{
       name: String(fallbackName).trim(),
       badge: fallbackBadge || '',
       isLeader: true
     }];
   }
-  return [];
+
+  // Lengkapi jika jumlah tamu (numberOfVisitors) lebih banyak dari daftar nama yang tersimpan
+  while (list.length < targetCount) {
+    list.push({
+      name: `Tamu ${list.length + 1}`,
+      badge: '',
+      isLeader: list.length === 0
+    });
+  }
+
+  return list;
 }
 
-function processCheckInBadges(existing, badgeNumber, badges) {
-  let finalBadgeNumber = badgeNumber ? String(badgeNumber).trim() : (existing.badgeNumber || null);
-  let updatedGuestNames = existing.guestNames;
+function processCheckInBadges(existing, badgeNumber, badges, inputGuestNames) {
+  const totalCount = Math.max(
+    1,
+    existing.numberOfVisitors || 1,
+    Array.isArray(badges) ? badges.length : 0,
+    Array.isArray(inputGuestNames) ? inputGuestNames.length : 0
+  );
 
-  const namesList = Array.isArray(existing.guestNames) && existing.guestNames.length > 0
-    ? existing.guestNames
-    : (existing.visitor?.fullName ? [existing.visitor.fullName] : []);
-
-  if (Array.isArray(badges) && badges.length > 0) {
-    updatedGuestNames = namesList.map((item, idx) => {
-      const name = typeof item === 'string' ? item.trim() : (item?.name || '').trim();
-      const bVal = badges[idx] !== undefined && badges[idx] !== null
-        ? String(badges[idx]).trim()
-        : (typeof item === 'object' && item?.badge ? String(item.badge).trim() : '');
-      return {
-        name,
-        badge: bVal,
-        isLeader: idx === 0
-      };
-    });
-    const validBadges = updatedGuestNames.map((g) => g.badge).filter(Boolean);
-    if (validBadges.length > 0) {
-      finalBadgeNumber = validBadges.join(', ');
-    }
-  } else if (badgeNumber) {
-    finalBadgeNumber = String(badgeNumber).trim();
-    if (namesList.length > 0) {
-      updatedGuestNames = namesList.map((item, idx) => {
-        const name = typeof item === 'string' ? item.trim() : (item?.name || '').trim();
-        return {
-          name,
-          badge: idx === 0 ? finalBadgeNumber : (typeof item === 'object' && item?.badge ? item.badge : ''),
-          isLeader: idx === 0
-        };
-      });
-    }
+  let namesSource = [];
+  if (Array.isArray(inputGuestNames) && inputGuestNames.length > 0) {
+    namesSource = inputGuestNames;
+  } else if (Array.isArray(existing.guestNames) && existing.guestNames.length > 0) {
+    namesSource = existing.guestNames;
+  } else if (existing.visitor?.fullName) {
+    namesSource = [existing.visitor.fullName];
   }
+
+  const updatedGuestNames = [];
+  for (let i = 0; i < totalCount; i++) {
+    const raw = namesSource[i];
+    let name = '';
+    let existingBadge = '';
+    let isLeader = i === 0;
+
+    if (typeof raw === 'string') {
+      name = raw.trim();
+    } else if (typeof raw === 'object' && raw) {
+      name = (raw.name || '').trim();
+      existingBadge = raw.badge || '';
+      if (raw.isLeader !== undefined) isLeader = raw.isLeader;
+    }
+
+    if (!name) {
+      name = i === 0 ? (existing.visitor?.fullName || 'Penanggung Jawab') : `Tamu ${i + 1}`;
+    }
+
+    let badge = '';
+    if (Array.isArray(badges) && badges[i] !== undefined && badges[i] !== null) {
+      badge = String(badges[i]).trim();
+    } else if (i === 0 && badgeNumber) {
+      badge = String(badgeNumber).trim();
+    } else {
+      badge = existingBadge;
+    }
+
+    updatedGuestNames.push({
+      name,
+      badge,
+      isLeader
+    });
+  }
+
+  const validBadges = updatedGuestNames.map((g) => g.badge).filter(Boolean);
+  const finalBadgeNumber = validBadges.length > 0
+    ? validBadges.join(', ')
+    : (badgeNumber ? String(badgeNumber).trim() : null);
 
   return { finalBadgeNumber, updatedGuestNames };
 }
@@ -144,7 +177,12 @@ function formatVisit(visit, viewer) {
     durationMinutes = Math.max(0, Math.floor((end - new Date(visit.checkInAt)) / 60000));
   }
 
-  const normalizedGuests = normalizeGuestNames(visit.guestNames, visit.visitor?.fullName, visit.badgeNumber);
+  const normalizedGuests = normalizeGuestNames(
+    visit.guestNames,
+    visit.visitor?.fullName,
+    visit.badgeNumber,
+    visit.numberOfVisitors
+  );
 
   return {
     id: visit.id,
@@ -769,7 +807,7 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
       });
     }
 
-    const { picUserId, badgeNumber, badges, note, identityNumber, identityPhoto } = req.body || {};
+    const { picUserId, badgeNumber, badges, guestNames, note, identityNumber, identityPhoto } = req.body || {};
     const picId = picUserId || existing.picUserId;
     if (!picId) return res.status(400).json({ error: 'PIC / Orang yang dituju wajib dipilih' });
 
@@ -787,7 +825,7 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
       });
     }
 
-    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges);
+    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges, guestNames);
 
     const checkOutToken = newToken();
     const now = new Date();
@@ -1130,7 +1168,7 @@ router.post('/scan', authenticate, allow(['ADMIN', 'SECURITY']), scanLimiter, as
 
 router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (req, res) => {
   try {
-    const { picUserId, badgeNumber, badges, note } = req.body || {};
+    const { picUserId, badgeNumber, badges, guestNames, note } = req.body || {};
 
     const existing = await prisma.visit.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: 'Kunjungan tidak ditemukan' });
@@ -1152,7 +1190,7 @@ router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (
     if (!pic || !pic.isActive) return res.status(400).json({ error: 'PIC tidak valid atau tidak aktif' });
     if (!pic.phone) return res.status(400).json({ error: `PIC ${pic.name} belum memiliki nomor WhatsApp` });
 
-    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges);
+    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges, guestNames);
 
     const checkOutToken = newToken();
     const now = new Date();

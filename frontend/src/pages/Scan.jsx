@@ -121,13 +121,23 @@ export default function Scan() {
       setBadge(data.visit.badgeNumber || '');
       setNote('');
 
-      const guests = Array.isArray(data.visit.guestNames) ? data.visit.guestNames : [];
-      let initBadges = guests.map((g, idx) => {
-        if (typeof g === 'object' && g.badge) return g.badge;
-        return idx === 0 ? (data.visit.badgeNumber || '') : '';
-      });
-      if (initBadges.length === 0) {
-        initBadges = [data.visit.badgeNumber || ''];
+      const count = Math.max(
+        1,
+        parseInt(data.visit?.numberOfVisitors, 10) || 1,
+        Array.isArray(data.visit?.guestNames) ? data.visit.guestNames.length : 0
+      );
+
+      const guests = Array.isArray(data.visit?.guestNames) ? data.visit.guestNames : [];
+      let initBadges = [];
+      for (let i = 0; i < count; i++) {
+        const g = guests[i];
+        let b = '';
+        if (typeof g === 'object' && g?.badge) {
+          b = g.badge;
+        } else if (i === 0 && data.visit?.badgeNumber) {
+          b = data.visit.badgeNumber;
+        }
+        initBadges.push(b);
       }
       setBadgesList(initBadges);
 
@@ -153,6 +163,41 @@ export default function Scan() {
     });
   };
 
+  const totalVisitors = Math.max(
+    1,
+    parseInt(result?.visit?.numberOfVisitors, 10) || 1,
+    Array.isArray(result?.visit?.guestNames) ? result.visit.guestNames.length : 0
+  );
+
+  const displayGuests = [];
+  if (result?.visit) {
+    const rawGuests = Array.isArray(result.visit.guestNames) ? result.visit.guestNames : [];
+    for (let i = 0; i < totalVisitors; i++) {
+      const raw = rawGuests[i];
+      let name = '';
+      let badgeVal = '';
+      let isLeader = i === 0;
+
+      if (typeof raw === 'string') {
+        name = raw.trim();
+      } else if (typeof raw === 'object' && raw) {
+        name = (raw.name || '').trim();
+        badgeVal = raw.badge || '';
+        if (raw.isLeader !== undefined) isLeader = raw.isLeader;
+      }
+
+      if (!name) {
+        name = i === 0 ? (result.visit.visitorName || 'Penanggung Jawab') : `Tamu ${i + 1}`;
+      }
+
+      displayGuests.push({
+        name,
+        badge: badgeVal || (i === 0 ? (result.visit.badgeNumber || '') : ''),
+        isLeader
+      });
+    }
+  }
+
   const doCheckIn = async () => {
     if (!picUserId) {
       setError('Pilih PIC / user yang dituju terlebih dahulu');
@@ -162,10 +207,17 @@ export default function Scan() {
     setError('');
     try {
       const badgeSummary = badgesList.filter(Boolean).join(', ') || badge;
+      const payloadGuests = displayGuests.map((g, idx) => ({
+        name: g.name,
+        badge: badgesList[idx] ? String(badgesList[idx]).trim() : '',
+        isLeader: g.isLeader
+      }));
+
       const data = await endpoints.checkIn(result.visit.id, {
         picUserId,
         badgeNumber: badgeSummary,
         badges: badgesList,
+        guestNames: payloadGuests,
         note
       });
       setSuccess({
@@ -173,7 +225,7 @@ export default function Scan() {
         title: 'Check-In berhasil',
         lines: [
           `Tamu: ${data.visitorName}`,
-          `Jumlah: ${data.numberOfVisitors || badgesList.length || 1} orang`,
+          `Jumlah: ${data.numberOfVisitors || totalVisitors} orang`,
           badgeSummary ? `No. Badge: ${badgeSummary}` : null,
           `PIC dinotifikasi: ${data.picNotified}`,
           'Barcode check-out telah dikirim ke WhatsApp tamu.'
@@ -379,36 +431,31 @@ export default function Scan() {
                   <Row label="PIC dituju" value={result.visit.picName} />
                   <Row label="Keperluan" value={result.visit.purpose} />
                   <Row label="Tipe" value={TYPE_LABEL[result.visit.visitType]} />
-                  <Row label="Jumlah" value={`${result.visit.numberOfVisitors} orang`} />
-                  {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 0 && (
+                  <Row label="Jumlah" value={`${totalVisitors} orang`} />
+                  {displayGuests.length > 0 && (
                     <div className="pt-2 pb-1">
                       <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                         <Users size={13} className="text-brand-500" />
-                        Daftar Tamu Masuk ({result.visit.guestNames.length} Orang):
+                        Daftar Tamu Masuk ({displayGuests.length} Orang):
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1.5">
-                        {result.visit.guestNames.map((g, idx) => {
-                          const gName = typeof g === 'object' ? g.name : g;
-                          const gBadge = typeof g === 'object' ? g.badge : '';
-                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
-                          return (
-                            <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1.5 truncate">
-                                <span>{idx + 1}. {gName}</span>
-                                {isLeader && (
-                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                    PJ
-                                  </span>
-                                )}
-                              </div>
-                              {gBadge ? (
-                                <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded font-mono font-medium shrink-0">
-                                  Badge: {gBadge}
+                        {displayGuests.map((g, idx) => (
+                          <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span>{idx + 1}. {g.name}</span>
+                              {g.isLeader && (
+                                <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  PJ
                                 </span>
-                              ) : null}
+                              )}
                             </div>
-                          );
-                        })}
+                            {g.badge ? (
+                              <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded font-mono font-medium shrink-0">
+                                Badge: {g.badge}
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -496,35 +543,33 @@ export default function Scan() {
                   <div className="space-y-2 pt-1">
                     <label className="label flex items-center justify-between">
                       <span>No. Badge Fisik Tamu</span>
-                      <span className="text-[11px] text-slate-400 font-normal">Input nomor badge per tamu</span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        {totalVisitors > 1 ? `Input nomor badge untuk setiap tamu (${totalVisitors} orang)` : 'Input nomor badge tamu'}
+                      </span>
                     </label>
 
-                    {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 1 ? (
+                    {totalVisitors > 1 ? (
                       <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
-                        {result.visit.guestNames.map((g, idx) => {
-                          const gName = typeof g === 'object' ? g.name : g;
-                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
-                          return (
-                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <div className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5 min-w-[140px] truncate">
-                                <span className="font-medium">{idx + 1}. {gName}</span>
-                                {isLeader && (
-                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                    PJ
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex-1 max-w-xs">
-                                <input
-                                  className="input text-xs py-1.5 px-3 font-mono"
-                                  placeholder={`No. Badge Tamu ${idx + 1}`}
-                                  value={badgesList[idx] || ''}
-                                  onChange={(e) => handleBadgeChange(idx, e.target.value)}
-                                />
-                              </div>
+                        {displayGuests.map((g, idx) => (
+                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5 min-w-[150px] truncate">
+                              <span className="font-medium text-slate-800 dark:text-slate-200">{idx + 1}. {g.name}</span>
+                              {g.isLeader && (
+                                <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  PJ
+                                </span>
+                              )}
                             </div>
-                          );
-                        })}
+                            <div className="flex-1 max-w-xs">
+                              <input
+                                className="input text-xs py-1.5 px-3 font-mono"
+                                placeholder={`No. Badge Tamu ${idx + 1}`}
+                                value={badgesList[idx] || ''}
+                                onChange={(e) => handleBadgeChange(idx, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -594,7 +639,7 @@ export default function Scan() {
                     <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Users size={13} className="text-brand-500" />
-                        Validasi Badge Tamu ({result.visit.guestNames?.length || 1} Tamu):
+                        Validasi Badge Tamu ({totalVisitors} Tamu):
                       </span>
                       <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
                         Wajib Dikembalikan
@@ -602,33 +647,28 @@ export default function Scan() {
                     </div>
 
                     <div className="space-y-1.5">
-                      {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 0 ? (
-                        result.visit.guestNames.map((g, idx) => {
-                          const gName = typeof g === 'object' ? g.name : g;
-                          const gBadge = typeof g === 'object' && g.badge ? g.badge : (idx === 0 ? result.visit.badgeNumber : '-');
-                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between gap-3 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs"
-                            >
-                              <div className="flex items-center gap-1.5 truncate">
-                                <span className="font-medium text-slate-800 dark:text-slate-200">{idx + 1}. {gName}</span>
-                                {isLeader && (
-                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
-                                    PJ
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-[11px] text-slate-500 dark:text-slate-400">No. Badge:</span>
-                                <span className="px-2.5 py-1 font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700 rounded-md">
-                                  {gBadge || '-'}
+                      {displayGuests.length > 0 ? (
+                        displayGuests.map((g, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-3 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs"
+                          >
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-medium text-slate-800 dark:text-slate-200">{idx + 1}. {g.name}</span>
+                              {g.isLeader && (
+                                <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  PJ
                                 </span>
-                              </div>
+                              )}
                             </div>
-                          );
-                        })
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400">No. Badge:</span>
+                              <span className="px-2.5 py-1 font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700 rounded-md">
+                                {g.badge || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        ))
                       ) : (
                         <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 text-xs">
                           <span>{result.visit.visitorName}</span>
