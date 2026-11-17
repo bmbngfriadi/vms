@@ -125,7 +125,6 @@ ${FOOTER}`;
  */
 export function guestCheckOutPass({ name, visitNumber, checkInAt, purpose, guestNames, badge }) {
   const guestField = formatGuestFieldWA(guestNames, name, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -139,7 +138,6 @@ Kedatangan Anda telah berhasil divalidasi oleh petugas Security. Selamat berakti
 • Status: 🟢 *Di Dalam Pabrik (Check-In)*
 • No. Kunjungan: *${visitNumber}*
 ${guestField}
-• No. Badge: *${badgeStr}*
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 • Keperluan: ${purpose || '-'}
 • Lokasi: Kawasan Pabrik Plant Batam
@@ -160,7 +158,6 @@ export function guestCheckedOut({ name, visitNumber, checkInAt, checkOutAt, purp
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
   const guestField = formatGuestFieldWA(guestNames, name, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -174,7 +171,6 @@ Kunjungan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah resmi selesai.
 • Status: 🔴 *Telah Check-Out (Keluar)*
 • No. Kunjungan: *${visitNumber}*
 ${guestField}
-• No. Badge: *${badgeStr}*
 • Keperluan: ${purpose || '-'}
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
@@ -192,7 +188,6 @@ ${FOOTER}`;
  */
 export function picGuestArrived({ picName, guestName, company, department, visitNumber, checkInAt, badge, purpose, guestNames }) {
   const guestField = formatGuestFieldWA(guestNames, guestName, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -210,7 +205,6 @@ ${guestField}
 • Departemen: ${department}
 • PIC Dituju: *${picName}*
 • Keperluan: ${purpose || '-'}
-• No. Badge: *${badgeStr}*
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 
 📢 *Tindakan Anda:*
@@ -227,7 +221,6 @@ export function picGuestDeparted({ picName, guestName, company, department, visi
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
   const guestField = formatGuestFieldWA(guestNames, guestName, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -245,7 +238,6 @@ ${guestField}
 • Departemen: ${department || '-'}
 • PIC Dituju: *${picName}*
 • Keperluan: ${purpose || '-'}
-• No. Badge: *${badgeStr}*
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
 • Total Durasi: *${dur}*
@@ -261,7 +253,6 @@ ${FOOTER}`;
  */
 export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count, purpose, guestNames, badge }) {
   const guestField = formatGuestFieldWA(guestNames, guestName, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -279,7 +270,6 @@ ${guestField}
 • Departemen: ${department}
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
-• No. Badge: *${badgeStr}*
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 • Lokasi Area: POS 1
 
@@ -294,7 +284,6 @@ export function managementDeparture({ guestName, company, department, picName, v
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
   const guestField = formatGuestFieldWA(guestNames, guestName, badge);
-  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -312,7 +301,6 @@ ${guestField}
 • Departemen: ${department}
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
-• No. Badge: *${badgeStr}*
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
 • Durasi Total: *${dur}*
