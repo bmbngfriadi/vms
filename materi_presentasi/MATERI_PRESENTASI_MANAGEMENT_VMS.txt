@@ -137,8 +137,15 @@ Sistem membagi akses ke dalam 5 peran utama dengan hak akses terisolasi (RBAC):
      Tamu mengambil foto KTP/SIM via kamera ponsel.
      Teknologi OCR membaca nomor NIK secara otomatis dari foto tersebut.
 5. Tamu memilih Departemen tujuan, nama PIC yang dituju, instansi, dan keperluan.
-6. Tamu menekan tombol "Daftar Kunjungan".
-7. Sistem langsung menampilkan Barcode/QR Code Registrasi unik pada layar ponsel tamu 
+6. PENCATATAN DETAIL SELURUH TAMU ROMBONGAN (STANDAR K3 PABRIK):
+   - Pada bagian Informasi Tambahan, kolom "Jumlah Tamu / Orang" WAJIB diisi.
+   - Tamu 1 otomatis terisi sebagai Penanggung Jawab Tamu (read-only).
+   - Jika rombongan terdiri dari beberapa orang (misal 5 orang), sistem menyediakan 
+     kolom nama lengkap untuk sisa rekan tamu (Tamu 2 s/d Tamu 5) yang wajib diisi.
+   - Seluruh nama anggota rombongan terekam ke dalam sistem dan terhitung sebagai 5 orang 
+     tamu aktif di pabrik, bukan hanya 1 transaksi.
+7. Tamu menekan tombol "Kirim & Dapatkan Barcode".
+8. Sistem langsung menampilkan Barcode/QR Code Registrasi unik pada layar ponsel tamu 
    serta mengirimkan salinan tiket QR ke nomor WhatsApp tamu.
 
 

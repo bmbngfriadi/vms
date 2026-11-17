@@ -120,6 +120,7 @@ model Visit {
   scheduledDate    DateTime    @map("scheduled_date")
   expectedTime     String?     @map("expected_time")
   numberOfVisitors Int         @default(1) @map("number_of_visitors")
+  guestNames       Json?       @map("guest_names")
   vehiclePlate     String?     @map("vehicle_plate")
   badgeNumber      String?     @map("badge_number")
   note             String?

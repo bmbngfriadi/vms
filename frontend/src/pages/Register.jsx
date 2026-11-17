@@ -16,7 +16,8 @@ import {
   Sparkles,
   ShieldCheck,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Users
 } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
@@ -34,6 +35,7 @@ const EMPTY = {
   picUserId: '',
   purpose: '',
   numberOfVisitors: 1,
+  guestNames: [''],
   vehiclePlate: ''
 };
 
@@ -114,7 +116,44 @@ export default function Register() {
     return () => clearTimeout(timer);
   }, [form.fullName, form.phone]);
 
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const set = (k) => (e) => {
+    const val = e.target.value;
+    setForm((curr) => {
+      const next = { ...curr, [k]: val };
+      if (k === 'fullName') {
+        const names = [...(curr.guestNames || [''])];
+        names[0] = val;
+        next.guestNames = names;
+      }
+      return next;
+    });
+  };
+
+  const handleVisitorsCountChange = (e) => {
+    const val = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 1));
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      names[0] = curr.fullName || '';
+      while (names.length < val) {
+        names.push('');
+      }
+      if (names.length > val) {
+        names.length = val;
+      }
+      return { ...curr, numberOfVisitors: val, guestNames: names };
+    });
+  };
+
+  const handleCompanionNameChange = (index, value) => {
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      while (names.length < (Number(curr.numberOfVisitors) || 1)) {
+        names.push('');
+      }
+      names[index] = value;
+      return { ...curr, guestNames: names };
+    });
+  };
 
   const selectDepartment = async (e) => {
     const departmentId = e.target.value;
@@ -141,11 +180,29 @@ export default function Register() {
       return;
     }
 
+    const visitorsCount = Number(form.numberOfVisitors) || 1;
+    if (visitorsCount > 1) {
+      for (let i = 1; i < visitorsCount; i++) {
+        const companionName = (form.guestNames?.[i] || '').trim();
+        if (!companionName) {
+          setError(`Nama lengkap untuk Tamu ke-${i + 1} wajib diisi.`);
+          window.scrollTo({ top: 600, behavior: 'smooth' });
+          return;
+        }
+      }
+    }
+
     setLoading(true);
     try {
+      const payloadGuestNames = [form.fullName.trim()];
+      for (let i = 1; i < visitorsCount; i++) {
+        payloadGuestNames.push((form.guestNames?.[i] || '').trim());
+      }
+
       const data = await endpoints.publicRegister({
         ...form,
-        numberOfVisitors: Number(form.numberOfVisitors) || 1
+        numberOfVisitors: visitorsCount,
+        guestNames: payloadGuestNames
       });
       setResult(data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -569,15 +626,24 @@ export default function Register() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                 <div>
-                  <label className="label">{t('register.visitors_count', 'Jumlah Orang')}</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">{t('register.visitors_count', 'Jumlah Tamu / Orang')} *</label>
+                    <span className="text-[10px] font-semibold text-red-500 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-full border border-red-200/60 dark:border-red-900/60">
+                      Wajib Diisi
+                    </span>
+                  </div>
                   <input
                     type="number"
                     min="1"
                     max="50"
-                    className="input text-sm py-2.5 px-3 rounded-xl"
+                    required
+                    className="input text-sm py-2.5 px-3 rounded-xl font-bold text-brand-600 dark:text-brand-400"
                     value={form.numberOfVisitors}
-                    onChange={set('numberOfVisitors')}
+                    onChange={handleVisitorsCountChange}
                   />
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    Total seluruh orang yang masuk dalam rombongan (min. 1 orang)
+                  </p>
                 </div>
 
                 <div>
@@ -586,8 +652,78 @@ export default function Register() {
                     className="input text-sm py-2.5 px-3 rounded-xl uppercase font-mono"
                     value={form.vehiclePlate}
                     onChange={set('vehiclePlate')}
-                    placeholder=""
+                    placeholder="Contoh: BP 1234 XX"
                   />
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    Opsional jika membawa kendaraan bermotor
+                  </p>
+                </div>
+              </div>
+
+              {/* Rincian Nama Seluruh Tamu Yang Datang */}
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <Users size={14} className="text-brand-500" />
+                    Daftar Nama Seluruh Tamu Masuk ({form.numberOfVisitors} Orang)
+                  </label>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                    Standar K3 Pabrik
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Sesuai standar K3 & keamanan kawasan pabrik PT Cemindo Gemilang Tbk, seluruh tamu yang memasuki pabrik wajib tercatat nama lengkapnya. Foto identitas/KTP cukup perwakilan penanggung jawab di atas.
+                  </p>
+
+                  <div className="space-y-2.5 pt-1">
+                    {/* Tamu 1: Penanggung Jawab Kunjungan (Read-only) */}
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                          Tamu 1 (Penanggung Jawab Tamu)
+                        </span>
+                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                          Penanggung Jawab • Otomatis
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        className="input text-xs py-2 px-3 rounded-lg bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 cursor-not-allowed border-dashed font-medium"
+                        value={form.fullName || '(Isi Nama Lengkap pada form di bagian atas)'}
+                      />
+                    </div>
+
+                    {/* Tamu 2 s/d N: Rekan Tamu */}
+                    {Array.from({ length: Math.max(0, (Number(form.numberOfVisitors) || 1) - 1) }).map((_, idx) => {
+                      const companionIndex = idx + 1;
+                      return (
+                        <div
+                          key={companionIndex}
+                          className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                              Tamu {companionIndex + 1} (Nama Lengkap Rekan) <span className="text-red-500">*</span>
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                              Rekan Tamu {companionIndex}
+                            </span>
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            className="input text-xs py-2 px-3 rounded-lg"
+                            placeholder={`Masukkan nama lengkap rekan tamu ke-${companionIndex + 1}`}
+                            value={form.guestNames?.[companionIndex] || ''}
+                            onChange={(e) => handleCompanionNameChange(companionIndex, e.target.value)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

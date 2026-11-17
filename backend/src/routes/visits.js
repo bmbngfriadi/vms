@@ -93,7 +93,10 @@ function formatVisit(visit, viewer) {
     purpose: visit.purpose,
     scheduledDate: visit.scheduledDate,
     expectedTime: visit.expectedTime,
-    numberOfVisitors: visit.numberOfVisitors,
+    numberOfVisitors: visit.numberOfVisitors || 1,
+    guestNames: Array.isArray(visit.guestNames)
+      ? visit.guestNames
+      : (visit.visitor?.fullName ? [visit.visitor.fullName] : []),
     vehiclePlate: visit.vehiclePlate,
     badgeNumber: visit.badgeNumber,
     checkInAt: visit.checkInAt,
@@ -148,7 +151,8 @@ async function notifyCheckIn(visit, req) {
         purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
-        badge: visit.badgeNumber
+        badge: visit.badgeNumber,
+        guestNames: visit.guestNames
       })
     });
   }
@@ -167,7 +171,8 @@ async function notifyCheckIn(visit, req) {
         purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
-        count: visit.numberOfVisitors
+        count: visit.numberOfVisitors,
+        guestNames: visit.guestNames
       })
     });
   });
@@ -206,7 +211,8 @@ async function notifyCheckOut(visit) {
         purpose: visit.purpose,
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
-        checkOutAt: visit.checkOutAt
+        checkOutAt: visit.checkOutAt,
+        guestNames: visit.guestNames
       })
     });
   }
@@ -226,7 +232,8 @@ async function notifyCheckOut(visit) {
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
         checkOutAt: visit.checkOutAt,
-        count: visit.numberOfVisitors
+        count: visit.numberOfVisitors,
+        guestNames: visit.guestNames
       })
     });
   });
@@ -377,6 +384,35 @@ const registerLimiter = rateLimit({
   message: { error: 'Terlalu banyak pendaftaran dari perangkat ini. Silakan coba lagi nanti.' }
 });
 
+// Helper parsing & validasi daftar nama tamu rombongan
+function parseGuestNames(leaderName, count, inputGuestNames) {
+  const total = Math.max(1, parseInt(count, 10) || 1);
+  const result = [String(leaderName || '').trim()];
+  let rawList = [];
+
+  if (Array.isArray(inputGuestNames)) {
+    rawList = inputGuestNames;
+  } else if (typeof inputGuestNames === 'string') {
+    try {
+      const parsed = JSON.parse(inputGuestNames);
+      if (Array.isArray(parsed)) rawList = parsed;
+    } catch {
+      rawList = inputGuestNames.split('\n');
+    }
+  }
+
+  for (let i = 1; i < total; i++) {
+    const rawName = rawList[i];
+    const nameStr = typeof rawName === 'string' ? rawName.trim() : (rawName?.name ? String(rawName.name).trim() : '');
+    if (!nameStr) {
+      throw new Error(`Nama lengkap untuk Tamu ke-${i + 1} wajib diisi`);
+    }
+    result.push(nameStr);
+  }
+
+  return { total, guestNames: result };
+}
+
 publicRouter.post('/register', registerLimiter, async (req, res) => {
   try {
     const {
@@ -389,11 +425,19 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       picUserId,
       purpose,
       numberOfVisitors,
+      guestNames,
       vehiclePlate
     } = req.body || {};
 
     if (!fullName || !phone || !departmentId || !picUserId || !purpose) {
       return res.status(400).json({ error: 'Nama, nomor WhatsApp, departemen, PIC, dan keperluan wajib diisi' });
+    }
+
+    let parsedVisitors;
+    try {
+      parsedVisitors = parseGuestNames(fullName, numberOfVisitors, guestNames);
+    } catch (valErr) {
+      return res.status(400).json({ error: valErr.message });
     }
 
     const cleanPhone = normalizePhone(phone);
@@ -497,7 +541,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         picNameManual: pic.name,
         purpose: purpose.trim(),
         scheduledDate: new Date(),
-        numberOfVisitors: Number(numberOfVisitors) > 0 ? Number(numberOfVisitors) : 1,
+        numberOfVisitors: parsedVisitors.total,
+        guestNames: parsedVisitors.guestNames,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
         identityPhoto: finalPhoto,
         tokens: { create: { token, type: 'CHECK_IN' } }
@@ -799,11 +844,19 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
       scheduledDate,
       expectedTime,
       numberOfVisitors,
+      guestNames,
       vehiclePlate
     } = req.body || {};
 
     if (!fullName || !phone || !purpose || !scheduledDate) {
       return res.status(400).json({ error: 'Nama tamu, nomor WhatsApp, keperluan, dan tanggal wajib diisi' });
+    }
+
+    let parsedVisitors;
+    try {
+      parsedVisitors = parseGuestNames(fullName, numberOfVisitors, guestNames);
+    } catch (valErr) {
+      return res.status(400).json({ error: valErr.message });
     }
 
     const cleanPhone = normalizePhone(phone);
@@ -891,7 +944,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         purpose: purpose.trim(),
         scheduledDate: when,
         expectedTime: expectedTime || '09:00',
-        numberOfVisitors: Number(numberOfVisitors) > 0 ? Number(numberOfVisitors) : 1,
+        numberOfVisitors: parsedVisitors.total,
+        guestNames: parsedVisitors.guestNames,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
         tokens: { create: { token, type: 'CHECK_IN' } }
       },
@@ -1304,9 +1358,19 @@ router.patch(
         visitData.scheduledDate = when;
       }
       if (has('expectedTime')) visitData.expectedTime = b.expectedTime || null;
-      if (has('numberOfVisitors')) {
-        const n = Number(b.numberOfVisitors);
-        visitData.numberOfVisitors = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+      if (has('numberOfVisitors') || has('guestNames')) {
+        const n = has('numberOfVisitors') ? Number(b.numberOfVisitors) : existing.numberOfVisitors;
+        const total = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+        visitData.numberOfVisitors = total;
+        if (has('guestNames')) {
+          const leader = b.fullName || existing.visitor?.fullName || '';
+          try {
+            const parsed = parseGuestNames(leader, total, b.guestNames);
+            visitData.guestNames = parsed.guestNames;
+          } catch {
+            // Lewati jika tidak ada perubahan list
+          }
+        }
       }
       if (has('vehiclePlate'))
         visitData.vehiclePlate = b.vehiclePlate ? String(b.vehiclePlate).trim().toUpperCase() : null;
@@ -1416,14 +1480,26 @@ router.get('/stats/summary', authenticate, async (req, res) => {
 
     const scope = req.user.role === 'PIC' ? { picUserId: req.user.id } : {};
 
-    const [waiting, onsite, checkedOutToday, todayTotal, byDepartment, recent, trend] = await Promise.all([
-      prisma.visit.count({ where: { ...scope, status: { in: ['WAITING_VALIDATION', 'APPROVED'] } } }),
-      prisma.visit.count({ where: { ...scope, status: 'CHECKED_IN' } }),
-      prisma.visit.count({ where: { ...scope, status: 'CHECKED_OUT', checkOutAt: { gte: startOfDay } } }),
-      prisma.visit.count({ where: { ...scope, createdAt: { gte: startOfDay } } }),
+    const [waitingAggr, onsiteAggr, checkedOutAggr, todayAggr, byDepartment, recent, trend] = await Promise.all([
+      prisma.visit.aggregate({
+        where: { ...scope, status: { in: ['WAITING_VALIDATION', 'APPROVED'] } },
+        _sum: { numberOfVisitors: true }
+      }),
+      prisma.visit.aggregate({
+        where: { ...scope, status: 'CHECKED_IN' },
+        _sum: { numberOfVisitors: true }
+      }),
+      prisma.visit.aggregate({
+        where: { ...scope, status: 'CHECKED_OUT', checkOutAt: { gte: startOfDay } },
+        _sum: { numberOfVisitors: true }
+      }),
+      prisma.visit.aggregate({
+        where: { ...scope, createdAt: { gte: startOfDay } },
+        _sum: { numberOfVisitors: true }
+      }),
       prisma.visit.groupBy({
         by: ['departmentId'],
-        _count: { _all: true },
+        _sum: { numberOfVisitors: true },
         where: { ...scope, createdAt: { gte: startOfDay } }
       }),
       prisma.visit.findMany({
@@ -1433,7 +1509,8 @@ router.get('/stats/summary', authenticate, async (req, res) => {
         take: 8
       }),
       prisma.$queryRaw`
-        SELECT to_char((created_at AT TIME ZONE 'Asia/Jakarta')::date, 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+        SELECT to_char((created_at AT TIME ZONE 'Asia/Jakarta')::date, 'YYYY-MM-DD') AS day,
+               COALESCE(SUM(number_of_visitors), 0)::int AS count
         FROM visits
         WHERE created_at >= NOW() - INTERVAL '6 days'
         GROUP BY 1 ORDER BY 1 ASC
@@ -1443,13 +1520,18 @@ router.get('/stats/summary', authenticate, async (req, res) => {
     const departments = await prisma.department.findMany({ select: { id: true, name: true } });
     const deptMap = Object.fromEntries(departments.map((d) => [d.id, d.name]));
 
+    const waiting = waitingAggr._sum?.numberOfVisitors || 0;
+    const onsite = onsiteAggr._sum?.numberOfVisitors || 0;
+    const checkedOutToday = checkedOutAggr._sum?.numberOfVisitors || 0;
+    const todayTotal = todayAggr._sum?.numberOfVisitors || 0;
+
     res.json({
       waiting,
       onsite,
       checkedOutToday,
       todayTotal,
       byDepartment: byDepartment
-        .map((d) => ({ name: deptMap[d.departmentId] || '-', count: d._count._all }))
+        .map((d) => ({ name: deptMap[d.departmentId] || '-', count: d._sum?.numberOfVisitors || 0 }))
         .sort((a, b) => b.count - a.count),
       trend,
       recent: recent.map((v) => formatVisit(v, req.user))
@@ -1515,7 +1597,7 @@ async function handleExcelExport(req, res) {
     });
 
     // 1. Header Judul Laporan (Row 1-3)
-    sheet.mergeCells('A1:P1');
+    sheet.mergeCells('A1:Q1');
     const titleRow = sheet.getCell('A1');
     titleRow.value = 'PT CEMINDO GEMILANG TBK — PLANT BATAM';
     titleRow.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1523,7 +1605,7 @@ async function handleExcelExport(req, res) {
     titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
     sheet.getRow(1).height = 30;
 
-    sheet.mergeCells('A2:P2');
+    sheet.mergeCells('A2:Q2');
     const subtitleRow = sheet.getCell('A2');
     subtitleRow.value = 'LAPORAN REKAPITULASI KUNJUNGAN TAMU (VISITOR MANAGEMENT SYSTEM)';
     subtitleRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
@@ -1531,11 +1613,12 @@ async function handleExcelExport(req, res) {
     subtitleRow.alignment = { horizontal: 'center', vertical: 'middle' };
     sheet.getRow(2).height = 22;
 
-    sheet.mergeCells('A3:P3');
+    sheet.mergeCells('A3:Q3');
     const infoRow = sheet.getCell('A3');
     const rangeText = startDate && endDate ? `${startDate} s/d ${endDate}` : 'Semua Periode';
     const statusText = status && status !== 'ALL' ? (STATUS_MAP[status] || status) : 'Semua Status';
-    infoRow.value = `Periode: ${rangeText}  |  Filter Status: ${statusText}  |  Total Data: ${rows.length} kunjungan  |  Diekspor: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`;
+    const totalPeople = rows.reduce((acc, curr) => acc + (curr.numberOfVisitors || 1), 0);
+    infoRow.value = `Periode: ${rangeText}  |  Filter Status: ${statusText}  |  Total Data: ${rows.length} transaksi (${totalPeople} orang tamu)  |  Diekspor: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB`;
     infoRow.font = { name: 'Arial', size: 9, italic: true, color: { argb: 'FF64748B' } };
     infoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
     infoRow.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1548,14 +1631,15 @@ async function handleExcelExport(req, res) {
     const columns = [
       { header: 'No.', key: 'no', width: 6, align: 'center' },
       { header: 'No. Kunjungan', key: 'visitNumber', width: 20, align: 'center' },
-      { header: 'Nama Lengkap Tamu', key: 'fullName', width: 26, align: 'left' },
+      { header: 'Nama Penanggung Jawab', key: 'fullName', width: 26, align: 'left' },
       { header: 'No. Identitas (NIK/SIM)', key: 'identityNumber', width: 22, align: 'center' },
       { header: 'Perusahaan / Instansi', key: 'company', width: 24, align: 'left' },
       { header: 'No. WhatsApp', key: 'phone', width: 16, align: 'center' },
       { header: 'Departemen Tujuan', key: 'department', width: 22, align: 'left' },
-      { header: 'PIC', key: 'pic', width: 22, align: 'left' },
+      { header: 'PIC Dituju', key: 'pic', width: 22, align: 'left' },
       { header: 'Keperluan Kunjungan', key: 'purpose', width: 28, align: 'left' },
       { header: 'Jml', key: 'visitors', width: 8, align: 'center' },
+      { header: 'Daftar Seluruh Nama Tamu', key: 'guestNames', width: 34, align: 'left' },
       { header: 'Plat Kendaraan', key: 'plate', width: 16, align: 'center' },
       { header: 'Tipe', key: 'type', width: 16, align: 'center' },
       { header: 'Status', key: 'status', width: 22, align: 'center' },
@@ -1587,6 +1671,10 @@ async function handleExcelExport(req, res) {
           ? Math.floor((new Date(v.checkOutAt) - new Date(v.checkInAt)) / 60000)
           : null;
 
+      const guestListStr = Array.isArray(v.guestNames) && v.guestNames.length > 0
+        ? v.guestNames.map((g, i) => `${i + 1}. ${g}${i === 0 ? ' (PJ)' : ''}`).join('\n')
+        : (v.visitor?.fullName || '-');
+
       const rowValues = [
         idx + 1,
         v.visitNumber || '-',
@@ -1598,6 +1686,7 @@ async function handleExcelExport(req, res) {
         v.picUser?.name || v.picNameManual || '-',
         v.purpose || '-',
         v.numberOfVisitors || 1,
+        guestListStr,
         v.vehiclePlate || '-',
         TYPE_MAP[v.visitType] || v.visitType || '-',
         STATUS_MAP[v.status] || v.status || '-',

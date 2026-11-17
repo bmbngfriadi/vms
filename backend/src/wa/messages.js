@@ -130,10 +130,17 @@ ${DIVIDER}
 ${FOOTER}`;
 }
 
+function formatRombongan(guestNames) {
+  if (!Array.isArray(guestNames) || guestNames.length <= 1) return '';
+  const lines = guestNames.map((name, i) => `  ${i + 1}. ${name}${i === 0 ? ' (Penanggung Jawab)' : ''}`).join('\n');
+  return `\n👥 *Daftar Tamu Masuk (${guestNames.length} Orang):*\n${lines}`;
+}
+
 /**
  * 5. PIC: tamunya sudah masuk.
  */
-export function picGuestArrived({ picName, guestName, company, department, visitNumber, checkInAt, badge, purpose }) {
+export function picGuestArrived({ picName, guestName, company, department, visitNumber, checkInAt, badge, purpose, guestNames }) {
+  const rombonganText = formatRombongan(guestNames);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -152,7 +159,7 @@ Tamu kunjungan Anda telah menyelesaikan validasi di Pos Security dan saat ini te
 • PIC Dituju: *${picName}*
 • Keperluan: ${purpose || '-'}
 • No. Badge: *${badge || '-'}*
-• Waktu Masuk: *${fmtTime(checkInAt)} WIB*
+• Waktu Masuk: *${fmtTime(checkInAt)} WIB*${rombonganText}
 
 📢 *Tindakan Anda:*
 Mohon segera menemui atau berkoordinasi dengan tamu Anda di area lobi resepsionis.
@@ -164,9 +171,10 @@ ${FOOTER}`;
 /**
  * 6. PIC: tamunya sudah keluar.
  */
-export function picGuestDeparted({ picName, guestName, company, department, visitNumber, checkInAt, checkOutAt, purpose }) {
+export function picGuestDeparted({ picName, guestName, company, department, visitNumber, checkInAt, checkOutAt, purpose, guestNames }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  const rombonganText = formatRombongan(guestNames);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -186,7 +194,7 @@ Kunjungan tamu Anda telah selesai dan tamu telah resmi meninggalkan kawasan pabr
 • Keperluan: ${purpose || '-'}
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
-• Total Durasi: *${dur}*
+• Total Durasi: *${dur}*${rombonganText}
 
 Seluruh riwayat kunjungan telah diarsipkan ke dalam sistem.
 
@@ -197,7 +205,8 @@ ${FOOTER}`;
 /**
  * 7. Management: ringkasan tamu masuk.
  */
-export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count, purpose }) {
+export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count, purpose, guestNames }) {
+  const rombonganText = formatRombongan(guestNames);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -216,7 +225,7 @@ Pemberitahuan operasional kedatangan tamu di kawasan pabrik:
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
-• Lokasi Area: POS 1
+• Lokasi Area: POS 1${rombonganText}
 
 ${DIVIDER}
 ${FOOTER}`;
@@ -225,9 +234,10 @@ ${FOOTER}`;
 /**
  * 8. Management: ringkasan tamu keluar.
  */
-export function managementDeparture({ guestName, company, department, picName, visitNumber, checkInAt, checkOutAt, count, purpose }) {
+export function managementDeparture({ guestName, company, department, picName, visitNumber, checkInAt, checkOutAt, count, purpose, guestNames }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  const rombonganText = formatRombongan(guestNames);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -248,7 +258,7 @@ Pemberitahuan operasional tamu telah check-out dari kawasan pabrik:
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
 • Durasi Total: *${dur}*
-• Lokasi Area: POS 1
+• Lokasi Area: POS 1${rombonganText}
 
 ${DIVIDER}
 ${FOOTER}`;

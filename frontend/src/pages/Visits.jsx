@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw } from 'lucide-react';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw, Users } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import VisitEditModal from '../components/VisitEditModal.jsx';
@@ -570,6 +570,26 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
         <Row label="PIC" value={visit.picName} />
         <Row label="Keperluan" value={visit.purpose} />
         <Row label="Jumlah" value={`${visit.numberOfVisitors} orang`} />
+        {Array.isArray(visit.guestNames) && visit.guestNames.length > 1 && (
+          <div className="pt-2 pb-1">
+            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+              <Users size={13} className="text-brand-500" />
+              Daftar Rombongan Tamu ({visit.guestNames.length} Orang):
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1">
+              {visit.guestNames.map((g, idx) => (
+                <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                  <span>{idx + 1}. {g}</span>
+                  {idx === 0 && (
+                    <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">
+                      PJ
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {visit.vehiclePlate && <Row label="Kendaraan" value={visit.vehiclePlate} />}
         <Row label="Rencana" value={`${fmtDate(visit.scheduledDate)} ${visit.expectedTime || ''}`} />
         <div className="h-px bg-slate-100 dark:bg-slate-800 my-3" />
@@ -627,6 +647,7 @@ function CreateModal({ user, onClose, onCreated }) {
     scheduledDate: todayISO(),
     expectedTime: '09:00',
     numberOfVisitors: 1,
+    guestNames: [''],
     vehiclePlate: ''
   });
   const [error, setError] = useState('');
@@ -697,7 +718,44 @@ function CreateModal({ user, onClose, onCreated }) {
     return () => clearTimeout(timer);
   }, [form.fullName, form.phone]);
 
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const set = (k) => (e) => {
+    const val = e.target.value;
+    setForm((curr) => {
+      const next = { ...curr, [k]: val };
+      if (k === 'fullName') {
+        const names = [...(curr.guestNames || [''])];
+        names[0] = val;
+        next.guestNames = names;
+      }
+      return next;
+    });
+  };
+
+  const handleVisitorsCountChange = (e) => {
+    const val = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 1));
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      names[0] = curr.fullName || '';
+      while (names.length < val) {
+        names.push('');
+      }
+      if (names.length > val) {
+        names.length = val;
+      }
+      return { ...curr, numberOfVisitors: val, guestNames: names };
+    });
+  };
+
+  const handleCompanionNameChange = (index, value) => {
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      while (names.length < (Number(curr.numberOfVisitors) || 1)) {
+        names.push('');
+      }
+      names[index] = value;
+      return { ...curr, guestNames: names };
+    });
+  };
 
   // Filter PIC agar hanya menampilkan staf di departemen yang dipilih
   const filteredPics = form.departmentId
@@ -725,12 +783,30 @@ function CreateModal({ user, onClose, onCreated }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    setBusy(true);
     setError('');
+
+    const visitorsCount = Number(form.numberOfVisitors) || 1;
+    if (visitorsCount > 1) {
+      for (let i = 1; i < visitorsCount; i++) {
+        const companionName = (form.guestNames?.[i] || '').trim();
+        if (!companionName) {
+          setError(`Nama lengkap untuk Tamu ke-${i + 1} wajib diisi.`);
+          return;
+        }
+      }
+    }
+
+    setBusy(true);
     try {
+      const payloadGuestNames = [form.fullName.trim()];
+      for (let i = 1; i < visitorsCount; i++) {
+        payloadGuestNames.push((form.guestNames?.[i] || '').trim());
+      }
+
       const data = await endpoints.createVisit({
         ...form,
-        numberOfVisitors: Number(form.numberOfVisitors) || 1,
+        numberOfVisitors: visitorsCount,
+        guestNames: payloadGuestNames,
         picUserId: form.picUserId || undefined
       });
       setCreated(data);
@@ -992,18 +1068,103 @@ function CreateModal({ user, onClose, onCreated }) {
             <textarea className="input min-h-[70px]" value={form.purpose} onChange={set('purpose')} required />
           </div>
           <div className="w-full min-w-0">
-            <label className="label">{t('register.visitors_count', 'Jumlah Orang')}</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label mb-0">{t('register.visitors_count', 'Jumlah Tamu / Orang')} *</label>
+              <span className="text-[10px] font-semibold text-red-500 bg-red-50 dark:bg-red-950/60 px-2 py-0.5 rounded-full border border-red-200/60 dark:border-red-900/60">
+                Wajib Diisi
+              </span>
+            </div>
             <input
               type="number"
               min="1"
-              className="input"
+              max="50"
+              required
+              className="input font-bold text-brand-600 dark:text-brand-400"
               value={form.numberOfVisitors}
-              onChange={set('numberOfVisitors')}
+              onChange={handleVisitorsCountChange}
             />
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+              Total seluruh orang yang masuk (min. 1 orang)
+            </p>
           </div>
           <div className="w-full min-w-0">
             <label className="label">{t('register.vehicle_plate', 'No. Polisi')}</label>
-            <input className="input" value={form.vehiclePlate} onChange={set('vehiclePlate')} />
+            <input
+              className="input uppercase font-mono"
+              value={form.vehiclePlate}
+              onChange={set('vehiclePlate')}
+              placeholder="Contoh: BP 1234 XX"
+            />
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+              Opsional jika membawa kendaraan
+            </p>
+          </div>
+
+          {/* Rincian Nama Seluruh Tamu Yang Datang */}
+          <div className="sm:col-span-2 w-full pt-1 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <Users size={14} className="text-brand-500" />
+                Daftar Nama Seluruh Tamu Yang Hadir ({form.numberOfVisitors} Orang)
+              </label>
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                Standar K3 Pabrik
+              </span>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Seluruh tamu rombongan yang masuk wajib terdaftar nama lengkapnya. Foto identitas/KTP cukup perwakilan penanggung jawab.
+              </p>
+
+              <div className="space-y-2 pt-1">
+                {/* Tamu 1: Penanggung Jawab Kunjungan (Read-only) */}
+                <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                      Tamu 1 (Penanggung Jawab Kunjungan)
+                    </span>
+                    <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                      Penanggung Jawab • Otomatis
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="input text-xs py-2 px-3 rounded-lg bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 cursor-not-allowed border-dashed font-medium"
+                    value={form.fullName || '(Isi Nama Tamu pada kolom di atas)'}
+                  />
+                </div>
+
+                {/* Tamu 2 s/d N: Rekan Tamu */}
+                {Array.from({ length: Math.max(0, (Number(form.numberOfVisitors) || 1) - 1) }).map((_, idx) => {
+                  const companionIndex = idx + 1;
+                  return (
+                    <div
+                      key={companionIndex}
+                      className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                          Tamu {companionIndex + 1} (Nama Lengkap Rekan) <span className="text-red-500">*</span>
+                        </span>
+                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                          Rekan Tamu {companionIndex}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        className="input text-xs py-2 px-3 rounded-lg"
+                        placeholder={`Masukkan nama lengkap rekan tamu ke-${companionIndex + 1}`}
+                        value={form.guestNames?.[companionIndex] || ''}
+                        onChange={(e) => handleCompanionNameChange(companionIndex, e.target.value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

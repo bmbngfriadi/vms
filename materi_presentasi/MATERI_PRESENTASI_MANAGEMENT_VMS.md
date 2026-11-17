@@ -75,44 +75,28 @@ Sebagai kawasan industri semen dengan aktivitas operasional dan standar **Kesela
 [1. Tamu Walk-in / Undangan PIC]
               |
               v
-[2. Input Nama & No. WA] ----(Cocok?)----> [A. Auto-Lookup: Muat Foto KTP & NIK Otomatis]
-              |                                  |
-            (Baru)                               v
-              v                     [3. Terbitkan QR Code Kunjungan]
-    [B. Foto KTP + OCR NIK]                      |
-              |                                  v
-              +---------------------> [4. Tiba di POS 1 Security]
-                                                 |
-                                                 v
-                                   [5. Scan QR & Beri Nomor Badge]
-                                                 |
-                                                 v
-                                   [6. CHECK-IN MASUK PABRIK]
-                                                 |
-                         +-----------------------+-----------------------+
-                         |                                               |
-                         v                                               v
-              [Notifikasi WA ke PIC]                          [Notifikasi WA Management]
-                         |                                               |
-                         +-----------------------+-----------------------+
-                                                 |
-                                                 v
-                                      [7. Tamu Onsite di Pabrik]
-                                                 |
-                                                 v
-                                   [8. Tamu Kembali ke POS 1]
-                                                 |
-                                                 v
-                                   [9. Scan QR & Kembalikan Badge]
-                                                 |
-                                                 v
-                                  [10. CHECK-OUT KELUAR PABRIK]
-                                                 |
-                         +-----------------------+-----------------------+
-                         |                                               |
-                         v                                               v
-             [Notifikasi WA ke PIC]                          [Notifikasi WA Management]
-                                                      (Durasi & Waktu Keluar Terinci)
+[2. Input Data Utama & Foto KTP Penanggung Jawab]
+              |
+              v
+[3. Input Jumlah Tamu & Seluruh Nama Rekan Rombongan (Wajib)]
+              |
+              v
+[4. Terbitkan Tiket QR Code Masuk]
+              |
+              v
+[5. Tiba di POS 1 Security]
+              |
+              v
+[6. Scan QR & Security Verifikasi Seluruh Rombongan]
+              |
+              v
+[7. CHECK-IN MASUK PABRIK (Dashboard Bertambah Sesuai Jumlah Riil)]
+              |
+      +-------+-------+
+      |               |
+      v               v
+[WA ke PIC]     [WA ke Management]
+                (Disertai Daftar Lengkap Nama Rombongan)
 ```
 
 ---

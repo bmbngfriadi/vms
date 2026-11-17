@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Save, Trash2, X, Eye } from 'lucide-react';
+import { Loader2, Save, Trash2, X, Eye, Users } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import { useDialog } from '../lib/dialog.jsx';
 import PhotoPreviewModal from './PhotoPreviewModal.jsx';
@@ -71,6 +71,9 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
     scheduledDate: toDateInput(visit.scheduledDate),
     expectedTime: visit.expectedTime || '',
     numberOfVisitors: visit.numberOfVisitors || 1,
+    guestNames: Array.isArray(visit.guestNames) && visit.guestNames.length > 0
+      ? [...visit.guestNames]
+      : [visit.visitorName || ''],
     vehiclePlate: visit.vehiclePlate || '',
     badgeNumber: visit.badgeNumber || '',
     note: visit.note || '',
@@ -85,14 +88,59 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
     endpoints.pics().then(setPics).catch(() => { });
   }, []);
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (e) => setForm((f) => {
+    const val = e.target.value;
+    const next = { ...f, [k]: val };
+    if (k === 'fullName') {
+      const names = [...(f.guestNames || [''])];
+      names[0] = val;
+      next.guestNames = names;
+    }
+    return next;
+  });
+
+  const handleVisitorsCountChange = (e) => {
+    const val = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 1));
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      names[0] = curr.fullName || '';
+      while (names.length < val) {
+        names.push('');
+      }
+      if (names.length > val) {
+        names.length = val;
+      }
+      return { ...curr, numberOfVisitors: val, guestNames: names };
+    });
+  };
+
+  const handleCompanionNameChange = (index, value) => {
+    setForm((curr) => {
+      const names = [...(curr.guestNames || [''])];
+      while (names.length < (Number(curr.numberOfVisitors) || 1)) {
+        names.push('');
+      }
+      names[index] = value;
+      return { ...curr, guestNames: names };
+    });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      const payload = { ...form, numberOfVisitors: Number(form.numberOfVisitors) || 1 };
+      const visitorsCount = Number(form.numberOfVisitors) || 1;
+      const payloadGuestNames = [form.fullName.trim()];
+      for (let i = 1; i < visitorsCount; i++) {
+        payloadGuestNames.push((form.guestNames?.[i] || '').trim());
+      }
+
+      const payload = {
+        ...form,
+        numberOfVisitors: visitorsCount,
+        guestNames: payloadGuestNames
+      };
       if (!payload.picUserId) payload.picNameManual = form.picNameManual || null;
       const updated = await endpoints.updateVisit(visit.id, payload);
       onSaved?.(updated);
@@ -236,19 +284,54 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
             <textarea className="input min-h-[70px]" value={form.purpose} onChange={set('purpose')} required />
           </div>
           <div>
-            <label className="label">Jumlah Orang</label>
+            <label className="label">Jumlah Orang *</label>
             <input
               type="number"
               min="1"
-              className="input"
+              max="50"
+              required
+              className="input font-bold text-brand-600 dark:text-brand-400"
               value={form.numberOfVisitors}
-              onChange={set('numberOfVisitors')}
+              onChange={handleVisitorsCountChange}
             />
           </div>
           <div>
             <label className="label">No. Polisi</label>
             <input className="input" value={form.vehiclePlate} onChange={set('vehiclePlate')} />
           </div>
+
+          {/* Rincian Nama Seluruh Tamu Yang Datang */}
+          {Number(form.numberOfVisitors) > 1 && (
+            <div className="sm:col-span-2 space-y-2 pt-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <Users size={14} className="text-brand-500" />
+                Daftar Nama Seluruh Tamu ({form.numberOfVisitors} Orang)
+              </label>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Tamu 1 (Penanggung Jawab): <strong className="text-slate-800 dark:text-slate-200">{form.fullName}</strong>
+                </div>
+                {Array.from({ length: Math.max(0, (Number(form.numberOfVisitors) || 1) - 1) }).map((_, idx) => {
+                  const companionIndex = idx + 1;
+                  return (
+                    <div key={companionIndex} className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                        Nama Lengkap Tamu {companionIndex + 1}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="input text-xs py-1.5 px-3 rounded-lg"
+                        placeholder={`Nama tamu ke-${companionIndex + 1}`}
+                        value={form.guestNames?.[companionIndex] || ''}
+                        onChange={(e) => handleCompanionNameChange(companionIndex, e.target.value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="label">No. Badge</label>
             <input className="input" value={form.badgeNumber} onChange={set('badgeNumber')} />

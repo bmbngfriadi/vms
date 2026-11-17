@@ -10,7 +10,8 @@ import {
   Loader2,
   UserCheck,
   LogOut,
-  RotateCcw
+  RotateCcw,
+  Users
 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime, fmtTime } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
@@ -349,6 +350,26 @@ export default function Scan() {
                   <Row label="Keperluan" value={result.visit.purpose} />
                   <Row label="Tipe" value={TYPE_LABEL[result.visit.visitType]} />
                   <Row label="Jumlah" value={`${result.visit.numberOfVisitors} orang`} />
+                  {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 1 && (
+                    <div className="pt-2 pb-1">
+                      <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                        <Users size={13} className="text-brand-500" />
+                        Daftar Anggota Tamu ({result.visit.guestNames.length} Orang):
+                      </div>
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1">
+                        {result.visit.guestNames.map((g, idx) => (
+                          <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                            <span>{idx + 1}. {g}</span>
+                            {idx === 0 && (
+                              <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">
+                                PJ
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {result.visit.checkInAt && (
                     <Row label="Masuk" value={fmtDateTime(result.visit.checkInAt)} />
                   )}
