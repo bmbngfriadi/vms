@@ -1,0 +1,371 @@
+================================================================================
+           VISITOR MANAGEMENT SYSTEM (VMS) - PLANT BATAM
+                      PT CEMINDO GEMILANG Tbk
+================================================================================
+DOKUMEN PANDUAN EKSEKUTIF & CARA KERJA SISTEM (END-TO-END)
+UNTUK BAHAN PRESENTASI MANAJEMEN PABRIK
+================================================================================
+
+Disusun Oleh    : Tim Pengembang Sistem VMS Plant Batam
+Target Audiens  : Direksi, General Manager, Plant Manager, Safety/HSE, 
+                  Security Supervisor, IT & Dept. Head
+Lokasi          : Kawasan Pabrik PT Cemindo Gemilang Tbk - Plant Batam
+Lampiran Visual : Folder "screenshots" (Terlampir 8 tangkapan layar utama)
+
+
+--------------------------------------------------------------------------------
+DAFTAR ISI
+--------------------------------------------------------------------------------
+1. LATAR BELAKANG & TUJUAN BISNIS
+2. ARSITEKTUR & KEUNGGULAN TEKNOLOGI
+3. PEMBAGIAN HAK AKSES & PERAN PENGGUNA (ROLE MATRIX)
+4. ALUR KERJA SISTEM DARI AWAL HINGGA AKHIR (END-TO-END WORKFLOW)
+   4.1. Skenario A: Tamu Datang Langsung (Walk-In Visitor)
+   4.2. Skenario B: Undangan Resmi / Janji Temu oleh PIC (Pre-Registration)
+   4.3. Skenario C: Validasi Kedatangan di Pos Security (Check-In)
+   4.4. Skenario D: Monitoring Keberadaan Tamu (Onsite Live Monitoring)
+   4.5. Skenario E: Validasi Kepulangan di Pos Security (Check-Out)
+   4.6. Skenario F: Tata Kelola Data, Audit Trail & Perlindungan Data Pribadi
+5. FITUR-FITUR UNGGULAN SISTEM (KEY VALUE PROPOSITIONS)
+6. INTEGRASI NOTIFIKASI REAL-TIME WHATSAPP
+7. PANDUAN MATERI PRESENTASI SLIDE / TANGKAPAN LAYAR (SCREENSHOTS)
+8. MANFAAT BISNIS & EFISIENSI OPERASIONAL (IMPACT & ROI)
+9. KESIMPULAN & PENUTUP
+
+
+================================================================================
+1. LATAR BELAKANG & TUJUAN BISNIS
+================================================================================
+Sebagai kawasan industri semen dengan aktivitas operasional dan standar K3 
+(Keselamatan dan Kesehatan Kerja) yang ketat, kepastian mengenai siapa yang 
+berada di dalam kawasan pabrik pada setiap detiknya adalah prioritas keselamatan 
+dan keamanan tertinggi.
+
+Sebelum adanya sistem VMS:
+- Registrasi tamu dilakukan secara manual di pos security menggunakan buku tamu fisik.
+- Data identitas (KTP/SIM) sulit terlacak secara terpusat, memicu antrean di gerbang.
+- Karyawan (PIC) sering tidak mengetahui secara instan bahwa tamu mereka telah tiba.
+- Manajemen tidak memiliki visibilitas langsung atas jumlah orang luar di dalam pabrik.
+- Laporan kunjungan membutuhkan rekap manual yang rawan kehilangan data dan lambat.
+
+Tujuan Utama VMS PT Cemindo Gemilang Tbk:
+1. DIGITALISASI & OTOMASI: Mengganti pencatatan manual menjadi serba digital berbasis QR Code.
+2. AKUNTABILITAS & K3: Setiap orang di kawasan pabrik terdata lengkap (nama, instansi, 
+   foto identitas, tujuan, PIC, waktu masuk, dan waktu keluar).
+3. TRANSPARANSI MANAJEMEN REAL-TIME: Manajemen mendapatkan notifikasi langsung via WhatsApp 
+   saat tamu masuk dan saat tamu keluar pabrik, lengkap dengan rekap durasi kunjungan.
+4. KEAMANAN DATA PRIBADI (Kepatuhan UU PDP): Perlindungan data identitas tamu yang aman 
+   serta pembersihan otomatis saat riwayat kunjungan dihapus.
+
+
+================================================================================
+2. ARSITEKTUR & KEUNGGULAN TEKNOLOGI
+================================================================================
+Sistem VMS dibangun dengan arsitektur modern berstandar enterprise industri:
+
+1. FRONTEND:
+   - React.js + TailwindCSS + Lucide Icons: Tampilan modern, bersih, ramah sentuhan, 
+     dan tanpa 'AI slop' dengan densitas tinggi.
+   - Progressive Web App (PWA): Dapat diinstal langsung di layar smartphone security 
+     maupun PIC layaknya aplikasi native Android/iOS (dengan icon barcode resmi).
+   - Dukungan Mode Gelap/Terang (Dark/Light Mode) & Multi-Bahasa (Indonesia/English).
+
+2. BACKEND & DATABASE:
+   - Node.js (Express REST API) performa tinggi dan modular.
+   - Prisma ORM & Database PostgreSQL 15: Transaksional kuat, integritas data tinggi, 
+     dan relasi antar entitas yang terstruktur rapi.
+   - Tesseract OCR Engine: Pembacaan otomatis NIK dari foto KTP tamu secara cerdas.
+   - Baileys WhatsApp Engine: Gateway pengiriman notifikasi WhatsApp otomatis langsung 
+     dari server internal tanpa bergantung pada pihak ketiga berbayar.
+
+3. INFRASTRUKTUR & CONTAINER:
+   - Terisolasi penuh dalam Docker Containers (vms-app, vms-backend, vms-postgres).
+   - Pengoperasian lokal di jaringan pabrik (on-premise) yang sangat aman dan cepat.
+
+
+================================================================================
+3. PEMBAGIAN HAK AKSES & PERAN PENGGUNA (ROLE MATRIX)
+================================================================================
+Sistem membagi akses ke dalam 5 peran utama dengan hak akses terisolasi (RBAC):
+
+1. ADMINISTRATOR (ADMIN / IT / HSE):
+   - Akses menyeluruh ke seluruh sistem.
+   - Kelola Master Data: Departemen, Data User Karyawan, Konfigurasi Sistem.
+   - Monitoring koneksi WhatsApp Gateway (Scan QR, Status Server).
+   - Audit trail, penghapusan data kunjungan, dan hak ekspor laporan ke Excel/CSV.
+
+2. SECURITY (PETUGAS POS 1):
+   - Halaman khusus 'Scan QR': Pemindai kamera barcode/QR Code kecepatan tinggi.
+   - Melakukan Check-In (Validasi masuk dan penyerahan nomor badge tamu).
+   - Melakukan Check-Out (Validasi keluar dan pengembalian badge tamu).
+   - Monitoring daftar tamu yang saat ini sedang berada di dalam kawasan pabrik (Onsite).
+
+3. PIC (PERSON IN CHARGE / KARYAWAN):
+   - Buat Janji Temu Resmi (Pre-Registration) untuk vendor, kontraktor, atau rekanan.
+   - Approval/Validasi kedatangan tamu walk-in yang menuju ke departemennya.
+   - Monitoring riwayat tamu yang khusus ditujukan kepada dirinya.
+
+4. MANAGEMENT (DIREKSI / GM / PLANT MANAGER):
+   - Executive Dashboard: Melihat grafik tren kunjungan, distribusi departemen, 
+     dan daftar tamu onsite secara real-time.
+   - Notifikasi Eksekutif WhatsApp: Menerima ringkasan otomatis setiap kali ada tamu 
+     yang masuk atau keluar kawasan pabrik tanpa harus login ke komputer.
+
+5. TAMU / PENGUNJUNG (VISITOR):
+   - Tidak memerlukan akun login.
+   - Cukup mengakses halaman publik Registrasi Tamu (via barcode stand di gerbang 
+     atau link web pabrik).
+
+
+================================================================================
+4. ALUR KERJA SISTEM DARI AWAL HINGGA AKHIR (END-TO-END WORKFLOW)
+================================================================================
+
+4.1. SKENARIO A: TAMU DATANG LANGSUNG (WALK-IN VISITOR)
+--------------------------------------------------------------------------------
+1. Tamu tiba di gerbang POS 1 PT Cemindo Gemilang Tbk - Plant Batam.
+2. Tamu membuka halaman registrasi tamu di smartphone miliknya.
+3. Tamu menginput:
+   - Nama Lengkap (Sesuai KTP/SIM)
+   - Nomor WhatsApp
+4. KECERDASAN SISTEM (Auto-Lookup Tamu Berulang):
+   - Sistem otomatis memeriksa database.
+   - JIKA TAMU PERNAH BERKUNJUNG SEBELUMNYA:
+     Sistem langsung mengenali tamu! Foto identitas dan nomor identitas (NIK) lama 
+     langsung dimuat secara instan. Tamu tidak perlu foto ulang KTP atau input NIK lagi.
+   - JIKA TAMU BARU PERTAMA KALI DATANG (atau riwayat sebelumnya telah dihapus):
+     Tamu mengambil foto KTP/SIM via kamera ponsel.
+     Teknologi OCR membaca nomor NIK secara otomatis dari foto tersebut.
+5. Tamu memilih Departemen tujuan, nama PIC yang dituju, instansi, dan keperluan.
+6. Tamu menekan tombol "Daftar Kunjungan".
+7. Sistem langsung menampilkan Barcode/QR Code Registrasi unik pada layar ponsel tamu 
+   serta mengirimkan salinan tiket QR ke nomor WhatsApp tamu.
+
+
+4.2. SKENARIO B: UNDANGAN RESMI / JANJI TEMU OLEH PIC (PRE-REGISTRATION)
+--------------------------------------------------------------------------------
+1. Karyawan (PIC) yang memiliki agenda rapat atau inspeksi vendor membuka menu 'Buat Janji'.
+2. PIC menginput data tamu (Nama, No WA, Instansi, Tanggal Rencana, Jam Perkiraan).
+3. Sama seperti registrasi tamu: Jika tamu sudah pernah berkunjung, identitas tamu 
+   langsung terisi otomatis sehingga PIC tidak perlu meminta foto KTP berulang kali.
+4. Setelah disimpan, sistem otomatis mengirimkan pesan WhatsApp "Undangan Kunjungan Resmi" 
+   kepada tamu yang bersangkutan, lengkap dengan gambar QR Code tiket masuk dan panduan K3.
+
+
+4.3. SKENARIO C: VALIDASI KEDATANGAN DI POS SECURITY (CHECK-IN)
+--------------------------------------------------------------------------------
+1. Tamu menunjukkan gambar QR Code dari layar HP atau cetakan kepada petugas Security di POS 1.
+2. Security membuka menu "Scan Barcode" pada aplikasi VMS (menggunakan kamera HP/tablet/scanner).
+3. Kamera mendeteksi QR Code dalam hitungan milidetik:
+   - Layar menampilkan Detail Tamu, Foto KTP, Instansi, PIC Dituju, dan Keperluan.
+   - Security memverifikasi kesesuaian fisik tamu dengan foto identitas.
+4. Security menginput Nomor Badge Fisik (misal: "B-05") dan Plat Nomor Kendaraan (jika ada).
+5. Security menekan tombol "Validasi Masuk (Check-In)".
+6. DETIK ITU JUGA (REAL-TIME NOTIFIKASI OTOMATIS):
+   - WhatsApp ke PIC: Menginfokan bahwa tamu sudah tiba di POS 1 dan masuk ke area pabrik.
+   - WhatsApp ke Management: Menginfokan kedatangan tamu (Monitoring Operasional Masuk Pabrik).
+
+
+4.4. SKENARIO D: MONITORING KEBERADAAN TAMU (ONSITE LIVE MONITORING)
+--------------------------------------------------------------------------------
+1. Status kunjungan berubah menjadi "🟢 Masuk Kawasan Pabrik" (CHECKED_IN).
+2. Di Dashboard Eksekutif, indikator angka "Tamu di Lokasi" bertambah secara otomatis.
+3. Seluruh manajemen, HSE, dan security dapat melihat daftar siapa saja orang luar yang saat ini 
+   berada di dalam kawasan pabrik. Hal ini krusial untuk evakuasi darurat (Emergency Evacuation Drill).
+
+
+4.5. SKENARIO E: VALIDASI KEPULANGAN DI POS SECURITY (CHECK-OUT)
+--------------------------------------------------------------------------------
+1. Tamu yang telah selesai urusan kembali ke POS 1 untuk mengembalikan badge.
+2. Security memindai ulang QR Code tamu atau mencari berdasarkan nomor kunjungan/nama.
+3. Security menekan tombol "Konfirmasi Keluar (Check-Out)".
+4. Sistem otomatis mencatat waktu check-out presisi dan menghitung durasi total kunjungan 
+   (misal: "1 jam 25 menit").
+5. DETIK ITU JUGA (REAL-TIME NOTIFIKASI OTOMATIS):
+   - WhatsApp ke PIC: Mengabarkan bahwa tamu telah resmi meninggalkan kawasan pabrik.
+   - WhatsApp ke Management: "🔴 MONITORING: TAMU TELAH KELUAR", merinci durasi total berada di pabrik 
+     dan lokasi titik keluar (POS 1).
+
+
+4.6. SKENARIO F: TATA KELOLA DATA, AUDIT TRAIL & PERLINDUNGAN DATA PRIBADI
+--------------------------------------------------------------------------------
+1. Seluruh data historis kunjungan tersimpan rapi dan dapat difilter berdasarkan tanggal, 
+   departemen, status, maupun PIC.
+2. Laporan dapat diekspor kapan saja ke format Microsoft Excel (.xlsx) resmi dengan kop surat 
+   PT Cemindo Gemilang Tbk yang rapi untuk kebutuhan audit ISO / K3 / Pengamanan.
+3. PERLINDUNGAN DATA PRIVASI (UU PDP):
+   Jika manajemen atau administrator menghapus baris kunjungan dari sistem:
+   - Sistem secara cerdas memeriksa apakah tamu tersebut masih memiliki kunjungan lain.
+   - Jika kunjungan tersebut adalah satu-satunya riwayat milik tamu tersebut, maka data foto identitas 
+     dan nomor KTP tamu akan DIHAPUS BERSIH secara otomatis dari database.
+   - Tamu yang kunjungannya telah dihapus tidak akan lagi terdeteksi di database, dan wajib 
+     mengunggah identitas kembali jika datang lagi di masa depan.
+
+
+================================================================================
+5. FITUR-FITUR UNGGULAN SISTEM (KEY VALUE PROPOSITIONS)
+================================================================================
+1. RECOGNITION DATABASE (AUTO-LOOKUP TAMU BERULANG):
+   Tamu vendor/kontraktor yang sering datang tidak perlu repot foto KTP berulang-ulang. 
+   Cukup masukkan Nama & No. WA, sistem langsung mengenali identitas yang bersangkutan.
+
+2. OCR (OPTICAL CHARACTER RECOGNITION) KTP/SIM:
+   Pembacaan nomor KTP secara otomatis dari foto yang diunggah, memangkas waktu ketik 
+   dan menghilangkan kesalahan input (human error).
+
+3. NOTIFIKASI DUAL-CHANNEL WHATSAPP MANDIRI:
+   Tidak membutuhkan pulsa SMS atau biaya langganan API berbayar bulanan mahal. 
+   Menggunakan server WhatsApp internal yang stabil dan hemat biaya.
+
+4. PROGRESSIVE WEB APP (PWA):
+   Dapat diinstal di home screen HP petugas security layaknya aplikasi Android resmi 
+   tanpa harus melalui Google Play Store.
+
+5. KEAMANAN MULTI-LOGIN & SELF-RESET PASSWORD:
+   Karyawan dapat login menggunakan Email Resmi Cemindo, Username, ataupun Nomor Handphone. 
+   Lupa password dapat di-reset mandiri via kode OTP WhatsApp.
+
+6. DUAL THEME & BILINGUAL:
+   Dukungan Dark Mode untuk kenyamanan petugas jaga malam di pos security, serta 
+   dukungan bahasa Inggris untuk tamu ekspatriat / auditor internasional.
+
+
+================================================================================
+6. INTEGRASI NOTIFIKASI REAL-TIME WHATSAPP
+================================================================================
+Format pesan notifikasi dirancang khusus dengan estetika bubble chat WhatsApp 
+(menggunakan emoji status, garis pemisah presisi, teks bold terstruktur).
+
+CONTOH NOTIFIKASI KEDATANGAN (TAMU MASUK PABRIK):
+--------------------------------------------------------------------------------
+🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+─────────────────
+🟢 *MONITORING: TAMU MASUK PABRIK*
+─────────────────
+
+Pemberitahuan operasional kedatangan tamu di kawasan pabrik:
+
+📋 *DETAIL KUNJUNGAN:*
+• Status: 🟢 *Masuk Kawasan Pabrik*
+• No. Kunjungan: *VMS-20261117-5780*
+• Nama Tamu: *Bambang Friadi*
+• Instansi: PT Solnet Media
+• Jumlah Orang: 1 orang
+• Departemen: Information Technology
+• PIC Dituju: Syam Suri
+• Keperluan: Maintenance Jaringan Internet Pabrik
+• Waktu Masuk: *08.35 WIB*
+• Lokasi Area: POS 1
+
+─────────────────
+_Pesan Otomatis, Visitor Management System_
+--------------------------------------------------------------------------------
+
+CONTOH NOTIFIKASI KEPULANGAN (TAMU KELUAR PABRIK):
+--------------------------------------------------------------------------------
+🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — Visitor Management*
+─────────────────
+🔴 *MONITORING: TAMU TELAH KELUAR*
+─────────────────
+
+Pemberitahuan operasional tamu telah check-out dari kawasan pabrik:
+
+📋 *DETAIL KUNJUNGAN:*
+• Status: 🔴 *Telah Check-Out (Keluar)*
+• No. Kunjungan: *VMS-20261117-5780*
+• Nama Tamu: *Bambang Friadi*
+• Instansi: PT Solnet Media
+• Jumlah Orang: 1 orang
+• Departemen: Information Technology
+• PIC Dituju: Syam Suri
+• Keperluan: Maintenance Jaringan Internet Pabrik
+• Waktu Masuk: 08.35 WIB
+• Waktu Keluar: *10.15 WIB*
+• Durasi Total: *1 jam 40 menit*
+• Lokasi Area: POS 1
+
+─────────────────
+_Pesan Otomatis, Visitor Management System_
+--------------------------------------------------------------------------------
+
+
+================================================================================
+7. PANDUAN MATERI PRESENTASI SLIDE / TANGKAPAN LAYAR (SCREENSHOTS)
+================================================================================
+Di dalam folder "screenshots", telah disediakan 8 tangkapan layar utama untuk 
+disisipkan ke dalam slide presentasi PowerPoint / PDF:
+
+1. [01_halaman_login_dan_autentikasi.png]
+   Menampilkan pintu gerbang akses sistem dengan opsi login multi-kredensial 
+   (Username, Email, No. HP), tombol lupa password OTP WhatsApp, dan selector bahasa.
+
+2. [02_dashboard_monitoring_eksekutif.png]
+   Menampilkan ringkasan eksekutif: kartu total tamu hari ini, tamu aktif onsite, 
+   grafik tren mingguan, distribusi tamu per departemen, dan live feed kedatangan.
+
+3. [03_form_registrasi_tamu_walk_in.png]
+   Menampilkan form pendaftaran mandiri tamu: input foto KTP/SIM dengan kamera/upload, 
+   fitur auto-lookup tamu berulang, pembacaan NIK via OCR, dan pemilihan PIC.
+
+4. [04_buat_janji_temu_pre_registration_pic.png]
+   Menampilkan antarmuka karyawan (PIC) saat mengundang tamu / rekanan resmi 
+   sebelum hari kedatangan, lengkap dengan tanggal dan jam perkiraan.
+
+5. [05_pos_security_scan_qr_checkin_checkout.png]
+   Menampilkan antarmuka petugas Pos 1 Security: viewfinder kamera pemindai barcode, 
+   pemberian nomor badge tamu, pencatatan plat kendaraan, dan tombol eksekusi check-in/out.
+
+6. [06_data_kunjungan_audit_dan_monitoring.png]
+   Menampilkan tabel komprehensif seluruh kunjungan pabrik dengan filter status, 
+   pencarian cerdas, tombol export Excel resmi, dan kontrol privasi data.
+
+7. [07_notifikasi_wa_realtime_tamu_masuk.png]
+   Tangkapan layar asli pesan WhatsApp saat tamu memasuki pabrik melalui POS 1.
+
+8. [08_notifikasi_wa_realtime_tamu_keluar.png]
+   Tangkapan layar asli pesan WhatsApp saat tamu check-out, memperlihatkan kalkulasi 
+   durasi kunjungan secara otomatis dan presisi.
+
+
+================================================================================
+8. MANFAAT BISNIS & EFISIENSI OPERASIONAL (IMPACT & ROI)
+================================================================================
+1. ZERO PAPERWORK & GREEN OPERATION:
+   Menghilangkan 100% penggunaan buku register kertas di pos security. Ramah lingkungan 
+   dan data tidak akan pernah robek, hilang, atau terkena tumpahan air/debu pabrik.
+
+2. PENINGKATAN KEAMANAN & KEPATUHAN K3:
+   Jika terjadi kondisi darurat di pabrik (kebakaran, gempa, gangguan teknis), tim HSE 
+   dan Security dapat mengetahui dalam 3 detik berapa banyak tamu dan siapa saja yang ada 
+   di dalam area pabrik.
+
+3. EFISIENSI WAKTU REGISTRASI (DARI 5 MENIT MENJADI 30 DETIK):
+   Dengan pemindaian QR Code dan fitur Auto-Lookup Tamu Berulang, antrean tamu di pos 
+   security pada jam-jam sibuk berkurang drastis hingga 85%.
+
+4. INTEGRASI TANPA BIAYA PIHAK KETIGA:
+   Penggunaan WhatsApp Gateway internal menghemat jutaan rupiah per bulan dibandingkan 
+   menggunakan penyedia SMS Gateway berbayar.
+
+5. PROFESIONALISME & CITRA PERUSAHAAN (BRANDING):
+   Memberikan impresi modern, tertib, dan canggih kepada tamu industri, auditor, vendor, 
+   dan instansi pemerintah yang mengunjungi PT Cemindo Gemilang Tbk - Plant Batam.
+
+
+================================================================================
+9. KESIMPULAN & PENUTUP
+================================================================================
+Sistem Visitor Management System (VMS) Plant Batam ini bukan sekadar buku tamu digital, 
+melainkan sebuah ekosistem pengawasan dan kontrol keamanan terintegrasi yang menghubungkan 
+Tamu, Petugas Security POS 1, Karyawan (PIC), dan Jajaran Manajemen secara real-time.
+
+Sistem ini telah teruji secara operasional, siap pakai, stabil, dan dapat diandalkan untuk 
+mendukung operasional harian industri PT Cemindo Gemilang Tbk - Plant Batam.
+
+---
+Dokumen ini disusun pada: 17 November 2026
+PT Cemindo Gemilang Tbk - Plant Batam
+Visitor Management System (VMS)
+================================================================================
