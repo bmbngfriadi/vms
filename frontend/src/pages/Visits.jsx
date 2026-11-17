@@ -576,17 +576,29 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
               <Users size={13} className="text-brand-500" />
               Daftar Rombongan Tamu ({visit.guestNames.length} Orang):
             </div>
-            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1">
-              {visit.guestNames.map((g, idx) => (
-                <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                  <span>{idx + 1}. {g}</span>
-                  {idx === 0 && (
-                    <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">
-                      PJ
-                    </span>
-                  )}
-                </div>
-              ))}
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1.5">
+              {visit.guestNames.map((g, idx) => {
+                const gName = typeof g === 'object' ? g.name : g;
+                const gBadge = typeof g === 'object' ? g.badge : '';
+                const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
+                return (
+                  <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span>{idx + 1}. {gName}</span>
+                      {isLeader && (
+                        <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                          PJ
+                        </span>
+                      )}
+                    </div>
+                    {gBadge ? (
+                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded font-mono font-medium shrink-0">
+                        Badge: {gBadge}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

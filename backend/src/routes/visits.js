@@ -64,6 +64,74 @@ const activeToken = (visit, type) => {
   return list.length ? list[0] : null;
 };
 
+export function normalizeGuestNames(guestNames, fallbackName = '', fallbackBadge = '') {
+  if (Array.isArray(guestNames) && guestNames.length > 0) {
+    return guestNames.map((g, idx) => {
+      if (typeof g === 'string') {
+        return {
+          name: g.trim(),
+          badge: idx === 0 ? (fallbackBadge || '') : '',
+          isLeader: idx === 0
+        };
+      }
+      return {
+        name: (g?.name || '').trim(),
+        badge: g?.badge || (idx === 0 ? (fallbackBadge || '') : ''),
+        isLeader: g?.isLeader !== undefined ? g.isLeader : idx === 0
+      };
+    }).filter((item) => item.name);
+  }
+  if (fallbackName) {
+    return [{
+      name: String(fallbackName).trim(),
+      badge: fallbackBadge || '',
+      isLeader: true
+    }];
+  }
+  return [];
+}
+
+function processCheckInBadges(existing, badgeNumber, badges) {
+  let finalBadgeNumber = badgeNumber ? String(badgeNumber).trim() : (existing.badgeNumber || null);
+  let updatedGuestNames = existing.guestNames;
+
+  const namesList = Array.isArray(existing.guestNames) && existing.guestNames.length > 0
+    ? existing.guestNames
+    : (existing.visitor?.fullName ? [existing.visitor.fullName] : []);
+
+  if (Array.isArray(badges) && badges.length > 0) {
+    updatedGuestNames = namesList.map((item, idx) => {
+      const name = typeof item === 'string' ? item.trim() : (item?.name || '').trim();
+      const bVal = badges[idx] !== undefined && badges[idx] !== null
+        ? String(badges[idx]).trim()
+        : (typeof item === 'object' && item?.badge ? String(item.badge).trim() : '');
+      return {
+        name,
+        badge: bVal,
+        isLeader: idx === 0
+      };
+    });
+    const validBadges = updatedGuestNames.map((g) => g.badge).filter(Boolean);
+    if (validBadges.length > 0) {
+      finalBadgeNumber = validBadges.join(', ');
+    }
+  } else if (badgeNumber) {
+    finalBadgeNumber = String(badgeNumber).trim();
+    if (namesList.length > 0) {
+      updatedGuestNames = namesList.map((item, idx) => {
+        const name = typeof item === 'string' ? item.trim() : (item?.name || '').trim();
+        return {
+          name,
+          badge: idx === 0 ? finalBadgeNumber : (typeof item === 'object' && item?.badge ? item.badge : ''),
+          isLeader: idx === 0
+        };
+      });
+    }
+  }
+
+  return { finalBadgeNumber, updatedGuestNames };
+}
+
 function formatVisit(visit, viewer) {
   if (!visit) return null;
   const canSeeContact = ['ADMIN', 'SECURITY'].includes(viewer?.role);
@@ -75,6 +143,8 @@ function formatVisit(visit, viewer) {
     const end = visit.checkOutAt ? new Date(visit.checkOutAt) : new Date();
     durationMinutes = Math.max(0, Math.floor((end - new Date(visit.checkInAt)) / 60000));
   }
+
+  const normalizedGuests = normalizeGuestNames(visit.guestNames, visit.visitor?.fullName, visit.badgeNumber);
 
   return {
     id: visit.id,
@@ -93,10 +163,8 @@ function formatVisit(visit, viewer) {
     purpose: visit.purpose,
     scheduledDate: visit.scheduledDate,
     expectedTime: visit.expectedTime,
-    numberOfVisitors: visit.numberOfVisitors || 1,
-    guestNames: Array.isArray(visit.guestNames)
-      ? visit.guestNames
-      : (visit.visitor?.fullName ? [visit.visitor.fullName] : []),
+    numberOfVisitors: visit.numberOfVisitors || (normalizedGuests.length > 0 ? normalizedGuests.length : 1),
+    guestNames: normalizedGuests,
     vehiclePlate: visit.vehiclePlate,
     badgeNumber: visit.badgeNumber,
     checkInAt: visit.checkInAt,
@@ -132,7 +200,9 @@ async function notifyCheckIn(visit, req) {
         visitNumber: visit.visitNumber,
         checkInAt: visit.checkInAt,
         purpose: visit.purpose,
-        passUrl: passUrl(outToken.token, req)
+        passUrl: passUrl(outToken.token, req),
+        guestNames: visit.guestNames,
+        badge: visit.badgeNumber
       }),
       imageBuffer: await qrImageBuffer(passUrl(outToken.token, req))
     });
@@ -193,7 +263,9 @@ async function notifyCheckOut(visit) {
         visitNumber: visit.visitNumber,
         purpose: visit.purpose,
         checkInAt: visit.checkInAt,
-        checkOutAt: visit.checkOutAt
+        checkOutAt: visit.checkOutAt,
+        guestNames: visit.guestNames,
+        badge: visit.badgeNumber
       })
     });
   }
@@ -563,7 +635,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         visitNumber: visit.visitNumber,
         department: dept.name,
         purpose: visit.purpose,
-        passUrl: url
+        passUrl: url,
+        guestNames: visit.guestNames
       }),
       imageBuffer: await qrImageBuffer(url)
     });
@@ -696,7 +769,7 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
       });
     }
 
-    const { picUserId, badgeNumber, note, identityNumber, identityPhoto } = req.body || {};
+    const { picUserId, badgeNumber, badges, note, identityNumber, identityPhoto } = req.body || {};
     const picId = picUserId || existing.picUserId;
     if (!picId) return res.status(400).json({ error: 'PIC / Orang yang dituju wajib dipilih' });
 
@@ -713,6 +786,8 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
         error: 'Foto identitas tamu (KTP/SIM/Paspor) belum ada. Petugas Security wajib mengambil foto identitas tamu.'
       });
     }
+
+    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges);
 
     const checkOutToken = newToken();
     const now = new Date();
@@ -744,7 +819,8 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
           checkInAt: now,
           identityPhoto: finalPhoto,
           picUserId: pic.id,
-          badgeNumber: badgeNumber ? String(badgeNumber).trim() : null,
+          badgeNumber: finalBadgeNumber,
+          guestNames: updatedGuestNames || existing.guestNames,
           note: note || existing.note
         },
         include: VISIT_INCLUDE
@@ -966,7 +1042,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         purpose: visit.purpose,
         date: when,
         time: visit.expectedTime,
-        passUrl: url
+        passUrl: url,
+        guestNames: visit.guestNames
       }),
       imageBuffer: await qrImageBuffer(url)
     });
@@ -1053,7 +1130,7 @@ router.post('/scan', authenticate, allow(['ADMIN', 'SECURITY']), scanLimiter, as
 
 router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (req, res) => {
   try {
-    const { picUserId, badgeNumber, note } = req.body || {};
+    const { picUserId, badgeNumber, badges, note } = req.body || {};
 
     const existing = await prisma.visit.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: 'Kunjungan tidak ditemukan' });
@@ -1075,6 +1152,8 @@ router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (
     if (!pic || !pic.isActive) return res.status(400).json({ error: 'PIC tidak valid atau tidak aktif' });
     if (!pic.phone) return res.status(400).json({ error: `PIC ${pic.name} belum memiliki nomor WhatsApp` });
 
+    const { finalBadgeNumber, updatedGuestNames } = processCheckInBadges(existing, badgeNumber, badges);
+
     const checkOutToken = newToken();
     const now = new Date();
 
@@ -1095,7 +1174,8 @@ router.post('/:id/check-in', authenticate, allow(['ADMIN', 'SECURITY']), async (
           checkInAt: now,
           checkInById: req.user.id,
           picUserId: pic.id,
-          badgeNumber: badgeNumber ? String(badgeNumber).trim() : null,
+          badgeNumber: finalBadgeNumber,
+          guestNames: updatedGuestNames || existing.guestNames,
           note: note || existing.note
         },
         include: VISIT_INCLUDE

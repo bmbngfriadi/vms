@@ -34,6 +34,7 @@ export default function Scan() {
   const [pics, setPics] = useState([]);
   const [picUserId, setPicUserId] = useState('');
   const [badge, setBadge] = useState('');
+  const [badgesList, setBadgesList] = useState([]);
   const [note, setNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -117,8 +118,19 @@ export default function Scan() {
       const data = await endpoints.scan(v);
       setResult(data);
       setPicUserId(data.visit.picUser?.id || '');
-      setBadge('');
+      setBadge(data.visit.badgeNumber || '');
       setNote('');
+
+      const guests = Array.isArray(data.visit.guestNames) ? data.visit.guestNames : [];
+      let initBadges = guests.map((g, idx) => {
+        if (typeof g === 'object' && g.badge) return g.badge;
+        return idx === 0 ? (data.visit.badgeNumber || '') : '';
+      });
+      if (initBadges.length === 0) {
+        initBadges = [data.visit.badgeNumber || ''];
+      }
+      setBadgesList(initBadges);
+
       if (data.action === 'CHECK_IN') {
         endpoints
           .pics(data.visit.department?.id)
@@ -133,6 +145,14 @@ export default function Scan() {
     }
   };
 
+  const handleBadgeChange = (idx, value) => {
+    setBadgesList((prev) => {
+      const next = [...prev];
+      next[idx] = value;
+      return next;
+    });
+  };
+
   const doCheckIn = async () => {
     if (!picUserId) {
       setError('Pilih PIC / user yang dituju terlebih dahulu');
@@ -141,19 +161,28 @@ export default function Scan() {
     setActionLoading(true);
     setError('');
     try {
-      const data = await endpoints.checkIn(result.visit.id, { picUserId, badgeNumber: badge, note });
+      const badgeSummary = badgesList.filter(Boolean).join(', ') || badge;
+      const data = await endpoints.checkIn(result.visit.id, {
+        picUserId,
+        badgeNumber: badgeSummary,
+        badges: badgesList,
+        note
+      });
       setSuccess({
         kind: 'CHECK_IN',
         title: 'Check-In berhasil',
         lines: [
           `Tamu: ${data.visitorName}`,
+          `Jumlah: ${data.numberOfVisitors || badgesList.length || 1} orang`,
+          badgeSummary ? `No. Badge: ${badgeSummary}` : null,
           `PIC dinotifikasi: ${data.picNotified}`,
           'Barcode check-out telah dikirim ke WhatsApp tamu.'
-        ],
+        ].filter(Boolean),
         passUrl: data.guestPassUrl
       });
       setResult(null);
       setCode('');
+      setBadgesList([]);
     } catch (err) {
       setError(errMsg(err, 'Gagal memproses check-in'));
     } finally {
@@ -221,6 +250,7 @@ export default function Scan() {
     setCode('');
     setPicUserId('');
     setBadge('');
+    setBadgesList([]);
     setNote('');
   };
 
@@ -350,23 +380,35 @@ export default function Scan() {
                   <Row label="Keperluan" value={result.visit.purpose} />
                   <Row label="Tipe" value={TYPE_LABEL[result.visit.visitType]} />
                   <Row label="Jumlah" value={`${result.visit.numberOfVisitors} orang`} />
-                  {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 1 && (
+                  {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 0 && (
                     <div className="pt-2 pb-1">
                       <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                         <Users size={13} className="text-brand-500" />
-                        Daftar Anggota Tamu ({result.visit.guestNames.length} Orang):
+                        Daftar Tamu Masuk ({result.visit.guestNames.length} Orang):
                       </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1">
-                        {result.visit.guestNames.map((g, idx) => (
-                          <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                            <span>{idx + 1}. {g}</span>
-                            {idx === 0 && (
-                              <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">
-                                PJ
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                        {result.visit.guestNames.map((g, idx) => {
+                          const gName = typeof g === 'object' ? g.name : g;
+                          const gBadge = typeof g === 'object' ? g.badge : '';
+                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
+                          return (
+                            <div key={idx} className="text-xs text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span>{idx + 1}. {gName}</span>
+                                {isLeader && (
+                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                    PJ
+                                  </span>
+                                )}
+                              </div>
+                              {gBadge ? (
+                                <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded font-mono font-medium shrink-0">
+                                  Badge: {gBadge}
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -451,15 +493,64 @@ export default function Scan() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label">No. Badge</label>
-                      <input className="input" value={badge} onChange={(e) => setBadge(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="label">Catatan</label>
-                      <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
-                    </div>
+                  <div className="space-y-2 pt-1">
+                    <label className="label flex items-center justify-between">
+                      <span>No. Badge Fisik Tamu</span>
+                      <span className="text-[11px] text-slate-400 font-normal">Input nomor badge per tamu</span>
+                    </label>
+
+                    {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 1 ? (
+                      <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
+                        {result.visit.guestNames.map((g, idx) => {
+                          const gName = typeof g === 'object' ? g.name : g;
+                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
+                          return (
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5 min-w-[140px] truncate">
+                                <span className="font-medium">{idx + 1}. {gName}</span>
+                                {isLeader && (
+                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                    PJ
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-1 max-w-xs">
+                                <input
+                                  className="input text-xs py-1.5 px-3 font-mono"
+                                  placeholder={`No. Badge Tamu ${idx + 1}`}
+                                  value={badgesList[idx] || ''}
+                                  onChange={(e) => handleBadgeChange(idx, e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <input
+                            className="input font-mono"
+                            placeholder="Contoh: B-01"
+                            value={badgesList[0] !== undefined ? badgesList[0] : badge}
+                            onChange={(e) => {
+                              setBadge(e.target.value);
+                              handleBadgeChange(0, e.target.value);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="label">Catatan Kunjungan (Opsional)</label>
+                    <input
+                      className="input"
+                      placeholder="Catatan tambahan security..."
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                    />
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
@@ -488,18 +579,72 @@ export default function Scan() {
               )}
 
               {result.action === 'CHECK_OUT' && (
-                <div className="card p-5">
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">Konfirmasi Keluar</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-                    Pastikan tamu telah menyerahkan badge dan meninggalkan area kawasan pabrik.
-                  </p>
+                <div className="card p-5 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                      Konfirmasi Keluar & Validasi Pengembalian Badge
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Cocokkan kartu badge fisik yang dikembalikan tamu dengan nomor badge terdaftar di bawah ini sebelum memproses Check-Out.
+                    </p>
+                  </div>
+
+                  {/* Daftar Validasi Badge per Tamu */}
+                  <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5">
+                    <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Users size={13} className="text-brand-500" />
+                        Validasi Badge Tamu ({result.visit.guestNames?.length || 1} Tamu):
+                      </span>
+                      <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
+                        Wajib Dikembalikan
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {Array.isArray(result.visit.guestNames) && result.visit.guestNames.length > 0 ? (
+                        result.visit.guestNames.map((g, idx) => {
+                          const gName = typeof g === 'object' ? g.name : g;
+                          const gBadge = typeof g === 'object' && g.badge ? g.badge : (idx === 0 ? result.visit.badgeNumber : '-');
+                          const isLeader = typeof g === 'object' ? g.isLeader : idx === 0;
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-3 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs"
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="font-medium text-slate-800 dark:text-slate-200">{idx + 1}. {gName}</span>
+                                {isLeader && (
+                                  <span className="text-[9px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                    PJ
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400">No. Badge:</span>
+                                <span className="px-2.5 py-1 font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700 rounded-md">
+                                  {gBadge || '-'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 text-xs">
+                          <span>{result.visit.visitorName}</span>
+                          <span className="font-mono font-bold">{result.visit.badgeNumber || '-'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <button
                     className="btn-primary w-full py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
                     onClick={doCheckOut}
                     disabled={actionLoading}
                   >
                     {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={18} />}
-                    Konfirmasi Check-Out
+                    Validasi Badge & Konfirmasi Check-Out
                   </button>
                 </div>
               )}

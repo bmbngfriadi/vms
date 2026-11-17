@@ -10,10 +10,57 @@ const fmtTime = (d) =>
 const DIVIDER = '─────────────────';
 const FOOTER = '_Pesan Otomatis, Visitor Management System_';
 
+export function formatGuestFieldWA(guestNames, fallbackName = '', badgeNumber = '') {
+  let list = [];
+  if (Array.isArray(guestNames) && guestNames.length > 0) {
+    list = guestNames.map((g, idx) => {
+      if (typeof g === 'string') {
+        return { name: g.trim(), badge: idx === 0 ? (badgeNumber || '') : '', isLeader: idx === 0 };
+      }
+      return {
+        name: (g?.name || '').trim(),
+        badge: g?.badge || (idx === 0 ? (badgeNumber || '') : ''),
+        isLeader: g?.isLeader !== undefined ? g.isLeader : idx === 0
+      };
+    }).filter((item) => item.name);
+  } else if (fallbackName) {
+    list = [{ name: String(fallbackName).trim(), badge: badgeNumber || '', isLeader: true }];
+  }
+
+  if (list.length === 0) {
+    return `• Nama Tamu: *${fallbackName || '-'}*`;
+  }
+
+  if (list.length === 1) {
+    const item = list[0];
+    const badgePart = item.badge ? ` (No. Badge: *${item.badge}*)` : '';
+    return `• Nama Tamu: *${item.name}*${badgePart}`;
+  }
+
+  const lines = list.map((item, idx) => {
+    const leaderTag = idx === 0 || item.isLeader ? ' (Penanggung Jawab)' : '';
+    const badgePart = item.badge ? ` — No. Badge: *${item.badge}*` : '';
+    return `  ${idx + 1}. *${item.name}*${leaderTag}${badgePart}`;
+  });
+
+  return `• Nama Tamu (${list.length} orang):\n${lines.join('\n')}`;
+}
+
+export function formatBadgeList(guestNames, fallbackBadge = '') {
+  if (Array.isArray(guestNames) && guestNames.length > 0) {
+    const badges = guestNames
+      .map((g) => (typeof g === 'object' ? g?.badge : null))
+      .filter(Boolean);
+    if (badges.length > 0) return badges.join(', ');
+  }
+  return fallbackBadge || '-';
+}
+
 /**
  * 1. Tamu walk-in: barcode awal (check-in) untuk ditunjukkan ke security.
  */
-export function guestWalkInPass({ name, company, visitNumber, department, purpose }) {
+export function guestWalkInPass({ name, company, visitNumber, department, purpose, guestNames }) {
+  const guestField = formatGuestFieldWA(guestNames, name);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -25,7 +72,7 @@ Pendaftaran kedatangan Anda di kawasan pabrik *PT Cemindo Gemilang Tbk - Plant B
 
 📋 *RINCIAN KUNJUNGAN:*
 • No. Registrasi: *${visitNumber}*
-• Nama Tamu: *${name}*
+${guestField}
 • Instansi: ${company || 'Pribadi / Perorangan'}
 • Departemen: ${department}
 • Keperluan: ${purpose || '-'}
@@ -43,7 +90,8 @@ ${FOOTER}`;
 /**
  * 2. Tamu pre-registered: barcode dikirim saat PIC membuat janji temu.
  */
-export function guestPreRegisteredPass({ name, company, visitNumber, department, picName, purpose, date, time }) {
+export function guestPreRegisteredPass({ name, company, visitNumber, department, picName, purpose, date, time, guestNames }) {
+  const guestField = formatGuestFieldWA(guestNames, name);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -55,6 +103,7 @@ Anda telah dijadwalkan berkunjung ke kawasan pabrik *PT Cemindo Gemilang Tbk - P
 
 📋 *RINCIAN JADWAL:*
 • No. Kunjungan: *${visitNumber}*
+${guestField}
 • Hari, Tanggal: ${fmtDate(date)}
 • Waktu Rencana: ${time || '09:00'} WIB
 • Departemen: ${department}
@@ -74,7 +123,9 @@ ${FOOTER}`;
 /**
  * 3. Tamu sudah check-in: barcode baru untuk check-out.
  */
-export function guestCheckOutPass({ name, visitNumber, checkInAt, purpose }) {
+export function guestCheckOutPass({ name, visitNumber, checkInAt, purpose, guestNames, badge }) {
+  const guestField = formatGuestFieldWA(guestNames, name, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -87,6 +138,8 @@ Kedatangan Anda telah berhasil divalidasi oleh petugas Security. Selamat berakti
 📋 *STATUS KUNJUNGAN:*
 • Status: 🟢 *Di Dalam Pabrik (Check-In)*
 • No. Kunjungan: *${visitNumber}*
+${guestField}
+• No. Badge: *${badgeStr}*
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 • Keperluan: ${purpose || '-'}
 • Lokasi: Kawasan Pabrik Plant Batam
@@ -103,9 +156,11 @@ ${FOOTER}`;
 /**
  * 4. Tamu sudah check-out (konfirmasi).
  */
-export function guestCheckedOut({ name, visitNumber, checkInAt, checkOutAt, purpose }) {
+export function guestCheckedOut({ name, visitNumber, checkInAt, checkOutAt, purpose, guestNames, badge }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  const guestField = formatGuestFieldWA(guestNames, name, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -118,6 +173,8 @@ Kunjungan Anda di *PT Cemindo Gemilang Tbk - Plant Batam* telah resmi selesai.
 📋 *RINGKASAN KUNJUNGAN:*
 • Status: 🔴 *Telah Check-Out (Keluar)*
 • No. Kunjungan: *${visitNumber}*
+${guestField}
+• No. Badge: *${badgeStr}*
 • Keperluan: ${purpose || '-'}
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
@@ -130,17 +187,12 @@ ${DIVIDER}
 ${FOOTER}`;
 }
 
-function formatRombongan(guestNames) {
-  if (!Array.isArray(guestNames) || guestNames.length <= 1) return '';
-  const lines = guestNames.map((name, i) => `  ${i + 1}. ${name}${i === 0 ? ' (Penanggung Jawab)' : ''}`).join('\n');
-  return `\n👥 *Daftar Tamu Masuk (${guestNames.length} Orang):*\n${lines}`;
-}
-
 /**
  * 5. PIC: tamunya sudah masuk.
  */
 export function picGuestArrived({ picName, guestName, company, department, visitNumber, checkInAt, badge, purpose, guestNames }) {
-  const rombonganText = formatRombongan(guestNames);
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -153,13 +205,13 @@ Tamu kunjungan Anda telah menyelesaikan validasi di Pos Security dan saat ini te
 📋 *RINCIAN DATA TAMU:*
 • Status: 🟢 *Di Dalam Pabrik (Masuk)*
 • No. Kunjungan: *${visitNumber}*
-• Nama Tamu: *${guestName}*
+${guestField}
 • Instansi: ${company || 'Pribadi / Perorangan'}
 • Departemen: ${department}
 • PIC Dituju: *${picName}*
 • Keperluan: ${purpose || '-'}
-• No. Badge: *${badge || '-'}*
-• Waktu Masuk: *${fmtTime(checkInAt)} WIB*${rombonganText}
+• No. Badge: *${badgeStr}*
+• Waktu Masuk: *${fmtTime(checkInAt)} WIB*
 
 📢 *Tindakan Anda:*
 Mohon segera menemui atau berkoordinasi dengan tamu Anda di area lobi resepsionis.
@@ -171,10 +223,11 @@ ${FOOTER}`;
 /**
  * 6. PIC: tamunya sudah keluar.
  */
-export function picGuestDeparted({ picName, guestName, company, department, visitNumber, checkInAt, checkOutAt, purpose, guestNames }) {
+export function picGuestDeparted({ picName, guestName, company, department, visitNumber, checkInAt, checkOutAt, purpose, guestNames, badge }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
-  const rombonganText = formatRombongan(guestNames);
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -187,14 +240,15 @@ Kunjungan tamu Anda telah selesai dan tamu telah resmi meninggalkan kawasan pabr
 📋 *RINCIAN KUNJUNGAN:*
 • Status: 🔴 *Telah Keluar Pabrik*
 • No. Kunjungan: *${visitNumber}*
-• Nama Tamu: *${guestName}*
+${guestField}
 • Instansi: ${company || 'Pribadi / Perorangan'}
 • Departemen: ${department || '-'}
 • PIC Dituju: *${picName}*
 • Keperluan: ${purpose || '-'}
+• No. Badge: *${badgeStr}*
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
-• Total Durasi: *${dur}*${rombonganText}
+• Total Durasi: *${dur}*
 
 Seluruh riwayat kunjungan telah diarsipkan ke dalam sistem.
 
@@ -205,8 +259,9 @@ ${FOOTER}`;
 /**
  * 7. Management: ringkasan tamu masuk.
  */
-export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count, purpose, guestNames }) {
-  const rombonganText = formatRombongan(guestNames);
+export function managementArrival({ guestName, company, department, picName, visitNumber, checkInAt, count, purpose, guestNames, badge }) {
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -218,14 +273,15 @@ Pemberitahuan operasional kedatangan tamu di kawasan pabrik:
 📋 *DETAIL KUNJUNGAN:*
 • Status: 🟢 *Masuk Kawasan Pabrik*
 • No. Kunjungan: *${visitNumber}*
-• Nama Tamu: *${guestName}*
+${guestField}
 • Instansi: ${company || 'Pribadi / Perorangan'}
 • Jumlah Orang: ${count || 1} orang
 • Departemen: ${department}
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
+• No. Badge: *${badgeStr}*
 • Waktu Masuk: *${fmtTime(checkInAt)} WIB*
-• Lokasi Area: POS 1${rombonganText}
+• Lokasi Area: POS 1
 
 ${DIVIDER}
 ${FOOTER}`;
@@ -234,10 +290,11 @@ ${FOOTER}`;
 /**
  * 8. Management: ringkasan tamu keluar.
  */
-export function managementDeparture({ guestName, company, department, picName, visitNumber, checkInAt, checkOutAt, count, purpose, guestNames }) {
+export function managementDeparture({ guestName, company, department, picName, visitNumber, checkInAt, checkOutAt, count, purpose, guestNames, badge }) {
   const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
   const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
-  const rombonganText = formatRombongan(guestNames);
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  const badgeStr = formatBadgeList(guestNames, badge);
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — Visitor Management*
 ${DIVIDER}
@@ -249,16 +306,17 @@ Pemberitahuan operasional tamu telah check-out dari kawasan pabrik:
 📋 *DETAIL KUNJUNGAN:*
 • Status: 🔴 *Telah Check-Out (Keluar)*
 • No. Kunjungan: *${visitNumber}*
-• Nama Tamu: *${guestName}*
+${guestField}
 • Instansi: ${company || 'Pribadi / Perorangan'}
 • Jumlah Orang: ${count || 1} orang
 • Departemen: ${department}
 • PIC Dituju: ${picName || '-'}
 • Keperluan: ${purpose || '-'}
+• No. Badge: *${badgeStr}*
 • Waktu Masuk: ${fmtTime(checkInAt)} WIB
 • Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
 • Durasi Total: *${dur}*
-• Lokasi Area: POS 1${rombonganText}
+• Lokasi Area: POS 1
 
 ${DIVIDER}
 ${FOOTER}`;
