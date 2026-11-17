@@ -1107,16 +1107,9 @@ function CreateModal({ user, onClose, onCreated }) {
                 <Users size={14} className="text-brand-500" />
                 Daftar Nama Seluruh Tamu Yang Hadir ({form.numberOfVisitors} Orang)
               </label>
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Standar K3 Pabrik
-              </span>
             </div>
             <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Seluruh tamu rombongan yang masuk wajib terdaftar nama lengkapnya. Foto identitas/KTP cukup perwakilan penanggung jawab.
-              </p>
-
-              <div className="space-y-2 pt-1">
+              <div className="space-y-2">
                 {/* Tamu 1: Penanggung Jawab Kunjungan (Read-only) */}
                 <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
                   <div className="flex items-center justify-between mb-1">
