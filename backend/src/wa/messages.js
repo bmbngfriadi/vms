@@ -21,7 +21,7 @@ ${DIVIDER}
 ${DIVIDER}
 
 Halo, *${name}*!
-Pendaftaran kedatangan Anda di kawasan industri *PT Cemindo Gemilang Tbk - Plant Batam* telah berhasil.
+Pendaftaran kedatangan Anda di kawasan pabrik *PT Cemindo Gemilang Tbk - Plant Batam* telah berhasil.
 
 📋 *RINCIAN KUNJUNGAN:*
 • No. Registrasi: *${visitNumber}*
@@ -51,7 +51,7 @@ ${DIVIDER}
 ${DIVIDER}
 
 Halo, *${name}*!
-Anda telah dijadwalkan berkunjung ke kawasan industri *PT Cemindo Gemilang Tbk - Plant Batam*.
+Anda telah dijadwalkan berkunjung ke kawasan pabrik *PT Cemindo Gemilang Tbk - Plant Batam*.
 
 📋 *RINCIAN JADWAL:*
 • No. Kunjungan: *${visitNumber}*
@@ -204,7 +204,7 @@ ${DIVIDER}
 🟢 *MONITORING: TAMU MASUK PABRIK*
 ${DIVIDER}
 
-Pemberitahuan operasional kedatangan tamu di kawasan industri:
+Pemberitahuan operasional kedatangan tamu di kawasan pabrik:
 
 📋 *DETAIL KUNJUNGAN:*
 • Status: 🟢 *Masuk Kawasan Pabrik*
@@ -234,7 +234,7 @@ ${DIVIDER}
 🔴 *MONITORING: TAMU TELAH KELUAR*
 ${DIVIDER}
 
-Pemberitahuan operasional tamu telah check-out dari kawasan industri:
+Pemberitahuan operasional tamu telah check-out dari kawasan pabrik:
 
 📋 *DETAIL KUNJUNGAN:*
 • Status: 🔴 *Telah Check-Out (Keluar)*
