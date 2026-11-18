@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+const isVmsPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/vms');
+const BASE_PATH = isVmsPath ? '/vms' : '';
 
 export const api = axios.create({ baseURL: `${BASE_PATH}/api`, timeout: 30000 });
 

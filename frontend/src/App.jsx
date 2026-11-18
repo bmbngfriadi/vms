@@ -52,7 +52,8 @@ function Guard({ feature, children }) {
 }
 
 export default function App() {
-  const basename = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const isVmsPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/vms');
+  const basename = isVmsPath ? '/vms' : '';
 
   return (
     <ThemeProvider>
