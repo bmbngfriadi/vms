@@ -403,6 +403,55 @@ async function notifyCheckOut(visit) {
       })
     });
   });
+
+  // Notifikasi khusus Tim SHE jika tamu pekerjaan lapangan telah check-out (meninggalkan pabrik)
+  if (visit.requiresInduction) {
+    try {
+      const sheUsers = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          department: { code: 'SHE' },
+          phone: { not: null }
+        },
+        select: { phone: true, name: true }
+      });
+
+      const sheSetting = await prisma.setting.findUnique({
+        where: { key: 'she_notification_phone' }
+      });
+
+      const recipients = new Set();
+      if (sheSetting?.value) {
+        sheSetting.value.split(',').map((p) => p.trim()).filter(Boolean).forEach((p) => recipients.add(p));
+      }
+      sheUsers.forEach((u) => {
+        if (u.phone) recipients.add(u.phone);
+      });
+
+      recipients.forEach((phone) => {
+        notify({
+          visitId: visit.id,
+          recipient: phone,
+          type: 'SHE_DEPARTURE_ALERT',
+          message: msg.sheDepartureAlert({
+            visitNumber: visit.visitNumber,
+            guestName: guest.fullName,
+            guestNames: visit.guestNames,
+            company: guest.company,
+            department: dept,
+            picName,
+            purpose: visit.purpose,
+            workDescription: visit.workDescription,
+            checkInAt: visit.checkInAt,
+            checkOutAt: visit.checkOutAt,
+            badge: visit.badgeNumber
+          })
+        });
+      });
+    } catch (sheErr) {
+      console.error('[Notify SHE Departure] error:', sheErr.message);
+    }
+  }
 }
 
 // ============================================================

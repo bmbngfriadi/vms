@@ -345,10 +345,57 @@ ${guestField}
 • Rencana Pekerjaan: *${workDescription || 'Pekerjaan di Area Pabrik / Lapangan'}*
 • Lokasi Masuk: POS 1 Security
 • Waktu Check-In: *${fmtTime(checkInAt)} WIB*
-• Status K3: 🟡 *Wajib Safety Induction*
+• Status K3: 🟡 *Wajib Safety Induction (Sistem SHE)*
 
 📢 *Tindakan Tim SHE:*
 Mohon petugas SHE segera melakukan briefing / Safety Induction dan verifikasi kelengkapan APD tamu di Pos / Ruang Induction SHE.
+
+${DIVIDER}
+${FOOTER}`;
+}
+
+/**
+ * 10. Tim SHE: Pemberitahuan Tamu Pekerjaan Lapangan Telah Keluar Pabrik (Check-Out).
+ */
+export function sheDepartureAlert({
+  visitNumber,
+  guestName,
+  guestNames,
+  company,
+  department,
+  picName,
+  purpose,
+  workDescription,
+  checkInAt,
+  checkOutAt,
+  badge
+}) {
+  const mins = Math.max(0, Math.round((new Date(checkOutAt) - new Date(checkInAt)) / 60000));
+  const dur = `${Math.floor(mins / 60)} jam ${mins % 60} menit`;
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — K3 / Safety Health & Environment (SHE)*
+${DIVIDER}
+🔴 *INFORMASI K3: TAMU PEKERJAAN TELAH KELUAR PABRIK*
+${DIVIDER}
+
+Pemberitahuan kepada Tim SHE:
+Tamu yang melakukan pekerjaan di area pabrik telah menyelesaikan kunjungan dan resmi keluar (check-out) melalui Pos Security:
+
+📋 *DETAIL KUNJUNGAN:*
+• No. Kunjungan: *${visitNumber}*
+${guestField}
+• Instansi / Perusahaan: ${company || 'Pribadi / Perorangan'}
+• Departemen Tujuan: ${department || '-'}
+• PIC Dituju: *${picName || '-'}*
+• Keperluan: ${purpose || '-'}
+• Rencana Pekerjaan: *${workDescription || 'Pekerjaan di Area Pabrik / Lapangan'}*
+• Waktu Masuk: ${fmtTime(checkInAt)} WIB
+• Waktu Keluar: *${fmtTime(checkOutAt)} WIB*
+• Total Durasi di Pabrik: *${dur}*
+• Status: 🔴 *Telah Meninggalkan Pabrik*
+
+Data headcount lapangan telah diperbarui secara otomatis di sistem VMS.
 
 ${DIVIDER}
 ${FOOTER}`;

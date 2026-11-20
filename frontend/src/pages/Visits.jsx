@@ -1163,7 +1163,7 @@ function CreateModal({ user, onClose, onCreated }) {
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Building2 size={15} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
                     <span className="text-xs font-bold text-slate-900 dark:text-white">Area Kantor (Office)</span>
@@ -1172,9 +1172,6 @@ function CreateModal({ user, onClose, onCreated }) {
                     Tanpa Pekerjaan Fisik
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Meeting kantor, administrasi, interview (Tidak membutuhkan Safety Induction SHE).
-                </p>
               </div>
 
               <div
@@ -1185,7 +1182,7 @@ function CreateModal({ user, onClose, onCreated }) {
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <HardHat size={15} className={form.destinationArea === 'PLANT_WORK' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'} />
                     <span className="text-xs font-bold text-slate-900 dark:text-white">Area Pabrik / Lapangan</span>
@@ -1194,9 +1191,6 @@ function CreateModal({ user, onClose, onCreated }) {
                     Wajib Induction K3
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                  Memasuki area pabrik/workshop, perbaikan mesin, proyek, teknisi/vendor (wajib briefing K3 SHE).
-                </p>
               </div>
             </div>
 
@@ -1208,7 +1202,7 @@ function CreateModal({ user, onClose, onCreated }) {
                 </div>
                 <textarea
                   className="input min-h-[58px] text-xs py-2 px-3 rounded-lg bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/60"
-                  placeholder="Jelaskan pekerjaan di pabrik/lapangan (contoh: Servis genset, overhaul motor, pasang pipa, audit teknis)..."
+                  placeholder=""
                   value={form.workDescription}
                   onChange={set('workDescription')}
                   required

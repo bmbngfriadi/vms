@@ -540,28 +540,31 @@ export default function SheInduction() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-60">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* Search & Date Filter */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64 min-w-[200px]">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Cari tamu / pekerjaan / instansi..."
-                className="input pl-8 text-xs py-2 h-9 rounded-xl w-full"
+                placeholder="Cari tamu / instansi / pekerjaan..."
+                className="input pl-9 text-xs py-2 h-9 rounded-xl w-full"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <input
-              type="date"
-              className="input text-xs py-1.5 h-9 rounded-xl w-36 shrink-0"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              title="Filter per tanggal"
-            />
+            <div className="w-40 shrink-0">
+              <input
+                type="date"
+                className="input text-xs py-1.5 h-9 rounded-xl w-full"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                title="Filter per tanggal"
+              />
+            </div>
             {date && (
               <button
                 onClick={() => setDate('')}
-                className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                className="btn-ghost text-xs py-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 h-9 text-slate-600 dark:text-slate-300"
                 title="Hapus filter tanggal"
               >
                 Reset
