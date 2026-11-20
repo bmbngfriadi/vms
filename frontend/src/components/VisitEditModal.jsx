@@ -54,6 +54,16 @@ export async function confirmDeleteVisit(visit, confirmFn) {
   return true;
 }
 
+function extractGuestName(g) {
+  if (!g) return '';
+  if (typeof g === 'string') return g === '[object Object]' ? '' : g.trim();
+  if (typeof g === 'object') {
+    const n = g.name || '';
+    return n === '[object Object]' ? '' : String(n).trim();
+  }
+  return '';
+}
+
 export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
   const { confirm } = useDialog();
   const [departments, setDepartments] = useState([]);
@@ -72,7 +82,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
     expectedTime: visit.expectedTime || '',
     numberOfVisitors: visit.numberOfVisitors || 1,
     guestNames: Array.isArray(visit.guestNames) && visit.guestNames.length > 0
-      ? [...visit.guestNames]
+      ? visit.guestNames.map(extractGuestName)
       : [visit.visitorName || ''],
     vehiclePlate: visit.vehiclePlate || '',
     badgeNumber: visit.badgeNumber || '',
@@ -92,7 +102,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
     const val = e.target.value;
     const next = { ...f, [k]: val };
     if (k === 'fullName') {
-      const names = [...(f.guestNames || [''])];
+      const names = [...(f.guestNames || [''])].map(extractGuestName);
       names[0] = val;
       next.guestNames = names;
     }
@@ -102,7 +112,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
   const handleVisitorsCountChange = (e) => {
     const val = Math.max(1, Math.min(50, parseInt(e.target.value, 10) || 1));
     setForm((curr) => {
-      const names = [...(curr.guestNames || [''])];
+      const names = [...(curr.guestNames || [''])].map(extractGuestName);
       names[0] = curr.fullName || '';
       while (names.length < val) {
         names.push('');
@@ -116,7 +126,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
 
   const handleCompanionNameChange = (index, value) => {
     setForm((curr) => {
-      const names = [...(curr.guestNames || [''])];
+      const names = [...(curr.guestNames || [''])].map(extractGuestName);
       while (names.length < (Number(curr.numberOfVisitors) || 1)) {
         names.push('');
       }
@@ -133,7 +143,8 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
       const visitorsCount = Number(form.numberOfVisitors) || 1;
       const payloadGuestNames = [form.fullName.trim()];
       for (let i = 1; i < visitorsCount; i++) {
-        payloadGuestNames.push((form.guestNames?.[i] || '').trim());
+        const raw = extractGuestName(form.guestNames?.[i]);
+        payloadGuestNames.push(raw.trim());
       }
 
       const payload = {
@@ -323,7 +334,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
                         required
                         className="input text-xs py-1.5 px-3 rounded-lg"
                         placeholder={`Nama tamu ke-${companionIndex + 1}`}
-                        value={form.guestNames?.[companionIndex] || ''}
+                        value={extractGuestName(form.guestNames?.[companionIndex])}
                         onChange={(e) => handleCompanionNameChange(companionIndex, e.target.value)}
                       />
                     </div>

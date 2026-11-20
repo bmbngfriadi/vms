@@ -72,14 +72,16 @@ export function normalizeGuestNames(guestNames, fallbackName = '', fallbackBadge
   if (Array.isArray(guestNames) && guestNames.length > 0) {
     list = guestNames.map((g, idx) => {
       if (typeof g === 'string') {
-        const clean = g.trim();
+        let clean = g.trim();
+        if (clean === '[object Object]' || clean === 'null' || clean === 'undefined') clean = '';
         return {
           name: clean || (idx === 0 ? (fallbackName || 'Tamu 1') : `Tamu ${idx + 1}`),
           badge: idx === 0 ? (fallbackBadge || '') : '',
           isLeader: idx === 0
         };
       }
-      const rawName = (g?.name || '').trim();
+      let rawName = (g?.name || '').trim();
+      if (rawName === '[object Object]' || rawName === 'null' || rawName === 'undefined') rawName = '';
       return {
         name: rawName || (idx === 0 ? (fallbackName || 'Tamu 1') : `Tamu ${idx + 1}`),
         badge: g?.badge || (idx === 0 ? (fallbackBadge || '') : ''),
@@ -618,7 +620,10 @@ function parseGuestNames(leaderName, count, inputGuestNames) {
 
   for (let i = 1; i < total; i++) {
     const rawName = rawList[i];
-    const nameStr = typeof rawName === 'string' ? rawName.trim() : (rawName?.name ? String(rawName.name).trim() : '');
+    let nameStr = typeof rawName === 'string' ? rawName.trim() : (rawName?.name ? String(rawName.name).trim() : '');
+    if (nameStr === '[object Object]' || nameStr === 'null' || nameStr === 'undefined') {
+      nameStr = `Tamu ${i + 1}`;
+    }
     if (!nameStr) {
       throw new Error(`Nama lengkap untuk Tamu ke-${i + 1} wajib diisi`);
     }
