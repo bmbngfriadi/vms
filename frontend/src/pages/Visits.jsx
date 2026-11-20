@@ -598,21 +598,14 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
         {visit.workDescription && <Row label="Rincian Kerja" value={visit.workDescription} />}
         {visit.requiresInduction && (
           <Row
-            label="Induction SHE"
+            label="K3 / Tim SHE"
             value={
-              visit.inductionStatus === 'INDUCTED' ? (
-                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full text-[11px]">
-                  <ShieldCheck size={12} /> Selesai Induction ({visit.inductionBy?.name || 'Petugas SHE'})
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full text-[11px]">
-                  <ShieldAlert size={12} /> Menunggu Induction SHE
-                </span>
-              )
+              <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full text-[11px]">
+                <ShieldAlert size={12} /> Butuh Safety Induction (Sistem SHE)
+              </span>
             }
           />
         )}
-        {visit.inductionNotes && <Row label="Catatan SHE" value={visit.inductionNotes} />}
         <Row label="Jumlah" value={`${visit.numberOfVisitors} orang`} />
         {Array.isArray(visit.guestNames) && visit.guestNames.length > 1 && (
           <div className="pt-2 pb-1">

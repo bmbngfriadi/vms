@@ -1861,7 +1861,7 @@ async function handleExcelExport(req, res) {
       { header: 'PIC Dituju', key: 'pic', width: 22, align: 'left' },
       { header: 'Keperluan Kunjungan', key: 'purpose', width: 28, align: 'left' },
       { header: 'Area Kunjungan', key: 'destinationArea', width: 18, align: 'center' },
-      { header: 'Status Induction SHE', key: 'inductionStatus', width: 22, align: 'center' },
+      { header: 'Induction K3 / SHE', key: 'requiresInduction', width: 22, align: 'center' },
       { header: 'No. Polisi Kendaraan', key: 'plate', width: 16, align: 'center' },
       { header: 'Tipe Kunjungan', key: 'type', width: 16, align: 'center' },
       { header: 'Status Kunjungan', key: 'status', width: 22, align: 'center' },
@@ -1923,7 +1923,7 @@ async function handleExcelExport(req, res) {
           v.picUser?.name || v.picNameManual || '-',
           v.purpose || '-',
           AREA_MAP[v.destinationArea] || v.destinationArea || 'Kantor',
-          INDUCTION_MAP[v.inductionStatus] || v.inductionStatus || '-',
+          v.requiresInduction ? 'Wajib Induction (Pekerjaan)' : 'Tidak Butuh (Kantor)',
           v.vehiclePlate || '-',
           TYPE_MAP[v.visitType] || v.visitType || '-',
           STATUS_MAP[v.status] || v.status || '-',
@@ -1962,12 +1962,11 @@ async function handleExcelExport(req, res) {
 
           // Format warna khusus untuk Status Induction K3
           if (colNumber === 13) {
-            if (v.inductionStatus === 'WAITING_INDUCTION') {
+            if (v.requiresInduction) {
               cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF92400E' } };
               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
-            } else if (v.inductionStatus === 'INDUCTED') {
-              cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF065F46' } };
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+            } else {
+              cell.font = { name: 'Arial', size: 9, color: { argb: 'FF64748B' } };
             }
           }
 
@@ -1992,25 +1991,25 @@ async function handleExcelExport(req, res) {
     });
 
     // 4. Set Column Widths
-columns.forEach((col, idx) => {
-  sheet.getColumn(idx + 1).width = col.width;
-});
+    columns.forEach((col, idx) => {
+      sheet.getColumn(idx + 1).width = col.width;
+    });
 
-const fileDate = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().slice(0, 10);
-const fileName = `laporan-kunjungan-batam-${fileDate}.xlsx`;
+    const fileDate = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().slice(0, 10);
+    const fileName = `laporan-kunjungan-batam-${fileDate}.xlsx`;
 
-res.setHeader(
-  'Content-Type',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-);
-res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
-await workbook.xlsx.write(res);
-res.end();
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
-  console.error('[Export Excel] error:', err.message);
-  res.status(500).json({ error: 'Gagal membuat file excel laporan' });
-}
+    console.error('[Export Excel] error:', err.message);
+    res.status(500).json({ error: 'Gagal membuat file excel laporan' });
+  }
 }
 
 router.get('/export/excel', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), handleExcelExport);

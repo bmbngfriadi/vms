@@ -2,6 +2,8 @@ import express from 'express';
 import prisma from '../db.js';
 import { authenticate, requireFeature } from '../middleware/auth.js';
 import { normalizeGuestNames } from './visits.js';
+import * as msg from '../wa/messages.js';
+import { notify } from '../wa/notify.js';
 
 const router = express.Router();
 
@@ -11,7 +13,6 @@ const VISIT_INCLUDE = {
   picUser: { select: { id: true, name: true, phone: true } },
   checkInBy: { select: { id: true, name: true } },
   checkOutBy: { select: { id: true, name: true } },
-  inductionBy: { select: { id: true, name: true } },
   tokens: { orderBy: { createdAt: 'desc' } }
 };
 
@@ -31,15 +32,13 @@ function formatSheVisit(v) {
     company: v.visitor?.company || '-',
     identityNumber: v.visitor?.identityNumber || '-',
     department: v.department?.name || '-',
+    departmentCode: v.department?.code || '',
     picName: v.picUser?.name || v.picNameManual || '-',
+    picPhone: v.picUser?.phone || null,
     purpose: v.purpose,
     destinationArea: v.destinationArea || 'OFFICE',
     workDescription: v.workDescription || null,
     requiresInduction: !!v.requiresInduction,
-    inductionStatus: v.inductionStatus || 'NOT_REQUIRED',
-    inductionAt: v.inductionAt,
-    inductionBy: v.inductionBy ? { id: v.inductionBy.id, name: v.inductionBy.name } : null,
-    inductionNotes: v.inductionNotes,
     numberOfVisitors: v.numberOfVisitors || (normalizedGuests.length > 0 ? normalizedGuests.length : 1),
     guestNames: normalizedGuests,
     badgeNumber: v.badgeNumber,
@@ -53,37 +52,44 @@ function formatSheVisit(v) {
 }
 
 // ============================================================
-// 1. STATISTIK RINGKASAN K3 / SHE
+// 1. STATISTIK RINGKASAN TAMU PEKERJAAN (SHE)
 // ============================================================
 router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses ditolak'), async (req, res) => {
   try {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [waitingAggr, inductedAggr, activeAggr, officeAggr] = await Promise.all([
-      // Tamu lapangan yang belum induction (antrean)
-      prisma.visit.aggregate({
-        where: {
-          requiresInduction: true,
-          inductionStatus: 'WAITING_INDUCTION',
-          status: { in: ['WAITING_VALIDATION', 'APPROVED', 'CHECKED_IN'] }
-        },
-        _sum: { numberOfVisitors: true }
-      }),
-      // Tamu lapangan yang sudah induction hari ini
-      prisma.visit.aggregate({
-        where: {
-          requiresInduction: true,
-          inductionStatus: 'INDUCTED',
-          inductionAt: { gte: startOfDay }
-        },
-        _sum: { numberOfVisitors: true }
-      }),
-      // Tamu lapangan yang saat ini aktif di dalam pabrik (Headcount Live K3)
+    const [activeAggr, todayAggr, waitingAggr, checkedOutAggr, officeAggr] = await Promise.all([
+      // Tamu pekerjaan yang saat ini berada di pabrik (Live Headcount Pabrik)
       prisma.visit.aggregate({
         where: {
           requiresInduction: true,
           status: 'CHECKED_IN'
+        },
+        _sum: { numberOfVisitors: true }
+      }),
+      // Total tamu pekerjaan hari ini
+      prisma.visit.aggregate({
+        where: {
+          requiresInduction: true,
+          createdAt: { gte: startOfDay }
+        },
+        _sum: { numberOfVisitors: true }
+      }),
+      // Tamu pekerjaan terjadwal yang belum check-in
+      prisma.visit.aggregate({
+        where: {
+          requiresInduction: true,
+          status: { in: ['WAITING_VALIDATION', 'APPROVED'] }
+        },
+        _sum: { numberOfVisitors: true }
+      }),
+      // Tamu pekerjaan yang sudah selesai check-out hari ini
+      prisma.visit.aggregate({
+        where: {
+          requiresInduction: true,
+          status: 'CHECKED_OUT',
+          checkOutAt: { gte: startOfDay }
         },
         _sum: { numberOfVisitors: true }
       }),
@@ -98,9 +104,10 @@ router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses d
     ]);
 
     res.json({
-      waitingInduction: waitingAggr._sum?.numberOfVisitors || 0,
-      inductedToday: inductedAggr._sum?.numberOfVisitors || 0,
       activeInPlant: activeAggr._sum?.numberOfVisitors || 0,
+      todayWork: todayAggr._sum?.numberOfVisitors || 0,
+      waitingCheckIn: waitingAggr._sum?.numberOfVisitors || 0,
+      checkedOutToday: checkedOutAggr._sum?.numberOfVisitors || 0,
       officeVisitorsToday: officeAggr._sum?.numberOfVisitors || 0
     });
   } catch (err) {
@@ -110,20 +117,24 @@ router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses d
 });
 
 // ============================================================
-// 2. DAFTAR KUNJUNGAN TAMU LAPANGAN / SHE
+// 2. DAFTAR KUNJUNGAN TAMU PEKERJAAN PABRIK (SHE)
 // ============================================================
 router.get('/visits', authenticate, requireFeature('page.she_induction', 'Akses ditolak'), async (req, res) => {
   try {
-    const { tab = 'waiting', search, date } = req.query;
+    const { tab = 'active', search, date } = req.query;
     const where = {
       requiresInduction: true
     };
 
-    if (tab === 'waiting') {
-      where.inductionStatus = 'WAITING_INDUCTION';
-      where.status = { in: ['WAITING_VALIDATION', 'APPROVED', 'CHECKED_IN'] };
-    } else if (tab === 'inducted') {
-      where.inductionStatus = 'INDUCTED';
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    if (tab === 'active') {
+      where.status = 'CHECKED_IN';
+    } else if (tab === 'today') {
+      where.createdAt = { gte: startOfDay };
+    } else if (tab === 'waiting') {
+      where.status = { in: ['WAITING_VALIDATION', 'APPROVED'] };
     }
 
     if (date) {
@@ -166,90 +177,96 @@ router.get('/visits', authenticate, requireFeature('page.she_induction', 'Akses 
 });
 
 // ============================================================
-// 3. AKSI VERIFIKASI SELESAI SAFETY INDUCTION
+// 3. KIRIM ULANG NOTIFIKASI WHATSAPP KE TIM SHE
 // ============================================================
 router.post(
-  '/visits/:id/induct',
+  '/visits/:id/resend-wa',
   authenticate,
-  requireFeature('she.induction_action', 'Anda tidak memiliki hak verifikasi Safety Induction'),
+  requireFeature('page.she_induction', 'Akses ditolak'),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { notes, checklist = [] } = req.body || {};
-
-      const existing = await prisma.visit.findUnique({
+      const visit = await prisma.visit.findUnique({
         where: { id },
-        include: { visitor: true }
+        include: {
+          visitor: true,
+          department: true,
+          picUser: true
+        }
       });
 
-      if (!existing) {
+      if (!visit) {
         return res.status(404).json({ error: 'Data kunjungan tidak ditemukan' });
       }
 
-      if (!existing.requiresInduction) {
-        return res.status(400).json({ error: 'Kunjungan ini tidak tercatat sebagai tamu area lapangan/pekerjaan' });
+      if (!visit.requiresInduction) {
+        return res.status(400).json({ error: 'Kunjungan ini tidak berstatus tamu pekerjaan lapangan' });
       }
 
-      const checklistStr = Array.isArray(checklist) && checklist.length > 0 ? ` [Checklist: ${checklist.join(', ')}]` : '';
-      const finalNotes = (notes ? String(notes).trim() : 'Safety induction telah diberikan dan APD diverifikasi.') + checklistStr;
-
-      const updated = await prisma.visit.update({
-        where: { id },
-        data: {
-          inductionStatus: 'INDUCTED',
-          inductionAt: new Date(),
-          inductionById: req.user.id,
-          inductionNotes: finalNotes
+      const sheUsers = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          department: { code: 'SHE' },
+          phone: { not: null }
         },
-        include: VISIT_INCLUDE
+        select: { phone: true, name: true }
+      });
+
+      const sheSetting = await prisma.setting.findUnique({
+        where: { key: 'she_notification_phone' }
+      });
+
+      const recipients = new Set();
+      if (sheSetting?.value) {
+        sheSetting.value.split(',').map((p) => p.trim()).filter(Boolean).forEach((p) => recipients.add(p));
+      }
+      sheUsers.forEach((u) => {
+        if (u.phone) recipients.add(u.phone);
+      });
+
+      if (recipients.size === 0) {
+        return res.status(400).json({
+          error: 'Belum ada nomor WhatsApp Tim SHE yang terdaftar. Silakan atur di Pengaturan WA SHE.'
+        });
+      }
+
+      const messageText = msg.sheInductionAlert({
+        visitNumber: visit.visitNumber,
+        guestName: visit.visitor?.fullName,
+        guestNames: visit.guestNames,
+        company: visit.visitor?.company,
+        department: visit.department?.name,
+        picName: visit.picUser?.name || visit.picNameManual,
+        purpose: visit.purpose,
+        workDescription: visit.workDescription,
+        checkInAt: visit.checkInAt || visit.createdAt,
+        badge: visit.badgeNumber
+      });
+
+      let sentCount = 0;
+      recipients.forEach((phone) => {
+        notify({
+          visitId: visit.id,
+          recipient: phone,
+          type: 'SHE_INDUCTION_ALERT',
+          message: messageText
+        });
+        sentCount++;
       });
 
       res.json({
-        message: 'Safety Induction berhasil diverifikasi',
-        visit: formatSheVisit(updated)
+        ok: true,
+        message: `Notifikasi WhatsApp berhasil dikirim ke ${sentCount} nomor Tim SHE.`
       });
     } catch (err) {
-      console.error('[SHE Induct] error:', err.message);
-      res.status(500).json({ error: 'Gagal memproses verifikasi induction' });
+      console.error('[SHE Resend WA] error:', err.message);
+      res.status(500).json({ error: 'Gagal mengirim ulang notifikasi WhatsApp' });
     }
   }
 );
 
 // ============================================================
-// 4. RESET STATUS INDUCTION KEMBALI KE MENUNGGU (JIKA KELIRU)
-// ============================================================
-router.post(
-  '/visits/:id/reset',
-  authenticate,
-  requireFeature('she.induction_action', 'Anda tidak memiliki hak verifikasi Safety Induction'),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      const updated = await prisma.visit.update({
-        where: { id },
-        data: {
-          inductionStatus: 'WAITING_INDUCTION',
-          inductionAt: null,
-          inductionById: null,
-          inductionNotes: null
-        },
-        include: VISIT_INCLUDE
-      });
-
-      res.json({
-        message: 'Status induction dikembalikan ke antrean menunggu',
-        visit: formatSheVisit(updated)
-      });
-    } catch (err) {
-      console.error('[SHE Reset] error:', err.message);
-      res.status(500).json({ error: 'Gagal mereset status induction' });
-    }
-  }
-);
-
-// ============================================================
-// 5. PENGATURAN NOTIFIKASI SHE
+// 4. PENGATURAN NOMOR NOTIFIKASI SHE
 // ============================================================
 router.get('/settings', authenticate, requireFeature('page.she_induction', 'Akses ditolak'), async (req, res) => {
   try {
@@ -258,8 +275,11 @@ router.get('/settings', authenticate, requireFeature('page.she_induction', 'Akse
     });
 
     const sheUsers = await prisma.user.findMany({
-      where: { isActive: true, department: { code: 'SHE' } },
-      select: { id: true, name: true, phone: true, email: true }
+      where: {
+        department: { code: 'SHE' },
+        isActive: true
+      },
+      select: { id: true, name: true, phone: true }
     });
 
     res.json({
@@ -268,31 +288,26 @@ router.get('/settings', authenticate, requireFeature('page.she_induction', 'Akse
     });
   } catch (err) {
     console.error('[SHE Settings] error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat pengaturan SHE' });
+    res.status(500).json({ error: 'Gagal memuat pengaturan notifikasi SHE' });
   }
 });
 
-router.post(
-  '/settings',
-  authenticate,
-  requireFeature('page.she_induction', 'Akses ditolak'),
-  async (req, res) => {
-    try {
-      const { notificationPhone } = req.body || {};
-      const val = notificationPhone ? String(notificationPhone).trim() : '';
+router.post('/settings', authenticate, requireFeature('page.she_induction', 'Akses ditolak'), async (req, res) => {
+  try {
+    const { notificationPhone } = req.body || {};
+    const val = typeof notificationPhone === 'string' ? notificationPhone.trim() : '';
 
-      await prisma.setting.upsert({
-        where: { key: 'she_notification_phone' },
-        update: { value: val },
-        create: { key: 'she_notification_phone', value: val }
-      });
+    await prisma.setting.upsert({
+      where: { key: 'she_notification_phone' },
+      update: { value: val },
+      create: { key: 'she_notification_phone', value: val }
+    });
 
-      res.json({ message: 'Pengaturan notifikasi SHE berhasil disimpan', notificationPhone: val });
-    } catch (err) {
-      console.error('[SHE Settings save] error:', err.message);
-      res.status(500).json({ error: 'Gagal menyimpan pengaturan SHE' });
-    }
+    res.json({ ok: true, notificationPhone: val });
+  } catch (err) {
+    console.error('[SHE Save Settings] error:', err.message);
+    res.status(500).json({ error: 'Gagal menyimpan pengaturan notifikasi SHE' });
   }
-);
+});
 
 export default router;

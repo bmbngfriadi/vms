@@ -315,13 +315,12 @@ export default function Pass() {
         <div className="card overflow-hidden rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           {/* Header Status Barcode */}
           <div
-            className={`px-4 py-3.5 border-b flex items-center justify-between ${
-              isDone
+            className={`px-4 py-3.5 border-b flex items-center justify-between ${isDone
                 ? 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-800'
                 : isCheckOutAction
-                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
-            }`}
+                  ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
+              }`}
           >
             <div className="flex items-center gap-2 min-w-0">
               {isDone ? (
@@ -335,21 +334,20 @@ export default function Pass() {
                 {isDone
                   ? 'Kunjungan Telah Selesai (Check-Out)'
                   : isCheckOutAction
-                  ? 'Validasi Keluar Tamu (Check-Out)'
-                  : isCheckInSuccess
-                  ? 'Tamu Resmi Masuk (Check-In Sukses)'
-                  : 'Validasi Masuk Tamu (Check-In)'}
+                    ? 'Validasi Keluar Tamu (Check-Out)'
+                    : isCheckInSuccess
+                      ? 'Tamu Resmi Masuk (Check-In Sukses)'
+                      : 'Validasi Masuk Tamu (Check-In)'}
               </span>
             </div>
 
             <span
-              className={`badge text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border ${
-                isDone
+              className={`badge text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border ${isDone
                   ? 'bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                   : isCheckOutAction
-                  ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-800'
-                  : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800'
-              }`}
+                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-800'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800'
+                }`}
             >
               {isCheckInSuccess ? 'DI DALAM PABRIK' : data.status}
             </span>
@@ -408,24 +406,18 @@ export default function Pass() {
                   </span>
                 </div>
                 {data.requiresInduction && (
-                  <div className={`col-span-2 p-2.5 rounded-xl border flex items-start gap-2 ${
-                    data.inductionStatus === 'INDUCTED'
-                      ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
-                      : 'border-amber-200 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
-                  }`}>
-                    <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                  <div className="col-span-2 p-2.5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                    <ShieldAlert size={16} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                     <div className="text-[11px] leading-tight">
                       <div className="font-bold">
-                        {data.inductionStatus === 'INDUCTED' ? '✅ Lulus Safety Induction SHE' : '⚠️ Wajib Safety Induction Tim SHE'}
+                        ⚠️ Perlu Safety Induction Tim SHE
                       </div>
                       <div className="mt-0.5 opacity-90">
-                        {data.inductionStatus === 'INDUCTED'
-                          ? 'Tamu telah mendapatkan briefing K3'
-                          : 'Arahkan tamu ke petugas SHE sebelum masuk area operasional pabrik.'}
+                        Tamu memiliki agenda pekerjaan di area operasional pabrik. Silakan ikuti Safety Induction bersama Tim K3 / SHE sebelum memulai pekerjaan.
                       </div>
                       {data.workDescription && (
-                        <div className="mt-1 pt-1 border-t border-current/20 font-medium">
-                          Pekerjaan: {data.workDescription}
+                        <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium">
+                          Rencana Pekerjaan: {data.workDescription}
                         </div>
                       )}
                     </div>

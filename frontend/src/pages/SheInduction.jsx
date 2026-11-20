@@ -1,23 +1,26 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ShieldAlert,
-  ShieldCheck,
   HardHat,
   Building2,
   Search,
-  CheckCircle2,
   Clock,
   Users,
   Loader2,
   Calendar,
   AlertTriangle,
-  RotateCcw,
-  CheckSquare,
   FileText,
   Phone,
   Settings,
   X,
-  Printer
+  Share2,
+  Send,
+  Copy,
+  Check,
+  MessageSquare,
+  RefreshCw,
+  ExternalLink,
+  ShieldAlert,
+  Info
 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -30,6 +33,7 @@ function StatCard({ icon: Icon, label, value, tone = 'brand', subtext }) {
     brand: 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 border-brand-200/80 dark:border-brand-900/60',
     amber: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200/80 dark:border-amber-900/60',
     emerald: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200/80 dark:border-emerald-900/60',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border-blue-200/80 dark:border-blue-900/60',
     slate: 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-800'
   };
 
@@ -50,238 +54,6 @@ function StatCard({ icon: Icon, label, value, tone = 'brand', subtext }) {
       </div>
       <div className={`p-3 rounded-2xl border shrink-0 ${tones[tone]}`}>
         <Icon size={22} strokeWidth={2.2} />
-      </div>
-    </div>
-  );
-}
-
-// Modal Verifikasi Safety Induction
-function InductModal({ visit, onClose, onSuccess }) {
-  const { user } = useAuth();
-  const [notes, setNotes] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [checks, setChecks] = useState({
-    briefing: true,
-    evakuasi: true,
-    larangan: true,
-    helm: true,
-    rompi: true,
-    sepatu: true
-  });
-
-  const toggleCheck = (k) => setChecks((c) => ({ ...c, [k]: !c[k] }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-
-    const checklistLabels = [];
-    if (checks.briefing) checklistLabels.push('Briefing K3 & Bahaya Pabrik');
-    if (checks.evakuasi) checklistLabels.push('Jalur & Titik Kumpul Evakuasi');
-    if (checks.larangan) checklistLabels.push('Larangan Merokok & Kamera');
-    if (checks.helm) checklistLabels.push('Helm Safety');
-    if (checks.rompi) checklistLabels.push('Rompi Reflektif');
-    if (checks.sepatu) checklistLabels.push('Sepatu Safety');
-
-    try {
-      await endpoints.sheInduct(visit.id, {
-        notes,
-        checklist: checklistLabels
-      });
-      onSuccess();
-    } catch (err) {
-      setError(errMsg(err, 'Gagal memproses verifikasi induction'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const guests = Array.isArray(visit.guestNames) ? visit.guestNames : [];
-
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden my-6">
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-amber-500/10">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-amber-500 text-white">
-              <HardHat size={18} />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Verifikasi Safety Induction K3
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Pemberian briefing keselamatan sebelum tamu memasuki pabrik
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {error && (
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-              <AlertTriangle size={15} className="shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Rincian Tamu */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-mono font-bold text-brand-600 dark:text-brand-400">
-                {visit.visitNumber}
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                Wajib Induction
-              </span>
-            </div>
-            <div className="text-xs">
-              <span className="text-slate-400 block text-[10px]">Nama Tamu / Rombongan:</span>
-              <span className="font-bold text-slate-900 dark:text-white text-sm">
-                {visit.visitorName} ({visit.numberOfVisitors} orang)
-              </span>
-              <span className="text-slate-500 dark:text-slate-400 block text-xs mt-0.5">
-                {visit.company || 'Pribadi'} · PIC: {visit.picName} ({visit.department})
-              </span>
-            </div>
-            {visit.workDescription && (
-              <div className="text-xs pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Rencana Pekerjaan:</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200 italic">
-                  {visit.workDescription}
-                </span>
-              </div>
-            )}
-            {guests.length > 1 && (
-              <div className="text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
-                <span className="font-semibold block mb-0.5">Daftar Anggota Rombongan:</span>
-                <div className="space-y-0.5">
-                  {guests.map((g, idx) => (
-                    <div key={idx} className="flex justify-between text-[11px]">
-                      <span>{idx + 1}. {g.name} {g.isLeader ? '(PJ)' : ''}</span>
-                      {g.badge && <span className="font-mono text-slate-500">Badge: {g.badge}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Checklist Standar K3 Pabrik */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <CheckSquare size={14} className="text-brand-500" />
-              <span>Checklist Kelayakan K3 PT Cemindo Gemilang Tbk:</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.briefing}
-                  onChange={() => toggleCheck('briefing')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Briefing Bahaya & Aturan K3
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.evakuasi}
-                  onChange={() => toggleCheck('evakuasi')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Titik Kumpul & Alarm Evakuasi
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.larangan}
-                  onChange={() => toggleCheck('larangan')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Larangan Merokok & No Kamera
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.helm}
-                  onChange={() => toggleCheck('helm')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Helm Keselamatan (Safety Helmet)
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.rompi}
-                  onChange={() => toggleCheck('rompi')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Rompi Reflektif (Hi-Vis Vest)
-                </span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={checks.sepatu}
-                  onChange={() => toggleCheck('sepatu')}
-                  className="rounded text-brand-600"
-                />
-                <span className="text-[11.5px] text-slate-700 dark:text-slate-300 font-medium">
-                  Sepatu Safety (Steel Toe Shoes)
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {/* Catatan Khusus SHE */}
-          <div>
-            <label className="label text-xs">Catatan Khusus SHE / No. Paspor K3 (Opsional):</label>
-            <input
-              type="text"
-              className="input text-xs"
-              placeholder="Contoh: Diberikan induction K3, APD lengkap, didampingi staf maintenance..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
-            <button type="button" onClick={onClose} className="btn-ghost text-xs" disabled={busy}>
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="btn-primary text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5"
-              disabled={busy}
-            >
-              {busy ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={16} />}
-              <span>Verifikasi Selesai Induction</span>
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );
@@ -326,7 +98,7 @@ function SheSettingsModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="card w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+      <div className="card w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Settings size={18} className="text-brand-500" />
@@ -350,26 +122,31 @@ function SheSettingsModal({ onClose }) {
             <input
               type="text"
               className="input text-xs"
-              placeholder="Contoh: 081234567890 atau pisahkan koma"
+              placeholder="Contoh: 081234567890 (bisa lebih dari satu, pisahkan koma)"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Setiap kali tamu pekerjaan pabrik/lapangan check-in di pos security, notifikasi otomatis dikirim ke nomor ini.
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+              Setiap kali tamu dengan tujuan pekerjaan pabrik check-in di Pos Security, sistem akan otomatis mengirim pemberitahuan WA ke nomor ini agar tim SHE dapat melakukan proses Safety Induction di sistem SHE.
             </p>
           </div>
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Staf / Petugas Terdaftar di Departemen SHE ({officers.length}):
+            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Staf / Petugas Terdaftar di Departemen SHE ({officers.length})</span>
+              <span className="text-[10px] text-slate-400 font-normal">Otomatis Terkirim</span>
             </div>
             <div className="space-y-1 max-h-36 overflow-y-auto">
-              {officers.map((o) => (
-                <div key={o.id} className="text-xs flex justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/60">
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{o.name}</span>
-                  <span className="font-mono text-slate-500 text-[11px]">{o.phone || 'Belum ada WA'}</span>
-                </div>
-              ))}
+              {officers.length === 0 ? (
+                <div className="text-xs text-slate-400 italic p-2">Belum ada user dengan departemen SHE.</div>
+              ) : (
+                officers.map((o) => (
+                  <div key={o.id} className="text-xs flex justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/60">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{o.name}</span>
+                    <span className="font-mono text-slate-500 text-[11px]">{o.phone || 'Belum ada nomor WA'}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -378,7 +155,7 @@ function SheSettingsModal({ onClose }) {
               Tutup
             </button>
             <button type="submit" className="btn-primary text-xs font-bold" disabled={saving}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : 'Simpan'}
+              {saving ? <Loader2 size={14} className="animate-spin" /> : 'Simpan Pengaturan'}
             </button>
           </div>
         </form>
@@ -387,28 +164,204 @@ function SheSettingsModal({ onClose }) {
   );
 }
 
+// Modal Detail Tamu Pekerjaan & Salin Teks
+function GuestDetailModal({ visit, onClose, onResendWa }) {
+  const [copied, setCopied] = useState(false);
+  const guests = visit.guestNames || [];
+
+  const copyText = () => {
+    const lines = [
+      `*INFORMASI TAMU PEKERJAAN PABRIK (PERLU INDUCTION SHE)*`,
+      `No. Kunjungan: ${visit.visitNumber}`,
+      `Instansi: ${visit.company || 'Pribadi'}`,
+      `PIC Dituju: ${visit.picName} (${visit.department})`,
+      `Rencana Pekerjaan: ${visit.workDescription || visit.purpose || '-'}`,
+      `Waktu Masuk: ${visit.checkInAt ? fmtDateTime(visit.checkInAt) : '-'}`,
+      `Status: ${visit.status}`,
+      ``,
+      `*Daftar Nama Tamu & Badge:*`
+    ];
+
+    if (guests.length > 0) {
+      guests.forEach((g, idx) => {
+        lines.push(`${idx + 1}. ${g.name} ${g.isLeader ? '(PJ)' : ''} — Badge: ${g.badge || '-'}`);
+      });
+    } else {
+      lines.push(`1. ${visit.visitorName} — Badge: ${visit.badgeNumber || '-'}`);
+    }
+
+    navigator.clipboard.writeText(lines.join('\n'));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HardHat size={18} className="text-amber-500" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              Detail Tamu Pekerjaan Pabrik
+            </h2>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Header Info */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                {visit.visitNumber}
+              </span>
+              <StatusBadge status={visit.status} />
+            </div>
+
+            <div>
+              <div className="text-sm font-bold text-slate-900 dark:text-white">
+                {visit.visitorName}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {visit.company || 'Pribadi'} · {visit.phone || '-'}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs flex justify-between">
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">PIC Dituju:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {visit.picName} ({visit.department})
+                </span>
+              </div>
+              {visit.checkInAt && (
+                <div className="text-right">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Waktu Masuk:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {fmtTime(visit.checkInAt)} WIB
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Rincian Pekerjaan */}
+          <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+              <ShieldAlert size={14} />
+              <span>Rincian Pekerjaan Lapangan:</span>
+            </div>
+            <p className="text-xs text-amber-950 dark:text-amber-100 font-medium leading-relaxed italic">
+              {visit.workDescription || visit.purpose || 'Pekerjaan di Area Pabrik / Lapangan'}
+            </p>
+          </div>
+
+          {/* Daftar Nama Tamu & Badge */}
+          <div className="space-y-2">
+            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Users size={14} className="text-brand-500" />
+                <span>Daftar Seluruh Tamu & Badge ({guests.length > 0 ? guests.length : 1} orang):</span>
+              </span>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+              {guests.length > 0 ? (
+                guests.map((g, idx) => (
+                  <div key={idx} className="p-2.5 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {g.name} {g.isLeader ? <span className="text-[10px] text-brand-600 font-bold ml-1">(PJ)</span> : ''}
+                      </span>
+                    </div>
+                    <div>
+                      {g.badge ? (
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          Badge: {g.badge}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">-</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-2.5 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {visit.visitorName} (Penanggung Jawab)
+                  </span>
+                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                    Badge: {visit.badgeNumber || '-'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/40 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
+            <Info size={16} className="shrink-0 mt-0.5" />
+            <span>
+              Catat dan lakukan modul Safety Induction untuk tamu di atas pada sistem terpisah milik Tim SHE sebelum tamu memulai aktivitas di lapangan.
+            </span>
+          </div>
+        </div>
+
+        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40">
+          <button
+            onClick={() => onResendWa(visit)}
+            className="btn-ghost text-xs py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium"
+            title="Kirim ulang notifikasi WhatsApp ke Tim SHE"
+          >
+            <Send size={13} />
+            <span>Kirim Notif WA SHE</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={copyText}
+              className="btn-ghost text-xs py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 font-bold"
+            >
+              {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+              <span>{copied ? 'Tersalin!' : 'Salin Info'}</span>
+            </button>
+            <button onClick={onClose} className="btn-primary text-xs py-1.5 px-4 font-bold">
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SheInduction() {
   const { can } = useAuth();
   const { t } = useI18n();
-  const { confirm, alert: customAlert } = useDialog();
-  const canInduct = can('she.induction_action');
+  const { alert: customAlert } = useDialog();
 
   const [stats, setStats] = useState({
-    waitingInduction: 0,
-    inductedToday: 0,
     activeInPlant: 0,
+    todayWork: 0,
+    waitingCheckIn: 0,
+    checkedOutToday: 0,
     officeVisitorsToday: 0
   });
 
-  const [tab, setTab] = useState('waiting');
+  const [tab, setTab] = useState('active');
   const [search, setSearch] = useState('');
   const [date, setDate] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [inductingVisit, setInductingVisit] = useState(null);
+  const [selectedVisit, setSelectedVisit] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [actionMsg, setActionMsg] = useState('');
 
   const loadStats = () => {
     setStatsLoading(true);
@@ -440,24 +393,18 @@ export default function SheInduction() {
     return () => clearTimeout(timer);
   }, [loadVisits, search]);
 
-  const handleReset = async (v) => {
-    const ok = await confirm({
-      title: 'Reset Status Induction?',
-      message: `Kembalikan status kunjungan ${v.visitNumber} (${v.visitorName}) ke status Menunggu Induction?`,
-      confirmText: 'Ya, Reset',
-      cancelText: 'Batal',
-      danger: true
-    });
-    if (!ok) return;
-
+  const handleResendWa = async (v) => {
     try {
-      await endpoints.sheReset(v.id);
-      loadStats();
-      loadVisits();
+      const res = await endpoints.sheResendWa(v.id);
+      customAlert({
+        title: 'Notifikasi Terkirim',
+        message: res.message || 'Notifikasi WhatsApp berhasil dikirim ke nomor Tim SHE.',
+        type: 'success'
+      });
     } catch (err) {
       customAlert({
-        title: 'Gagal Reset',
-        message: errMsg(err, 'Gagal mereset status'),
+        title: 'Gagal Mengirim Notifikasi',
+        message: errMsg(err, 'Gagal mengirim pesan WhatsApp'),
         type: 'error'
       });
     }
@@ -470,14 +417,14 @@ export default function SheInduction() {
         <div>
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-amber-500 text-white shadow-xs">
-              <ShieldAlert size={20} />
+              <HardHat size={20} />
             </div>
             <div>
               <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                Safety Induction & Monitoring K3 (SHE)
+                Informasi Tamu SHE (Pekerjaan Lapangan)
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Pusat verifikasi induksi keselamatan tamu area pabrik dan monitoring headcount lapangan
+                Papan informasi kedatangan tamu pekerjaan pabrik yang butuh Safety Induction oleh Tim SHE
               </p>
             </div>
           </div>
@@ -485,9 +432,20 @@ export default function SheInduction() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={() => {
+              loadStats();
+              loadVisits();
+            }}
             className="btn-ghost text-xs py-2 px-3 rounded-xl min-h-[38px] font-semibold text-slate-700 dark:text-slate-300"
-            title="Pengaturan Notifikasi WA Tim SHE"
+            title="Segarkan Data"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="btn-ghost text-xs py-2 px-3 rounded-xl min-h-[38px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
+            title="Pengaturan Nomor WhatsApp Tujuan Notifikasi SHE"
           >
             <Settings size={15} />
             <span className="hidden sm:inline">Pengaturan WA SHE</span>
@@ -495,35 +453,43 @@ export default function SheInduction() {
         </div>
       </div>
 
+      {/* Banner Informasi Modul Terpisah */}
+      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+        <Info size={17} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <div className="leading-relaxed">
+          <span className="font-bold">Informasi Alur Safety Induction K3:</span> Tamu dengan tujuan melakukan pekerjaan lapangan secara otomatis terdata di sini dan sistem mengirimkan notifikasi WhatsApp ke Tim SHE saat tamu check-in di pos security. Modul pelaksanaan induction dikelola pada sistem terpisah Tim SHE.
+        </div>
+      </div>
+
       {/* Kartu Statistik */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          icon={Clock}
-          label="Menunggu Induction"
-          value={stats.waitingInduction}
-          tone="amber"
-          subtext="Antrean tamu butuh briefing"
-        />
-        <StatCard
-          icon={ShieldCheck}
-          label="Selesai Induction Hari Ini"
-          value={stats.inductedToday}
-          tone="emerald"
-          subtext="Tamu telah diverifikasi K3"
-        />
-        <StatCard
           icon={HardHat}
-          label="Aktif di Area Pabrik"
+          label="Sedang Aktif di Pabrik"
           value={stats.activeInPlant}
           tone="brand"
-          subtext="Live headcount di plant"
+          subtext="Headcount tamu di lapangan"
+        />
+        <StatCard
+          icon={Calendar}
+          label="Tamu Pekerjaan Hari Ini"
+          value={stats.todayWork}
+          tone="amber"
+          subtext="Total sesi pekerjaan hari ini"
+        />
+        <StatCard
+          icon={Clock}
+          label="Menunggu Masuk"
+          value={stats.waitingCheckIn}
+          tone="blue"
+          subtext="Terjadwal / belum check-in"
         />
         <StatCard
           icon={Building2}
           label="Tamu Office Hari Ini"
           value={stats.officeVisitorsToday}
           tone="slate"
-          subtext="Tanpa pekerjaan fisik"
+          subtext="Tanpa pekerjaan fisik (no induction)"
         />
       </div>
 
@@ -531,36 +497,46 @@ export default function SheInduction() {
       <div className="card p-3 sm:p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tab Filter */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 w-full sm:w-auto overflow-x-auto">
             <button
-              onClick={() => setTab('waiting')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                tab === 'waiting'
+              onClick={() => setTab('active')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                tab === 'active'
+                  ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              Sedang di Pabrik ({stats.activeInPlant})
+            </button>
+            <button
+              onClick={() => setTab('today')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                tab === 'today'
                   ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              Antrean Menunggu ({stats.waitingInduction})
+              Hari Ini ({stats.todayWork})
             </button>
             <button
-              onClick={() => setTab('inducted')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                tab === 'inducted'
-                  ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+              onClick={() => setTab('waiting')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                tab === 'waiting'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              Sudah Di-Induksi
+              Menunggu Masuk ({stats.waitingCheckIn})
             </button>
             <button
               onClick={() => setTab('all')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                 tab === 'all'
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              Semua Lapangan
+              Semua Riwayat
             </button>
           </div>
 
@@ -569,7 +545,7 @@ export default function SheInduction() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Cari tamu / instansi / PIC..."
+                placeholder="Cari tamu / pekerjaan / instansi..."
                 className="input pl-8 text-xs py-2 h-9 rounded-xl w-full"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -608,7 +584,7 @@ export default function SheInduction() {
         <div className="md:hidden p-3 space-y-3">
           {!loading && rows.length === 0 && (
             <div className="p-8 text-center text-xs text-slate-400">
-              Tidak ada data tamu pada filter ini.
+              Tidak ada data tamu pekerjaan pada filter ini.
             </div>
           )}
 
@@ -621,15 +597,9 @@ export default function SheInduction() {
                 <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
                   {v.visitNumber}
                 </span>
-                {v.inductionStatus === 'INDUCTED' ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/80">
-                    Selesai Induction
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/80">
-                    Menunggu Induction
-                  </span>
-                )}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/80 flex items-center gap-1">
+                  <ShieldAlert size={11} /> Perlu Induction SHE
+                </span>
               </div>
 
               <div>
@@ -647,7 +617,7 @@ export default function SheInduction() {
               </div>
 
               {v.workDescription && (
-                <div className="text-xs p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-200">
+                <div className="text-xs p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-200">
                   <span className="text-[10px] uppercase font-bold block opacity-75">Pekerjaan Lapangan:</span>
                   <span className="italic">{v.workDescription}</span>
                 </div>
@@ -655,37 +625,29 @@ export default function SheInduction() {
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  Status Kunjungan: <StatusBadge status={v.status} />
+                  Status: <StatusBadge status={v.status} />
                 </div>
                 {v.checkInAt && <div>Masuk: {fmtTime(v.checkInAt)} WIB</div>}
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
-                {v.inductionStatus === 'WAITING_INDUCTION' ? (
-                  canInduct && (
-                    <button
-                      onClick={() => setInductingVisit(v)}
-                      className="btn-primary text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 w-full justify-center"
-                    >
-                      <HardHat size={14} /> Beri Safety Induction
-                    </button>
-                  )
-                ) : (
-                  <div className="flex items-center gap-2 w-full justify-between">
-                    <span className="text-[10.5px] text-emerald-600 font-medium">
-                      Oleh: {v.inductionBy?.name || 'Petugas SHE'}
-                    </span>
-                    {canInduct && (
-                      <button
-                        onClick={() => handleReset(v)}
-                        className="text-[10.5px] text-slate-400 hover:text-red-600"
-                      >
-                        Reset Status
-                      </button>
-                    )}
-                  </div>
-                )}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => handleResendWa(v)}
+                  className="btn-ghost text-xs py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                  title="Kirim ulang pesan WA ke Tim SHE"
+                >
+                  <Send size={12} />
+                  <span>Kirim WA</span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedVisit(v)}
+                  className="btn-primary text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1"
+                >
+                  <Info size={13} />
+                  <span>Detail & Salin</span>
+                </button>
               </div>
             </div>
           ))}
@@ -698,108 +660,115 @@ export default function SheInduction() {
               <tr>
                 <th className="th">No. Kunjungan</th>
                 <th className="th">Nama Tamu & Rombongan</th>
-                <th className="th">Instansi / Perusahaan</th>
+                <th className="th">Instansi</th>
                 <th className="th">PIC & Departemen</th>
-                <th className="th">Rencana Pekerjaan Lapangan</th>
+                <th className="th">Pekerjaan Lapangan</th>
                 <th className="th">Status Tamu</th>
-                <th className="th">Status Induction SHE</th>
-                <th className="th text-right">Aksi K3</th>
+                <th className="th">Induction K3</th>
+                <th className="th text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {!loading && rows.length === 0 && (
                 <tr>
                   <td className="td text-center py-10 text-slate-400" colSpan={8}>
-                    Tidak ada data tamu pada filter ini.
+                    Tidak ada data tamu pekerjaan pada filter ini.
                   </td>
                 </tr>
               )}
 
-              {rows.map((v) => (
-                <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                  <td className="td font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
-                    {v.visitNumber}
-                  </td>
-                  <td className="td">
-                    <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                      <span>{v.visitorName}</span>
-                      {v.numberOfVisitors > 1 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-semibold">
-                          +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
-                        </span>
-                      )}
-                    </div>
-                    {v.phone && <div className="text-[11px] text-slate-500 font-mono">{v.phone}</div>}
-                  </td>
-                  <td className="td text-xs text-slate-700 dark:text-slate-300">{v.company || '-'}</td>
-                  <td className="td text-xs">
-                    <div className="font-semibold text-slate-800 dark:text-slate-200">{v.picName}</div>
-                    <div className="text-[11px] text-slate-500">{v.department}</div>
-                  </td>
-                  <td className="td text-xs">
-                    <div className="max-w-xs text-slate-800 dark:text-slate-200 italic line-clamp-2">
-                      {v.workDescription || v.purpose || '-'}
-                    </div>
-                  </td>
-                  <td className="td">
-                    <StatusBadge status={v.status} />
-                  </td>
-                  <td className="td">
-                    {v.inductionStatus === 'INDUCTED' ? (
-                      <div>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/80">
-                          <CheckCircle2 size={12} /> Selesai Induction
-                        </span>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          Oleh: {v.inductionBy?.name || 'Petugas SHE'}
-                          {v.inductionAt && ` · ${fmtTime(v.inductionAt)}`}
+              {rows.map((v) => {
+                const guests = v.guestNames || [];
+                return (
+                  <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                    <td className="td font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                      <div>{v.visitNumber}</div>
+                      {v.checkInAt && (
+                        <div className="text-[10px] text-slate-400 font-normal">
+                          Masuk: {fmtTime(v.checkInAt)} WIB
                         </div>
+                      )}
+                    </td>
+                    <td className="td">
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{v.visitorName}</span>
+                        {v.numberOfVisitors > 1 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-semibold">
+                            +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+                          </span>
+                        )}
                       </div>
-                    ) : (
+                      {/* Daftar Badge per orang jika ada */}
+                      {guests.length > 0 ? (
+                        <div className="text-[10.5px] text-slate-500 mt-0.5 space-y-0.5">
+                          {guests.slice(0, 2).map((g, idx) => (
+                            <div key={idx} className="truncate max-w-[200px]">
+                              {idx + 1}. {g.name} {g.badge ? `(Badge: ${g.badge})` : ''}
+                            </div>
+                          ))}
+                          {guests.length > 2 && (
+                            <div className="text-[10px] text-brand-600 font-semibold">
+                              +{guests.length - 2} tamu lainnya (lihat detail)
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        v.badgeNumber && (
+                          <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                            Badge: {v.badgeNumber}
+                          </div>
+                        )
+                      )}
+                    </td>
+                    <td className="td text-xs text-slate-700 dark:text-slate-300">{v.company || '-'}</td>
+                    <td className="td text-xs">
+                      <div className="font-semibold text-slate-800 dark:text-slate-200">{v.picName}</div>
+                      <div className="text-[11px] text-slate-500">{v.department}</div>
+                    </td>
+                    <td className="td text-xs">
+                      <div className="max-w-xs text-slate-800 dark:text-slate-200 italic line-clamp-2" title={v.workDescription || v.purpose}>
+                        {v.workDescription || v.purpose || '-'}
+                      </div>
+                    </td>
+                    <td className="td">
+                      <StatusBadge status={v.status} />
+                    </td>
+                    <td className="td">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-200/80">
-                        <Clock size={12} /> Menunggu Induction
+                        <ShieldAlert size={12} /> Butuh Induction SHE
                       </span>
-                    )}
-                  </td>
-                  <td className="td text-right">
-                    {v.inductionStatus === 'WAITING_INDUCTION' ? (
-                      canInduct && (
+                    </td>
+                    <td className="td text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => setInductingVisit(v)}
-                          className="btn-primary text-xs py-1.5 px-3 rounded-xl font-bold inline-flex items-center gap-1.5"
+                          onClick={() => handleResendWa(v)}
+                          className="btn-ghost text-xs p-1.5 rounded-lg text-slate-500 hover:text-brand-600"
+                          title="Kirim ulang notifikasi WhatsApp ke Tim SHE"
                         >
-                          <HardHat size={14} /> Beri Induction
+                          <Send size={14} />
                         </button>
-                      )
-                    ) : (
-                      canInduct && (
                         <button
-                          onClick={() => handleReset(v)}
-                          className="text-xs text-slate-400 hover:text-red-600 transition-colors"
-                          title="Reset status induction kembali ke menunggu"
+                          onClick={() => setSelectedVisit(v)}
+                          className="btn-ghost text-xs py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 hover:border-brand-500"
                         >
-                          Reset
+                          Detail & Salin
                         </button>
-                      )
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal Verifikasi Induction */}
-      {inductingVisit && (
-        <InductModal
-          visit={inductingVisit}
-          onClose={() => setInductingVisit(null)}
-          onSuccess={() => {
-            setInductingVisit(null);
-            loadStats();
-            loadVisits();
-          }}
+      {/* Modal Detail & Salin Data Tamu */}
+      {selectedVisit && (
+        <GuestDetailModal
+          visit={selectedVisit}
+          onClose={() => setSelectedVisit(null)}
+          onResendWa={(v) => handleResendWa(v)}
         />
       )}
 

@@ -446,34 +446,20 @@ export default function Scan() {
                   />
 
                   {result.visit.requiresInduction && (
-                    <div
-                      className={`p-3 rounded-xl border flex items-start gap-2.5 my-2.5 ${
-                        result.visit.inductionStatus === 'INDUCTED'
-                          ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
-                          : 'border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
-                      }`}
-                    >
-                      <ShieldAlert className="shrink-0 mt-0.5" size={18} />
+                    <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2.5 my-2.5">
+                      <ShieldAlert className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" size={18} />
                       <div className="text-xs">
                         <div className="font-bold flex items-center gap-1.5">
-                          <span>Wajib Safety Induction SHE</span>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                              result.visit.inductionStatus === 'INDUCTED'
-                                ? 'bg-emerald-200/80 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100'
-                                : 'bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-100'
-                            }`}
-                          >
-                            {result.visit.inductionStatus === 'INDUCTED' ? 'Sudah Di-Induksi' : 'Menunggu Induction'}
+                          <span>Tamu Pekerjaan Lapangan (Perlu Safety Induction)</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-100">
+                            Info K3
                           </span>
                         </div>
-                        <div className="mt-0.5 text-[11px] opacity-90">
-                          {result.visit.inductionStatus === 'INDUCTED'
-                            ? `Telah diverifikasi oleh ${result.visit.inductionBy?.name || 'Petugas SHE'}`
-                            : 'Petugas Security wajib mengarahkan tamu ke Tim SHE untuk safety briefing & APD sebelum memasuki pabrik.'}
+                        <div className="mt-0.5 text-[11px] leading-relaxed">
+                          Tamu akan melakukan pekerjaan di area pabrik. Notifikasi otomatis dikirim ke Tim SHE saat check-in. Harap arahkan tamu untuk berkoordinasi dengan Tim SHE terkait Safety Induction.
                         </div>
                         {result.visit.workDescription && (
-                          <div className="mt-1 pt-1 border-t border-current/20 font-medium text-[11px]">
+                          <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium text-[11px] italic">
                             Rencana Kerja: {result.visit.workDescription}
                           </div>
                         )}

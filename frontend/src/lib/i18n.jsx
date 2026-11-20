@@ -57,7 +57,7 @@ const DICTIONARY = {
     'nav.scan': 'Scan Barcode',
     'nav.visits': 'Data Kunjungan',
     'nav.visits_short': 'Kunjungan',
-    'nav.she': 'Induction SHE (K3)',
+    'nav.she': 'Informasi Tamu SHE',
     'nav.reports': 'Laporan',
     'nav.master': 'Master Data',
     'nav.whatsapp': 'WhatsApp Gateway',
@@ -300,7 +300,7 @@ const DICTIONARY = {
     'nav.scan': 'Scan Barcode',
     'nav.visits': 'Visit Records',
     'nav.visits_short': 'Visits',
-    'nav.she': 'SHE Induction (HSE)',
+    'nav.she': 'SHE Guest Monitoring',
     'nav.reports': 'Reports',
     'nav.master': 'Master Data',
     'nav.whatsapp': 'WhatsApp Gateway',
@@ -541,8 +541,8 @@ const DICTIONARY = {
 
 const I18nContext = createContext({
   lang: 'id',
-  setLang: () => {},
-  toggleLang: () => {},
+  setLang: () => { },
+  toggleLang: () => { },
   t: (key, fallback) => fallback || key
 });
 
@@ -558,7 +558,7 @@ export function I18nProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem('vms_lang', lang);
-    } catch {}
+    } catch { }
     document.documentElement.lang = lang;
   }, [lang]);
 

@@ -63,8 +63,7 @@ export const endpoints = {
 
   sheStats: () => api.get('/she/stats').then((r) => r.data),
   sheVisits: (params) => api.get('/she/visits', { params }).then((r) => r.data),
-  sheInduct: (id, payload) => api.post(`/she/visits/${id}/induct`, payload).then((r) => r.data),
-  sheReset: (id) => api.post(`/she/visits/${id}/reset`).then((r) => r.data),
+  sheResendWa: (id) => api.post(`/she/visits/${id}/resend-wa`).then((r) => r.data),
   sheSettings: () => api.get('/she/settings').then((r) => r.data),
   sheSaveSettings: (payload) => api.post('/she/settings', payload).then((r) => r.data),
 
