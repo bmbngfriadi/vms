@@ -151,34 +151,54 @@ export default function Pass() {
 
   // Handler Konfirmasi Check-In (Tamu Masuk)
   const handleCheckIn = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setActionErrorMsg('');
     setActionSuccessMsg('');
 
-    // Validasi identitas tamu: wajib ada jika PIC belum melampirkannya
-    if (!data.identityPhoto && !securityPhoto) {
-      setActionErrorMsg('Foto identitas tamu (KTP/SIM/Paspor) wajib diambil oleh Security sebelum konfirmasi masuk.');
-      return;
-    }
-
-    const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim();
-    const picObj = pics.find((p) => p.id === (selectedPicId || data.picUserId));
-    const picName = picObj?.name || data.picName || 'PIC';
-
-    // Munculkan popup konfirmasi untuk security
-    const ok = await confirm({
-      title: 'Konfirmasi Check-In (Tamu Masuk)',
-      message: `Konfirmasi kedatangan dan izinkan masuk untuk ${data.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${data.visitNumber}\n• PIC Dituju: ${picName}\n• No. Badge: ${badgeSummary || '-'}\n\nPastikan nomor badge fisik telah diserahkan sesuai nama masing-masing tamu.`,
-      confirmText: 'Ya, Konfirmasi Masuk',
-      cancelText: 'Batal',
-      variant: 'brand',
-      icon: 'check'
-    });
-    if (!ok) return;
-
-    setActionBusy(true);
-
     try {
+      // Validasi identitas tamu: wajib ada jika PIC belum melampirkannya
+      if (!data?.identityPhoto && !securityPhoto) {
+        setActionErrorMsg('Foto identitas tamu (KTP/SIM/Paspor) wajib diambil oleh Security sebelum konfirmasi masuk.');
+        customAlert({
+          title: 'Foto Identitas Diperlukan',
+          message: 'Foto identitas tamu (KTP/SIM/Paspor) wajib diambil oleh Security sebelum konfirmasi masuk.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      const currentPicId = selectedPicId || data?.picUserId;
+      if (!currentPicId) {
+        setActionErrorMsg('Silakan pilih PIC / staf yang dituju tamu terlebih dahulu.');
+        customAlert({
+          title: 'Pilih PIC Dituju',
+          message: 'Silakan pilih PIC / staf PT Cemindo Gemilang Tbk yang dituju oleh tamu terlebih dahulu.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim();
+      const picList = Array.isArray(data?.pics) ? data.pics : [];
+      const picObj = picList.find((p) => p.id === currentPicId);
+      const picName = picObj?.name || data?.picName || 'PIC';
+      const visitorName = data?.visitorName || 'Tamu';
+      const visitNumber = data?.visitNumber || '-';
+      const visitorsCount = totalVisitors || 1;
+
+      // Munculkan popup konfirmasi untuk security
+      const ok = await confirm({
+        title: 'Konfirmasi Check-In (Tamu Masuk)',
+        message: `Konfirmasi kedatangan dan izinkan masuk untuk ${visitorName} (${visitorsCount} orang)?\n\n• No. Kunjungan: ${visitNumber}\n• PIC Dituju: ${picName}\n• No. Badge: ${badgeSummary || '-'}\n\nPastikan nomor badge fisik telah diserahkan sesuai nama masing-masing tamu.`,
+        confirmText: 'Ya, Konfirmasi Masuk',
+        cancelText: 'Batal',
+        variant: 'brand',
+        icon: 'check'
+      });
+      if (!ok) return;
+
+      setActionBusy(true);
+
       const payloadGuests = displayGuests.map((g, idx) => ({
         name: g.name,
         badge: badgesList[idx] ? String(badgesList[idx]).trim() : '',
@@ -186,13 +206,13 @@ export default function Pass() {
       }));
 
       const res = await endpoints.publicCheckIn(token, {
-        picUserId: selectedPicId || data.picUserId,
+        picUserId: currentPicId,
         badgeNumber: badgeSummary,
         badges: badgesList,
         guestNames: payloadGuests,
-        note: note.trim(),
+        note: (note || '').trim(),
         identityPhoto: securityPhoto || undefined,
-        identityNumber: (securityIdentityNumber || data.identityNumber || '').trim() || undefined
+        identityNumber: (securityIdentityNumber || data?.identityNumber || '').trim() || undefined
       });
       setActionSuccessMsg(res.message || 'Validasi Check-In Berhasil! Tamu resmi diizinkan masuk.');
       setData((prev) => ({
@@ -206,6 +226,7 @@ export default function Pass() {
         identityNumber: securityIdentityNumber || prev.identityNumber
       }));
     } catch (err) {
+      console.error('[handleCheckIn error]', err);
       setActionErrorMsg(errMsg(err, 'Gagal memproses validasi check-in'));
     } finally {
       setActionBusy(false);
@@ -217,23 +238,26 @@ export default function Pass() {
     setActionErrorMsg('');
     setActionSuccessMsg('');
 
-    const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim() || data.badgeNumber || '-';
-
-    // Munculkan popup konfirmasi untuk security
-    const ok = await confirm({
-      title: 'Konfirmasi Check-Out (Tamu Keluar)',
-      message: `Konfirmasi check-out dan tamu telah meninggalkan kawasan pabrik untuk ${data.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${data.visitNumber}\n• No. Badge: ${badgeSummary}\n\nPastikan seluruh kartu badge tamu telah dikembalikan ke pos security.`,
-      confirmText: 'Ya, Konfirmasi Keluar',
-      cancelText: 'Batal',
-      variant: 'warning',
-      icon: 'logout'
-    });
-    if (!ok) return;
-
-    setActionBusy(true);
-
     try {
-      const res = await endpoints.publicCheckOut(token, { note: note.trim() });
+      const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim() || data?.badgeNumber || '-';
+      const visitorName = data?.visitorName || 'Tamu';
+      const visitNumber = data?.visitNumber || '-';
+      const visitorsCount = totalVisitors || 1;
+
+      // Munculkan popup konfirmasi untuk security
+      const ok = await confirm({
+        title: 'Konfirmasi Check-Out (Tamu Keluar)',
+        message: `Konfirmasi check-out dan tamu telah meninggalkan kawasan pabrik untuk ${visitorName} (${visitorsCount} orang)?\n\n• No. Kunjungan: ${visitNumber}\n• No. Badge: ${badgeSummary}\n\nPastikan seluruh kartu badge tamu telah dikembalikan ke pos security.`,
+        confirmText: 'Ya, Konfirmasi Keluar',
+        cancelText: 'Batal',
+        variant: 'warning',
+        icon: 'logout'
+      });
+      if (!ok) return;
+
+      setActionBusy(true);
+
+      const res = await endpoints.publicCheckOut(token, { note: (note || '').trim() });
       setActionSuccessMsg(res.message || 'Check-Out Berhasil! Kunjungan tamu telah selesai.');
       setData((prev) => ({
         ...prev,
@@ -242,6 +266,7 @@ export default function Pass() {
         checkOutAt: res.checkOutAt || new Date().toISOString()
       }));
     } catch (err) {
+      console.error('[handleCheckOut error]', err);
       setActionErrorMsg(errMsg(err, 'Gagal memproses check-out tamu'));
     } finally {
       setActionBusy(false);
@@ -346,10 +371,10 @@ export default function Pass() {
           {/* Header Status Barcode */}
           <div
             className={`px-4 py-3.5 border-b flex items-center justify-between ${isDone
-                ? 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-800'
-                : isCheckOutAction
-                  ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
-                  : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
+              ? 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-800'
+              : isCheckOutAction
+                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
               }`}
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -373,10 +398,10 @@ export default function Pass() {
 
             <span
               className={`badge text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border ${isDone
-                  ? 'bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                  : isCheckOutAction
-                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-800'
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800'
+                ? 'bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                : isCheckOutAction
+                  ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-800'
+                  : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800'
                 }`}
             >
               {isCheckInSuccess ? 'DI DALAM PABRIK' : data.status}
@@ -523,7 +548,7 @@ export default function Pass() {
 
             {/* ================= TAMPILAN 1: FORM CHECK-IN LANGSUNG ================= */}
             {isCheckInAction && (
-              <form onSubmit={handleCheckIn} className="space-y-3.5 pt-1">
+              <form noValidate onSubmit={handleCheckIn} className="space-y-3.5 pt-1">
                 <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 space-y-3">
                   <div className="text-xs font-bold text-emerald-900 dark:text-emerald-100 flex items-center gap-1.5">
                     <BadgeCheck size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -664,9 +689,10 @@ export default function Pass() {
 
                 {/* Tombol Eksekusi Check-In */}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleCheckIn}
                   disabled={actionBusy}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all min-h-[50px]"
+                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all min-h-[50px] cursor-pointer"
                 >
                   {actionBusy ? (
                     <Loader2 size={20} className="animate-spin" />
