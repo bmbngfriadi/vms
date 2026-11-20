@@ -205,10 +205,24 @@ export default function Scan() {
       setError('Pilih PIC / user yang dituju terlebih dahulu');
       return;
     }
+
+    const badgeSummary = badgesList.filter(Boolean).join(', ') || badge;
+    const picObj = pics.find((p) => p.id === picUserId);
+    const picName = picObj?.name || result.visit?.picName || 'PIC';
+
+    const ok = await confirm({
+      title: 'Konfirmasi Check-In (Tamu Masuk)',
+      message: `Konfirmasi kedatangan dan izinkan masuk untuk ${result.visit.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${result.visit.visitNumber}\n• PIC Dituju: ${picName}\n• No. Badge: ${badgeSummary || '-'}\n\nPastikan nomor badge telah diserahkan sesuai nama masing-masing tamu.`,
+      confirmText: 'Ya, Konfirmasi Masuk',
+      cancelText: 'Batal',
+      variant: 'brand',
+      icon: 'check'
+    });
+    if (!ok) return;
+
     setActionLoading(true);
     setError('');
     try {
-      const badgeSummary = badgesList.filter(Boolean).join(', ') || badge;
       const payloadGuests = displayGuests.map((g, idx) => ({
         name: g.name,
         badge: badgesList[idx] ? String(badgesList[idx]).trim() : '',
@@ -245,6 +259,18 @@ export default function Scan() {
   };
 
   const doCheckOut = async () => {
+    const badgeSummary = badgesList.filter(Boolean).join(', ') || badge || result.visit.badgeNumber || '-';
+
+    const ok = await confirm({
+      title: 'Konfirmasi Check-Out (Tamu Keluar)',
+      message: `Konfirmasi check-out dan tamu telah meninggalkan kawasan pabrik untuk ${result.visit.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${result.visit.visitNumber}\n• No. Badge: ${badgeSummary}\n\nPastikan seluruh kartu badge tamu telah dikembalikan ke pos security.`,
+      confirmText: 'Ya, Konfirmasi Keluar',
+      cancelText: 'Batal',
+      variant: 'warning',
+      icon: 'logout'
+    });
+    if (!ok) return;
+
     setActionLoading(true);
     setError('');
     try {
@@ -647,7 +673,7 @@ export default function Scan() {
                       ) : (
                         <UserCheck size={18} />
                       )}
-                      Validasi & Check-In
+                      KONFIRMASI CHECK-IN (TAMU MASUK)
                     </button>
                     <button
                       className="btn-danger sm:w-auto py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
@@ -721,7 +747,7 @@ export default function Scan() {
                     disabled={actionLoading}
                   >
                     {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={18} />}
-                    Validasi Badge & Konfirmasi Check-Out
+                    KONFIRMASI CHECK-OUT (TAMU KELUAR)
                   </button>
                 </div>
               )}
