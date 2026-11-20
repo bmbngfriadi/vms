@@ -97,7 +97,7 @@ export function DialogProvider({ children }) {
         </div>
       );
     }
-    if (v === 'success') {
+    if (iconType === 'check' || v === 'success') {
       return (
         <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 shadow-xs">
           <CheckCircle2 size={24} strokeWidth={2.2} />

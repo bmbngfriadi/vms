@@ -27,6 +27,7 @@ import {
 import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
 import { useI18n } from '../lib/i18n.jsx';
+import { useDialog } from '../lib/dialog.jsx';
 import PhotoPreviewModal from '../components/PhotoPreviewModal.jsx';
 import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
 
@@ -34,6 +35,7 @@ export default function Pass() {
   const { token } = useParams();
   const { isDark, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useI18n();
+  const { confirm, alert: customAlert } = useDialog();
 
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -150,19 +152,33 @@ export default function Pass() {
   // Handler Konfirmasi Check-In (Tamu Masuk)
   const handleCheckIn = async (e) => {
     e.preventDefault();
-    setActionBusy(true);
     setActionErrorMsg('');
     setActionSuccessMsg('');
 
     // Validasi identitas tamu: wajib ada jika PIC belum melampirkannya
     if (!data.identityPhoto && !securityPhoto) {
       setActionErrorMsg('Foto identitas tamu (KTP/SIM/Paspor) wajib diambil oleh Security sebelum konfirmasi masuk.');
-      setActionBusy(false);
       return;
     }
 
+    const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim();
+    const picObj = pics.find((p) => p.id === (selectedPicId || data.picUserId));
+    const picName = picObj?.name || data.picName || 'PIC';
+
+    // Munculkan popup konfirmasi untuk security
+    const ok = await confirm({
+      title: 'Konfirmasi Check-In (Tamu Masuk)',
+      message: `Konfirmasi kedatangan dan izinkan masuk untuk ${data.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${data.visitNumber}\n• PIC Dituju: ${picName}\n• No. Badge: ${badgeSummary || '-'}\n\nPastikan nomor badge fisik telah diserahkan sesuai nama masing-masing tamu.`,
+      confirmText: 'Ya, Konfirmasi Masuk',
+      cancelText: 'Batal',
+      variant: 'brand',
+      icon: 'check'
+    });
+    if (!ok) return;
+
+    setActionBusy(true);
+
     try {
-      const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim();
       const payloadGuests = displayGuests.map((g, idx) => ({
         name: g.name,
         badge: badgesList[idx] ? String(badgesList[idx]).trim() : '',
@@ -198,9 +214,23 @@ export default function Pass() {
 
   // Handler Konfirmasi Check-Out (Tamu Keluar)
   const handleCheckOut = async () => {
-    setActionBusy(true);
     setActionErrorMsg('');
     setActionSuccessMsg('');
+
+    const badgeSummary = badgesList.filter(Boolean).join(', ') || badgeNumber.trim() || data.badgeNumber || '-';
+
+    // Munculkan popup konfirmasi untuk security
+    const ok = await confirm({
+      title: 'Konfirmasi Check-Out (Tamu Keluar)',
+      message: `Konfirmasi check-out dan tamu telah meninggalkan kawasan pabrik untuk ${data.visitorName} (${totalVisitors} orang)?\n\n• No. Kunjungan: ${data.visitNumber}\n• No. Badge: ${badgeSummary}\n\nPastikan seluruh kartu badge tamu telah dikembalikan ke pos security.`,
+      confirmText: 'Ya, Konfirmasi Keluar',
+      cancelText: 'Batal',
+      variant: 'warning',
+      icon: 'logout'
+    });
+    if (!ok) return;
+
+    setActionBusy(true);
 
     try {
       const res = await endpoints.publicCheckOut(token, { note: note.trim() });

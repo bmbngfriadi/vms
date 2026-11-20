@@ -63,7 +63,7 @@ export default function Scan() {
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
+        scannerRef.current.stop().catch(() => { });
       }
     };
   }, []);
@@ -84,7 +84,7 @@ export default function Scan() {
           await stopCamera();
           lookup(decoded);
         },
-        () => {}
+        () => { }
       );
       setScanning(true);
     } catch (err) {
@@ -103,7 +103,7 @@ export default function Scan() {
       setScanning(false);
       setError(
         'Kamera tidak dapat diakses. Pastikan halaman dibuka via HTTPS dan izin kamera diberikan. ' +
-          'Anda tetap dapat mengetik kode secara manual.'
+        'Anda tetap dapat mengetik kode secara manual.'
       );
     } finally {
       startingRef.current = false;
@@ -203,6 +203,11 @@ export default function Scan() {
   const doCheckIn = async () => {
     if (!picUserId) {
       setError('Pilih PIC / user yang dituju terlebih dahulu');
+      customAlert({
+        title: 'Pilih PIC Dituju Terlebih Dahulu',
+        message: 'Silakan pilih PIC atau staf PT Cemindo Gemilang Tbk yang dituju oleh tamu terlebih dahulu sebelum mengonfirmasi Check-In.',
+        type: 'warning'
+      });
       return;
     }
 
@@ -280,8 +285,7 @@ export default function Scan() {
         title: 'Check-Out berhasil',
         lines: [
           `Tamu: ${data.visitorName}`,
-          `Durasi kunjungan: ${Math.floor((data.durationMinutes || 0) / 60)} jam ${
-            (data.durationMinutes || 0) % 60
+          `Durasi kunjungan: ${Math.floor((data.durationMinutes || 0) / 60)} jam ${(data.durationMinutes || 0) % 60
           } menit`,
           'Notifikasi keluar telah dikirim ke tamu, PIC, dan management.'
         ]
@@ -377,9 +381,8 @@ export default function Scan() {
               dihapus library dan memicu error "The node to be removed is not a
               child of this node". Placeholder ditaruh sebagai overlay di luar. */}
           <div
-            className={`relative w-full rounded-md overflow-hidden bg-black ${
-              scanning ? '' : 'h-52'
-            }`}
+            className={`relative w-full rounded-md overflow-hidden bg-black ${scanning ? '' : 'h-52'
+              }`}
           >
             <div id="qr-reader" className="w-full" />
             {!scanning && (
@@ -665,8 +668,7 @@ export default function Scan() {
                     <button
                       className="btn-success flex-1 py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
                       onClick={doCheckIn}
-                      disabled={actionLoading || !picUserId}
-                      title={!picUserId ? 'Pilih PIC terlebih dahulu' : ''}
+                      disabled={actionLoading}
                     >
                       {actionLoading ? (
                         <Loader2 size={16} className="animate-spin" />
@@ -781,11 +783,10 @@ function Row({ label, value, strong }) {
     <div className="flex justify-between gap-4">
       <span className="text-slate-500 dark:text-slate-400 shrink-0">{label}</span>
       <span
-        className={`text-right ${
-          strong
+        className={`text-right ${strong
             ? 'font-medium text-slate-900 dark:text-white'
             : 'text-slate-700 dark:text-slate-200'
-        }`}
+          }`}
       >
         {value}
       </span>
