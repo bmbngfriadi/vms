@@ -310,4 +310,48 @@ ${DIVIDER}
 ${FOOTER}`;
 }
 
+/**
+ * 9. Tim SHE: Pemberitahuan Tamu Masuk Butuh Safety Induction (Pekerjaan Lapangan / Masuk Pabrik).
+ */
+export function sheInductionAlert({
+  visitNumber,
+  guestName,
+  guestNames,
+  company,
+  department,
+  picName,
+  purpose,
+  workDescription,
+  checkInAt,
+  badge
+}) {
+  const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  return `🏭 *PT CEMINDO GEMILANG Tbk*
+📍 *Plant Batam — K3 / Safety Health & Environment (SHE)*
+${DIVIDER}
+⚠️ *NOTIFIKASI K3: BUTUH SAFETY INDUCTION*
+${DIVIDER}
+
+Pemberitahuan kepada Tim SHE:
+Tamu dengan tujuan *Pekerjaan Lapangan / Area Pabrik* telah tiba dan memerlukan *Safety Induction K3* sebelum memasuki area kerja:
+
+📋 *DETAIL KUNJUNGAN:*
+• No. Kunjungan: *${visitNumber}*
+${guestField}
+• Instansi / Perusahaan: ${company || 'Pribadi / Perorangan'}
+• Departemen Tujuan: ${department || '-'}
+• PIC Dituju: *${picName || '-'}*
+• Keperluan: ${purpose || '-'}
+• Rencana Pekerjaan: *${workDescription || 'Pekerjaan di Area Pabrik / Lapangan'}*
+• Lokasi Masuk: POS 1 Security
+• Waktu Check-In: *${fmtTime(checkInAt)} WIB*
+• Status K3: 🟡 *Wajib Safety Induction*
+
+📢 *Tindakan Tim SHE:*
+Mohon petugas SHE segera melakukan briefing / Safety Induction dan verifikasi kelengkapan APD tamu di Pos / Ruang Induction SHE.
+
+${DIVIDER}
+${FOOTER}`;
+}
+
 export { APP_URL };

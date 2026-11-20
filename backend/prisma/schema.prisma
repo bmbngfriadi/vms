@@ -61,6 +61,7 @@ model User {
   visitsAsPic      Visit[]     @relation("VisitPic")
   visitsCheckedIn  Visit[]     @relation("VisitCheckIn")
   visitsCheckedOut Visit[]     @relation("VisitCheckOut")
+  visitsInducted   Visit[]     @relation("VisitInduction")
   featureOverrides UserFeature[]
   passwordResets   PasswordReset[]
 
@@ -133,6 +134,16 @@ model Visit {
   checkOutBy       User?       @relation("VisitCheckOut", fields: [checkOutById], references: [id], onDelete: SetNull)
   cancelReason     String?     @map("cancel_reason")
 
+  // Area & Safety Induction SHE
+  destinationArea  String      @default("OFFICE") @map("destination_area")
+  workDescription  String?     @map("work_description")
+  requiresInduction Boolean    @default(false) @map("requires_induction")
+  inductionStatus  String      @default("NOT_REQUIRED") @map("induction_status")
+  inductionAt      DateTime?   @map("induction_at")
+  inductionById    String?     @map("induction_by_id")
+  inductionBy      User?       @relation("VisitInduction", fields: [inductionById], references: [id], onDelete: SetNull)
+  inductionNotes   String?     @map("induction_notes")
+
   tokens           QrToken[]
   notifications    NotificationLog[]
 
@@ -143,6 +154,8 @@ model Visit {
   @@index([createdAt])
   @@index([visitorId])
   @@index([departmentId])
+  @@index([destinationArea])
+  @@index([inductionStatus])
   @@map("visits")
 }
 

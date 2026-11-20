@@ -17,7 +17,9 @@ import {
   ShieldCheck,
   Eye,
   RefreshCw,
-  Users
+  Users,
+  ShieldAlert,
+  HardHat
 } from 'lucide-react';
 import { endpoints, errMsg } from '../lib/api.js';
 import IdentityPhotoCapture from '../components/IdentityPhotoCapture.jsx';
@@ -34,6 +36,8 @@ const EMPTY = {
   departmentId: '',
   picUserId: '',
   purpose: '',
+  destinationArea: 'OFFICE',
+  workDescription: '',
   numberOfVisitors: 1,
   guestNames: [''],
   vehiclePlate: ''
@@ -200,6 +204,12 @@ export default function Register() {
     if (!form.identityPhoto) {
       setError(t('register.photo_required_alert', 'Foto identitas (KTP/SIM/Paspor) wajib dilampirkan.'));
       window.scrollTo({ top: 120, behavior: 'smooth' });
+      return;
+    }
+
+    if (form.destinationArea === 'PLANT_WORK' && !(form.workDescription || '').trim()) {
+      setError('Untuk kunjungan area pabrik/lapangan, rincian pekerjaan wajib diisi.');
+      window.scrollTo({ top: 500, behavior: 'smooth' });
       return;
     }
 
@@ -639,6 +649,78 @@ export default function Register() {
                     placeholder=""
                     required
                   />
+                </div>
+
+                {/* Tujuan Area & Klasifikasi K3 */}
+                <div className="sm:col-span-2 space-y-2 pt-1">
+                  <label className="label mb-1">Area / Tujuan Aktivitas di Kawasan Pabrik *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Opsi Kantor */}
+                    <div
+                      onClick={() => setForm((c) => ({ ...c, destinationArea: 'OFFICE' }))}
+                      className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
+                        form.destinationArea === 'OFFICE'
+                          ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/30 ring-1 ring-brand-500'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <Building2 size={16} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">Area Kantor (Office)</span>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          Tanpa Pekerjaan Fisik
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                        Meeting kantor, interview, administrasi atau bertamu ke staf (tidak butuh Safety Induction SHE).
+                      </p>
+                    </div>
+
+                    {/* Opsi Pabrik / Lapangan */}
+                    <div
+                      onClick={() => setForm((c) => ({ ...c, destinationArea: 'PLANT_WORK' }))}
+                      className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
+                        form.destinationArea === 'PLANT_WORK'
+                          ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <HardHat size={16} className={form.destinationArea === 'PLANT_WORK' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'} />
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">Area Pabrik / Lapangan</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
+                          Wajib Induction K3
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                        Memasuki area operasional pabrik, workshop, proyek, servis mesin, teknisi/vendor (wajib briefing K3).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input detail pekerjaan lapangan jika memilih Area Pabrik */}
+                  {form.destinationArea === 'PLANT_WORK' && (
+                    <div className="mt-3 p-3.5 rounded-xl border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                        <ShieldAlert size={15} />
+                        <span>Rincian Pekerjaan di Area Pabrik / Lapangan *</span>
+                      </div>
+                      <textarea
+                        className="input min-h-[64px] text-xs py-2 px-3 rounded-lg bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/60"
+                        placeholder="Jelaskan pekerjaan yang akan dilakukan (contoh: Perbaikan mesin motor di finish mill, instalasi kabel, servicing genset, dll)..."
+                        value={form.workDescription}
+                        onChange={set('workDescription')}
+                        required
+                      />
+                      <p className="text-[10.5px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                        ⚠️ Sesuai standar K3 PT Cemindo Gemilang Tbk, tamu pekerjaan lapangan wajib mendapatkan Safety Induction oleh Tim SHE dan mengenakan APD standar sebelum memasuki area kerja.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

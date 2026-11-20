@@ -10,6 +10,7 @@ import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Scan from './pages/Scan.jsx';
 import Visits from './pages/Visits.jsx';
+import SheInduction from './pages/SheInduction.jsx';
 import Reports from './pages/Reports.jsx';
 import Master from './pages/Master.jsx';
 import WhatsApp from './pages/WhatsApp.jsx';
@@ -98,6 +99,14 @@ export default function App() {
                     element={
                       <Guard feature="page.visits">
                         <Visits />
+                      </Guard>
+                    }
+                  />
+                  <Route
+                    path="/she"
+                    element={
+                      <Guard feature="page.she_induction">
+                        <SheInduction />
                       </Guard>
                     }
                   />

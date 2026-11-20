@@ -56,6 +56,7 @@ const VISIT_INCLUDE = {
   picUser: { select: { id: true, name: true, phone: true } },
   checkInBy: { select: { id: true, name: true } },
   checkOutBy: { select: { id: true, name: true } },
+  inductionBy: { select: { id: true, name: true } },
   tokens: { orderBy: { createdAt: 'desc' } }
 };
 
@@ -213,6 +214,13 @@ function formatVisit(visit, viewer) {
     note: visit.note,
     durationMinutes,
     passToken: (checkOutToken || checkInToken)?.token || null,
+    destinationArea: visit.destinationArea || 'OFFICE',
+    workDescription: visit.workDescription || null,
+    requiresInduction: !!visit.requiresInduction,
+    inductionStatus: visit.inductionStatus || 'NOT_REQUIRED',
+    inductionAt: visit.inductionAt || null,
+    inductionBy: visit.inductionBy ? { id: visit.inductionBy.id, name: visit.inductionBy.name } : null,
+    inductionNotes: visit.inductionNotes || null,
     createdAt: visit.createdAt
   };
 }
@@ -284,6 +292,54 @@ async function notifyCheckIn(visit, req) {
       })
     });
   });
+
+  // Notifikasi K3 khusus Tim SHE jika tamu memasuki area pabrik / melakukan pekerjaan lapangan
+  if (visit.requiresInduction) {
+    try {
+      const sheUsers = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          department: { code: 'SHE' },
+          phone: { not: null }
+        },
+        select: { phone: true, name: true }
+      });
+
+      const sheSetting = await prisma.setting.findUnique({
+        where: { key: 'she_notification_phone' }
+      });
+
+      const recipients = new Set();
+      if (sheSetting?.value) {
+        sheSetting.value.split(',').map((p) => p.trim()).filter(Boolean).forEach((p) => recipients.add(p));
+      }
+      sheUsers.forEach((u) => {
+        if (u.phone) recipients.add(u.phone);
+      });
+
+      recipients.forEach((phone) => {
+        notify({
+          visitId: visit.id,
+          recipient: phone,
+          type: 'SHE_INDUCTION_ALERT',
+          message: msg.sheInductionAlert({
+            visitNumber: visit.visitNumber,
+            guestName: guest.fullName,
+            guestNames: visit.guestNames,
+            company: guest.company,
+            department: dept,
+            picName,
+            purpose: visit.purpose,
+            workDescription: visit.workDescription,
+            checkInAt: visit.checkInAt,
+            badge: visit.badgeNumber
+          })
+        });
+      });
+    } catch (sheErr) {
+      console.error('[Notify SHE] error:', sheErr.message);
+    }
+  }
 }
 
 async function notifyCheckOut(visit) {
@@ -536,7 +592,9 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
       purpose,
       numberOfVisitors,
       guestNames,
-      vehiclePlate
+      vehiclePlate,
+      destinationArea,
+      workDescription
     } = req.body || {};
 
     if (!fullName || !phone || !departmentId || !picUserId || !purpose) {
@@ -640,6 +698,8 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
     const visitNumber = await generateVisitNumber();
     const token = newToken();
 
+    const isPlantWork = destinationArea === 'PLANT_WORK';
+
     const visit = await prisma.visit.create({
       data: {
         visitNumber,
@@ -655,6 +715,10 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
         guestNames: parsedVisitors.guestNames,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
         identityPhoto: finalPhoto,
+        destinationArea: isPlantWork ? 'PLANT_WORK' : 'OFFICE',
+        workDescription: isPlantWork && workDescription ? String(workDescription).trim() : null,
+        requiresInduction: isPlantWork,
+        inductionStatus: isPlantWork ? 'WAITING_INDUCTION' : 'NOT_REQUIRED',
         tokens: { create: { token, type: 'CHECK_IN' } }
       },
       include: VISIT_INCLUDE
@@ -771,6 +835,10 @@ publicRouter.get('/pass/:token', async (req, res) => {
       status: visit.status,
       action,
       pics,
+      destinationArea: visit.destinationArea || 'OFFICE',
+      workDescription: visit.workDescription || null,
+      requiresInduction: !!visit.requiresInduction,
+      inductionStatus: visit.inductionStatus || 'NOT_REQUIRED',
       qrDataUrl: await qrDataUrl(passUrl(tokenRow.token, req)),
       checkInAt: visit.checkInAt,
       checkOutAt: visit.checkOutAt
@@ -965,7 +1033,9 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
       expectedTime,
       numberOfVisitors,
       guestNames,
-      vehiclePlate
+      vehiclePlate,
+      destinationArea,
+      workDescription
     } = req.body || {};
 
     if (!fullName || !phone || !purpose || !scheduledDate) {
@@ -1052,6 +1122,8 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
     const token = newToken();
     const when = new Date(scheduledDate);
 
+    const isPlantWork = destinationArea === 'PLANT_WORK';
+
     const visit = await prisma.visit.create({
       data: {
         visitNumber,
@@ -1067,6 +1139,10 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
         numberOfVisitors: parsedVisitors.total,
         guestNames: parsedVisitors.guestNames,
         vehiclePlate: vehiclePlate ? String(vehiclePlate).trim().toUpperCase() : null,
+        destinationArea: isPlantWork ? 'PLANT_WORK' : 'OFFICE',
+        workDescription: isPlantWork && workDescription ? String(workDescription).trim() : null,
+        requiresInduction: isPlantWork,
+        inductionStatus: isPlantWork ? 'WAITING_INDUCTION' : 'NOT_REQUIRED',
         tokens: { create: { token, type: 'CHECK_IN' } }
       },
       include: VISIT_INCLUDE
@@ -1580,7 +1656,7 @@ router.delete(
 
         if (remainingVisits.length === 0) {
           // Jika tidak ada riwayat kunjungan tersisa, hapus data visitor
-          await prisma.visitor.delete({ where: { id: visit.visitorId } }).catch(() => {});
+          await prisma.visitor.delete({ where: { id: visit.visitorId } }).catch(() => { });
         } else {
           // Jika masih ada kunjungan tersisa, sinkronkan foto identitas dari kunjungan tersisa
           const latestVisitWithPhoto = remainingVisits.find((v) => !!v.identityPhoto);
@@ -1589,7 +1665,7 @@ router.delete(
             data: {
               identityPhoto: latestVisitWithPhoto ? latestVisitWithPhoto.identityPhoto : null
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -1720,6 +1796,17 @@ async function handleExcelExport(req, res) {
       PRE_REGISTERED: 'Janji Temu (Pre-Reg)'
     };
 
+    const AREA_MAP = {
+      OFFICE: 'Area Kantor (Office)',
+      PLANT_WORK: 'Area Pabrik / Lapangan'
+    };
+
+    const INDUCTION_MAP = {
+      NOT_REQUIRED: 'Tidak Perlu (Kantor)',
+      WAITING_INDUCTION: 'Menunggu Induction',
+      INDUCTED: 'Selesai Induction'
+    };
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'PT Cemindo Gemilang Tbk - VMS Batam';
     workbook.created = new Date();
@@ -1731,7 +1818,7 @@ async function handleExcelExport(req, res) {
     const totalPeople = rows.reduce((acc, curr) => acc + (curr.numberOfVisitors || 1), 0);
 
     // 1. Header Judul Laporan (Row 1-3)
-    sheet.mergeCells('A1:Q1');
+    sheet.mergeCells('A1:S1');
     const titleRow = sheet.getCell('A1');
     titleRow.value = 'PT CEMINDO GEMILANG TBK — PLANT BATAM';
     titleRow.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1739,7 +1826,7 @@ async function handleExcelExport(req, res) {
     titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
     sheet.getRow(1).height = 30;
 
-    sheet.mergeCells('A2:Q2');
+    sheet.mergeCells('A2:S2');
     const subtitleRow = sheet.getCell('A2');
     subtitleRow.value = 'LAPORAN REKAPITULASI KUNJUNGAN TAMU (VISITOR MANAGEMENT SYSTEM)';
     subtitleRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF1E293B' } };
@@ -1747,7 +1834,7 @@ async function handleExcelExport(req, res) {
     subtitleRow.alignment = { horizontal: 'center', vertical: 'middle' };
     sheet.getRow(2).height = 22;
 
-    sheet.mergeCells('A3:Q3');
+    sheet.mergeCells('A3:S3');
     const infoRow = sheet.getCell('A3');
     const rangeText = startDate && endDate ? `${startDate} s/d ${endDate}` : 'Semua Periode';
     const statusText = status && status !== 'ALL' ? (STATUS_MAP[status] || status) : 'Semua Status';
@@ -1773,6 +1860,8 @@ async function handleExcelExport(req, res) {
       { header: 'Departemen Tujuan', key: 'department', width: 22, align: 'left' },
       { header: 'PIC Dituju', key: 'pic', width: 22, align: 'left' },
       { header: 'Keperluan Kunjungan', key: 'purpose', width: 28, align: 'left' },
+      { header: 'Area Kunjungan', key: 'destinationArea', width: 18, align: 'center' },
+      { header: 'Status Induction SHE', key: 'inductionStatus', width: 22, align: 'center' },
       { header: 'No. Polisi Kendaraan', key: 'plate', width: 16, align: 'center' },
       { header: 'Tipe Kunjungan', key: 'type', width: 16, align: 'center' },
       { header: 'Status Kunjungan', key: 'status', width: 22, align: 'center' },
@@ -1833,6 +1922,8 @@ async function handleExcelExport(req, res) {
           v.department?.name || '-',
           v.picUser?.name || v.picNameManual || '-',
           v.purpose || '-',
+          AREA_MAP[v.destinationArea] || v.destinationArea || 'Kantor',
+          INDUCTION_MAP[v.inductionStatus] || v.inductionStatus || '-',
           v.vehiclePlate || '-',
           TYPE_MAP[v.visitType] || v.visitType || '-',
           STATUS_MAP[v.status] || v.status || '-',
@@ -1869,8 +1960,19 @@ async function handleExcelExport(req, res) {
             cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF0F172A' } };
           }
 
-          // Format warna khusus untuk status
-          if (colNumber === 14) {
+          // Format warna khusus untuk Status Induction K3
+          if (colNumber === 13) {
+            if (v.inductionStatus === 'WAITING_INDUCTION') {
+              cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF92400E' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+            } else if (v.inductionStatus === 'INDUCTED') {
+              cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF065F46' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+            }
+          }
+
+          // Format warna khusus untuk status kunjungan
+          if (colNumber === 16) {
             if (v.status === 'CHECKED_IN') {
               cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF065F46' } };
               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
@@ -1890,25 +1992,25 @@ async function handleExcelExport(req, res) {
     });
 
     // 4. Set Column Widths
-    columns.forEach((col, idx) => {
-      sheet.getColumn(idx + 1).width = col.width;
-    });
+columns.forEach((col, idx) => {
+  sheet.getColumn(idx + 1).width = col.width;
+});
 
-    const fileDate = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().slice(0, 10);
-    const fileName = `laporan-kunjungan-batam-${fileDate}.xlsx`;
+const fileDate = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().slice(0, 10);
+const fileName = `laporan-kunjungan-batam-${fileDate}.xlsx`;
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+res.setHeader(
+  'Content-Type',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+);
+res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
-    await workbook.xlsx.write(res);
-    res.end();
+await workbook.xlsx.write(res);
+res.end();
   } catch (err) {
-    console.error('[Export Excel] error:', err.message);
-    res.status(500).json({ error: 'Gagal membuat file excel laporan' });
-  }
+  console.error('[Export Excel] error:', err.message);
+  res.status(500).json({ error: 'Gagal membuat file excel laporan' });
+}
 }
 
 router.get('/export/excel', authenticate, requireFeature('report.export', 'Anda tidak dapat mengunduh laporan'), handleExcelExport);

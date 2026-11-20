@@ -61,6 +61,13 @@ export const endpoints = {
   updateVisit: (id, payload) => api.patch(`/visits/${id}`, payload).then((r) => r.data),
   deleteVisit: (id) => api.delete(`/visits/${id}`).then((r) => r.data),
 
+  sheStats: () => api.get('/she/stats').then((r) => r.data),
+  sheVisits: (params) => api.get('/she/visits', { params }).then((r) => r.data),
+  sheInduct: (id, payload) => api.post(`/she/visits/${id}/induct`, payload).then((r) => r.data),
+  sheReset: (id) => api.post(`/she/visits/${id}/reset`).then((r) => r.data),
+  sheSettings: () => api.get('/she/settings').then((r) => r.data),
+  sheSaveSettings: (payload) => api.post('/she/settings', payload).then((r) => r.data),
+
   featureCatalog: () => api.get('/features').then((r) => r.data),
   featureUsers: () => api.get('/features/users').then((r) => r.data),
   saveUserFeatures: (userId, overrides) =>

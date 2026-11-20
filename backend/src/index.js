@@ -9,6 +9,7 @@ import masterRoutes from './routes/master.js';
 import visitsRoutes, { publicRouter } from './routes/visits.js';
 import waRoutes from './routes/wa.js';
 import featuresRoutes from './routes/features.js';
+import sheRoutes from './routes/she.js';
 import { startWhatsApp } from './wa/client.js';
 
 dotenv.config();
@@ -66,6 +67,7 @@ app.use('/api/master', masterRoutes);
 app.use('/api/visits', visitsRoutes);
 app.use('/api/wa', waRoutes);
 app.use('/api/features', featuresRoutes);
+app.use('/api/she', sheRoutes);
 app.use('/api/public', publicRouter);
 
 app.use((req, res) => res.status(404).json({ error: `Endpoint ${req.method} ${req.path} tidak ditemukan` }));

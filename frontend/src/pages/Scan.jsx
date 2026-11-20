@@ -11,7 +11,9 @@ import {
   UserCheck,
   LogOut,
   RotateCcw,
-  Users
+  Users,
+  ShieldAlert,
+  HardHat
 } from 'lucide-react';
 import { endpoints, errMsg, fmtDateTime, fmtTime } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
@@ -430,6 +432,55 @@ export default function Scan() {
                   <Row label="Departemen" value={result.visit.department?.name || '-'} />
                   <Row label="PIC dituju" value={result.visit.picName} />
                   <Row label="Keperluan" value={result.visit.purpose} />
+                  <Row
+                    label="Area Kunjungan"
+                    value={
+                      result.visit.destinationArea === 'PLANT_WORK' ? (
+                        <span className="font-bold text-amber-700 dark:text-amber-300 inline-flex items-center gap-1">
+                          <HardHat size={14} /> Area Pabrik / Lapangan
+                        </span>
+                      ) : (
+                        'Area Kantor (Office)'
+                      )
+                    }
+                  />
+
+                  {result.visit.requiresInduction && (
+                    <div
+                      className={`p-3 rounded-xl border flex items-start gap-2.5 my-2.5 ${
+                        result.visit.inductionStatus === 'INDUCTED'
+                          ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
+                          : 'border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
+                      }`}
+                    >
+                      <ShieldAlert className="shrink-0 mt-0.5" size={18} />
+                      <div className="text-xs">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <span>Wajib Safety Induction SHE</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                              result.visit.inductionStatus === 'INDUCTED'
+                                ? 'bg-emerald-200/80 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100'
+                                : 'bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-100'
+                            }`}
+                          >
+                            {result.visit.inductionStatus === 'INDUCTED' ? 'Sudah Di-Induksi' : 'Menunggu Induction'}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[11px] opacity-90">
+                          {result.visit.inductionStatus === 'INDUCTED'
+                            ? `Telah diverifikasi oleh ${result.visit.inductionBy?.name || 'Petugas SHE'}`
+                            : 'Petugas Security wajib mengarahkan tamu ke Tim SHE untuk safety briefing & APD sebelum memasuki pabrik.'}
+                        </div>
+                        {result.visit.workDescription && (
+                          <div className="mt-1 pt-1 border-t border-current/20 font-medium text-[11px]">
+                            Rencana Kerja: {result.visit.workDescription}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <Row label="Tipe" value={TYPE_LABEL[result.visit.visitType]} />
                   <Row label="Jumlah" value={`${totalVisitors} orang`} />
                   {displayGuests.length > 0 && (

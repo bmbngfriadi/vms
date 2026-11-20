@@ -15,7 +15,18 @@ export function signToken(user) {
 
 /** Peta hak fitur efektif untuk satu user (override per user > bawaan role). */
 export function featuresFor(user) {
-  return resolveFeatures(user.role, overridesFromRows(user.featureOverrides || []));
+  const overrides = overridesFromRows(user.featureOverrides || []);
+  const map = resolveFeatures(user.role, overrides);
+  // User di Departemen SHE otomatis memiliki akses menu Induction SHE dan verifikasinya
+  if (user.department?.code === 'SHE') {
+    if (overrides['page.she_induction'] === undefined) {
+      map['page.she_induction'] = true;
+    }
+    if (overrides['she.induction_action'] === undefined) {
+      map['she.induction_action'] = true;
+    }
+  }
+  return map;
 }
 
 /** Attach req.user from the Bearer token. */

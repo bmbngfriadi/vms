@@ -21,7 +21,8 @@ import {
   QrCode,
   Sparkles,
   Smartphone,
-  Users
+  Users,
+  ShieldAlert
 } from 'lucide-react';
 import { endpoints, errMsg, fmtTime } from '../lib/api.js';
 import { useTheme } from '../lib/theme.jsx';
@@ -400,6 +401,36 @@ export default function Pass() {
                   <span className="text-[11px] text-slate-400 block">Keperluan:</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200 italic">{data.purpose || '-'}</span>
                 </div>
+                <div className="col-span-2">
+                  <span className="text-[11px] text-slate-400 block">Area Kunjungan:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {data.destinationArea === 'PLANT_WORK' ? 'Area Pabrik / Lapangan (Wajib K3)' : 'Area Kantor (Office)'}
+                  </span>
+                </div>
+                {data.requiresInduction && (
+                  <div className={`col-span-2 p-2.5 rounded-xl border flex items-start gap-2 ${
+                    data.inductionStatus === 'INDUCTED'
+                      ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
+                      : 'border-amber-200 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
+                  }`}>
+                    <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                    <div className="text-[11px] leading-tight">
+                      <div className="font-bold">
+                        {data.inductionStatus === 'INDUCTED' ? '✅ Lulus Safety Induction SHE' : '⚠️ Wajib Safety Induction Tim SHE'}
+                      </div>
+                      <div className="mt-0.5 opacity-90">
+                        {data.inductionStatus === 'INDUCTED'
+                          ? 'Tamu telah mendapatkan briefing K3'
+                          : 'Arahkan tamu ke petugas SHE sebelum masuk area operasional pabrik.'}
+                      </div>
+                      {data.workDescription && (
+                        <div className="mt-1 pt-1 border-t border-current/20 font-medium">
+                          Pekerjaan: {data.workDescription}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Daftar Tamu Masuk jika rombongan */}

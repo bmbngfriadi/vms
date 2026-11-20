@@ -55,6 +55,20 @@ export const FEATURES = [
     defaultRoles: ['ADMIN', 'MANAGEMENT']
   },
   {
+    key: 'page.she_induction',
+    label: 'Induction SHE & K3',
+    group: 'Halaman',
+    description: 'Menu pemantauan tamu lapangan dan verifikasi Safety Induction K3.',
+    defaultRoles: ['ADMIN']
+  },
+  {
+    key: 'she.induction_action',
+    label: 'Verifikasi Safety Induction',
+    group: 'Data Kunjungan',
+    description: 'Melakukan konfirmasi verifikasi bahwa tamu telah selesai Safety Induction.',
+    defaultRoles: ['ADMIN']
+  },
+  {
     key: 'page.features',
     label: 'Manajemen Fitur',
     group: 'Halaman',

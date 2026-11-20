@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw, Users } from 'lucide-react';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw, Users, ShieldAlert, HardHat, Building2 } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import VisitEditModal from '../components/VisitEditModal.jsx';
@@ -581,6 +581,38 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
         <Row label="Departemen" value={visit.department?.name || '-'} />
         <Row label="PIC" value={visit.picName} />
         <Row label="Keperluan" value={visit.purpose} />
+        <Row
+          label="Area Kunjungan"
+          value={
+            visit.destinationArea === 'PLANT_WORK' ? (
+              <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold">
+                <HardHat size={13} /> Area Pabrik / Lapangan
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                <Building2 size={13} /> Area Kantor (Office)
+              </span>
+            )
+          }
+        />
+        {visit.workDescription && <Row label="Rincian Kerja" value={visit.workDescription} />}
+        {visit.requiresInduction && (
+          <Row
+            label="Induction SHE"
+            value={
+              visit.inductionStatus === 'INDUCTED' ? (
+                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full text-[11px]">
+                  <ShieldCheck size={12} /> Selesai Induction ({visit.inductionBy?.name || 'Petugas SHE'})
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full text-[11px]">
+                  <ShieldAlert size={12} /> Menunggu Induction SHE
+                </span>
+              )
+            }
+          />
+        )}
+        {visit.inductionNotes && <Row label="Catatan SHE" value={visit.inductionNotes} />}
         <Row label="Jumlah" value={`${visit.numberOfVisitors} orang`} />
         {Array.isArray(visit.guestNames) && visit.guestNames.length > 1 && (
           <div className="pt-2 pb-1">
@@ -668,6 +700,8 @@ function CreateModal({ user, onClose, onCreated }) {
     departmentId: user?.role === 'ADMIN' ? '' : user?.departmentId || '',
     picUserId: user?.role === 'ADMIN' ? '' : user?.id || '',
     purpose: '',
+    destinationArea: 'OFFICE',
+    workDescription: '',
     scheduledDate: todayISO(),
     expectedTime: '09:00',
     numberOfVisitors: 1,
@@ -831,6 +865,11 @@ function CreateModal({ user, onClose, onCreated }) {
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (form.destinationArea === 'PLANT_WORK' && !(form.workDescription || '').trim()) {
+      setError('Untuk kunjungan area pabrik/lapangan, rincian pekerjaan wajib diisi.');
+      return;
+    }
 
     const visitorsCount = parseInt(form.numberOfVisitors, 10);
     if (!visitorsCount || visitorsCount < 1) {
@@ -1117,6 +1156,72 @@ function CreateModal({ user, onClose, onCreated }) {
           <div className="sm:col-span-2 w-full min-w-0">
             <label className="label">{t('register.purpose', 'Keperluan *')}</label>
             <textarea className="input min-h-[70px]" value={form.purpose} onChange={set('purpose')} required />
+          </div>
+
+          {/* Area Kunjungan & Standar K3 */}
+          <div className="sm:col-span-2 w-full min-w-0 space-y-2">
+            <label className="label mb-1">Area / Kategori Aktivitas Tamu *</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div
+                onClick={() => setForm((c) => ({ ...c, destinationArea: 'OFFICE' }))}
+                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
+                  form.destinationArea === 'OFFICE'
+                    ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/30 ring-1 ring-brand-500'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Building2 size={15} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Area Kantor (Office)</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    Tanpa Pekerjaan Fisik
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Meeting kantor, administrasi, interview (Tidak membutuhkan Safety Induction SHE).
+                </p>
+              </div>
+
+              <div
+                onClick={() => setForm((c) => ({ ...c, destinationArea: 'PLANT_WORK' }))}
+                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
+                  form.destinationArea === 'PLANT_WORK'
+                    ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <HardHat size={15} className={form.destinationArea === 'PLANT_WORK' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'} />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Area Pabrik / Lapangan</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
+                    Wajib Induction K3
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Memasuki area pabrik/workshop, perbaikan mesin, proyek, teknisi/vendor (wajib briefing K3 SHE).
+                </p>
+              </div>
+            </div>
+
+            {form.destinationArea === 'PLANT_WORK' && (
+              <div className="mt-2 p-3 rounded-xl border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <ShieldAlert size={14} />
+                  <span>Rincian Pekerjaan di Area Pabrik / Lapangan *</span>
+                </div>
+                <textarea
+                  className="input min-h-[58px] text-xs py-2 px-3 rounded-lg bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/60"
+                  placeholder="Jelaskan pekerjaan di pabrik/lapangan (contoh: Servis genset, overhaul motor, pasang pipa, audit teknis)..."
+                  value={form.workDescription}
+                  onChange={set('workDescription')}
+                  required
+                />
+              </div>
+            )}
           </div>
           <div className="w-full min-w-0">
             <div className="flex items-center justify-between mb-1">
