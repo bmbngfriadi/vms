@@ -1163,14 +1163,9 @@ function CreateModal({ user, onClose, onCreated }) {
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 size={15} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">Area Kantor (Office)</span>
-                  </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                    Tanpa Pekerjaan Fisik
-                  </span>
+                <div className="flex items-center gap-2">
+                  <Building2 size={15} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Area Kantor (Office)</span>
                 </div>
               </div>
 

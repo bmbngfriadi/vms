@@ -453,13 +453,6 @@ export default function SheInduction() {
         </div>
       </div>
 
-      {/* Banner Informasi Modul Terpisah */}
-      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-        <Info size={17} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div className="leading-relaxed">
-          <span className="font-bold">Informasi Alur Safety Induction K3:</span> Tamu dengan tujuan melakukan pekerjaan lapangan secara otomatis terdata di sini dan sistem mengirimkan notifikasi WhatsApp ke Tim SHE saat tamu check-in di pos security. Modul pelaksanaan induction dikelola pada sistem terpisah Tim SHE.
-        </div>
-      </div>
 
       {/* Kartu Statistik */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
