@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HardHat,
   Building2,
@@ -16,6 +17,8 @@ import {
   Send,
   Copy,
   Check,
+  CheckCircle2,
+  ShieldCheck,
   MessageSquare,
   RefreshCw,
   ExternalLink,
@@ -96,9 +99,10 @@ function SheSettingsModal({ onClose }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="card w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative z-10 card w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Settings size={18} className="text-brand-500" />
@@ -160,24 +164,28 @@ function SheSettingsModal({ onClose }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 // Modal Detail Tamu Pekerjaan & Salin Teks
-function GuestDetailModal({ visit, onClose, onResendWa }) {
+function GuestDetailModal({ visit, onClose, onResendWa, onToggleInduction }) {
   const [copied, setCopied] = useState(false);
+  const [updatingInduction, setUpdatingInduction] = useState(false);
   const guests = visit.guestNames || [];
 
   const copyText = () => {
+    const isInductedText = visit.inductionStatus === 'COMPLETED' ? 'Sudah di Induction' : 'Butuh Induction SHE';
     const lines = [
-      `*INFORMASI TAMU PEKERJAAN PABRIK (PERLU INDUCTION SHE)*`,
+      `*INFORMASI TAMU PEKERJAAN PABRIK*`,
       `No. Kunjungan: ${visit.visitNumber}`,
       `Instansi: ${visit.company || 'Pribadi'}`,
       `PIC Dituju: ${visit.picName} (${visit.department})`,
       `Rencana Pekerjaan: ${visit.workDescription || visit.purpose || '-'}`,
       `Waktu Masuk: ${visit.checkInAt ? fmtDateTime(visit.checkInAt) : '-'}`,
-      `Status: ${visit.status}`,
+      `Status Kunjungan: ${visit.status}`,
+      `Status Induction K3: ${isInductedText}`,
       ``,
       `*Daftar Nama Tamu & Badge:*`
     ];
@@ -195,107 +203,218 @@ function GuestDetailModal({ visit, onClose, onResendWa }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="card w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HardHat size={18} className="text-amber-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-              Detail Tamu Pekerjaan Pabrik
-            </h2>
+  const handleInductionAction = async (targetStatus) => {
+    setUpdatingInduction(true);
+    try {
+      await onToggleInduction(visit, targetStatus);
+    } finally {
+      setUpdatingInduction(false);
+    }
+  };
+
+  const isInducted = visit.inductionStatus === 'COMPLETED';
+
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-150">
+      {/* Click backdrop to close */}
+      <div className="fixed inset-0" onClick={onClose} />
+
+      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+        {/* Header Modal */}
+        <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+              <HardHat size={22} strokeWidth={2.2} />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                Detail Tamu Pekerjaan Pabrik
+              </h2>
+              <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">
+                PT Cemindo Gemilang Tbk · Informasi K3 & Safety Induction
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
-            <X size={18} />
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Tutup"
+          >
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-          {/* Header Info */}
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
-                {visit.visitNumber}
-              </span>
+        {/* Konten Scrollable Modal */}
+        <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Card Info Utama Kunjungan (Grid 2 Kolom) */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400">
+                  {visit.visitNumber}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold uppercase">
+                  {visit.visitType || 'WALK_IN'}
+                </span>
+              </div>
               <StatusBadge status={visit.status} />
             </div>
 
-            <div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                {visit.visitorName}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {visit.company || 'Pribadi'} · {visit.phone || '-'}
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs flex justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">PIC Dituju:</span>
+                <span className="text-slate-400 text-[10.5px] uppercase font-bold block mb-0.5">
+                  Nama Penanggung Jawab:
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white text-sm">
+                  {visit.visitorName}
+                </span>
+                <div className="text-slate-500 dark:text-slate-400 mt-0.5">
+                  {visit.company || 'Pribadi'} · {visit.phone || '-'}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-slate-400 text-[10.5px] uppercase font-bold block mb-0.5">
+                  PIC & Departemen Dituju:
+                </span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                  {visit.picName}
+                </span>
+                <div className="text-slate-500 dark:text-slate-400 mt-0.5">
+                  Departemen: {visit.department}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+                <span className="text-slate-400 text-[10.5px] uppercase font-bold block mb-0.5">
+                  Waktu Kedatangan (Masuk):
+                </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {visit.picName} ({visit.department})
+                  {visit.checkInAt ? `${fmtDateTime(visit.checkInAt)} WIB` : 'Belum Check-In'}
                 </span>
               </div>
-              {visit.checkInAt && (
-                <div className="text-right">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Waktu Masuk:</span>
-                  <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {fmtTime(visit.checkInAt)} WIB
-                  </span>
-                </div>
-              )}
+
+              <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+                <span className="text-slate-400 text-[10.5px] uppercase font-bold block mb-0.5">
+                  Waktu Kepulangan (Keluar):
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {visit.checkOutAt ? `${fmtDateTime(visit.checkOutAt)} WIB` : 'Masih Berada di Kawasan Pabrik'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Rincian Pekerjaan */}
-          <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-1">
+          {/* Rincian Pekerjaan Lapangan */}
+          <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 space-y-1.5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-              <ShieldAlert size={14} />
-              <span>Rincian Pekerjaan Lapangan:</span>
+              <ShieldAlert size={15} />
+              <span>Rincian Pekerjaan di Area Pabrik / Lapangan:</span>
             </div>
-            <p className="text-xs text-amber-950 dark:text-amber-100 font-medium leading-relaxed italic">
+            <p className="text-xs sm:text-[13px] text-amber-950 dark:text-amber-100 font-medium leading-relaxed italic bg-white/70 dark:bg-slate-900/60 p-2.5 rounded-xl border border-amber-200/50 dark:border-amber-900/30">
               {visit.workDescription || visit.purpose || 'Pekerjaan di Area Pabrik / Lapangan'}
             </p>
+          </div>
+
+          {/* Card Status Safety Induction K3 (Interaktif) */}
+          <div className={`p-4 rounded-2xl border transition-all ${
+            isInducted
+              ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
+              : 'bg-amber-50/50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/80'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                  Status Pelaksanaan Safety Induction:
+                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isInducted ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-xs">
+                      <CheckCircle2 size={14} /> Sudah di Induction
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-xs">
+                      <ShieldAlert size={14} /> Butuh Induction SHE
+                    </span>
+                  )}
+                  {isInducted && visit.inductionAt && (
+                    <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                      ({fmtDateTime(visit.inductionAt)})
+                    </span>
+                  )}
+                </div>
+                {isInducted && visit.inductionByName && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Diverifikasi oleh: <b>{visit.inductionByName}</b>
+                  </p>
+                )}
+              </div>
+
+              {/* Action Button Induction */}
+              <div>
+                {isInducted ? (
+                  <button
+                    type="button"
+                    disabled={updatingInduction}
+                    onClick={() => handleInductionAction('PENDING')}
+                    className="btn-ghost text-xs py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold flex items-center gap-1.5"
+                  >
+                    {updatingInduction ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                    <span>Ubah ke Belum Induction</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={updatingInduction}
+                    onClick={() => handleInductionAction('COMPLETED')}
+                    className="btn-success text-xs py-2 px-4 rounded-xl font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all min-h-[38px]"
+                  >
+                    {updatingInduction ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                    <span>Tandai Sudah di Induction</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Daftar Nama Tamu & Badge */}
           <div className="space-y-2">
             <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Users size={14} className="text-brand-500" />
+                <Users size={15} className="text-brand-500" />
                 <span>Daftar Seluruh Tamu & Badge ({guests.length > 0 ? guests.length : 1} orang):</span>
               </span>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
               {guests.length > 0 ? (
                 guests.map((g, idx) => (
-                  <div key={idx} className="p-2.5 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
-                    <div className="flex items-center gap-2">
+                  <div key={idx} className="p-2.5 sm:p-3 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
+                    <div className="flex items-center gap-2.5">
                       <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
                         {idx + 1}
                       </span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {g.name} {g.isLeader ? <span className="text-[10px] text-brand-600 font-bold ml-1">(PJ)</span> : ''}
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
+                        {g.name} {g.isLeader ? <span className="text-[10px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold px-1.5 py-0.5 rounded ml-1">Penanggung Jawab</span> : ''}
                       </span>
                     </div>
                     <div>
                       {g.badge ? (
-                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700">
                           Badge: {g.badge}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">-</span>
+                        <span className="text-slate-400 text-xs">-</span>
                       )}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="p-2.5 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
+                <div className="p-3 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     {visit.visitorName} (Penanggung Jawab)
                   </span>
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                  <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700">
                     Badge: {visit.badgeNumber || '-'}
                   </span>
                 </div>
@@ -304,17 +423,19 @@ function GuestDetailModal({ visit, onClose, onResendWa }) {
           </div>
 
           <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/40 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
-            <Info size={16} className="shrink-0 mt-0.5" />
+            <Info size={16} className="shrink-0 mt-0.5 text-blue-600" />
             <span>
               Catat dan lakukan modul Safety Induction untuk tamu di atas pada sistem terpisah milik Tim SHE sebelum tamu memulai aktivitas di lapangan.
             </span>
           </div>
         </div>
 
-        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40">
+        {/* Footer Action Bar */}
+        <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/40">
           <button
+            type="button"
             onClick={() => onResendWa(visit)}
-            className="btn-ghost text-xs py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium"
+            className="btn-ghost text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold"
             title="Kirim ulang notifikasi WhatsApp ke Tim SHE"
           >
             <Send size={13} />
@@ -323,19 +444,25 @@ function GuestDetailModal({ visit, onClose, onResendWa }) {
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={copyText}
-              className="btn-ghost text-xs py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 font-bold"
+              className="btn-ghost text-xs py-2 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 font-bold"
             >
               {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
               <span>{copied ? 'Tersalin!' : 'Salin Info'}</span>
             </button>
-            <button onClick={onClose} className="btn-primary text-xs py-1.5 px-4 font-bold">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-primary text-xs py-2 px-5 rounded-xl font-bold"
+            >
               Tutup
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -349,7 +476,11 @@ export default function SheInduction() {
     todayWork: 0,
     waitingCheckIn: 0,
     checkedOutToday: 0,
-    officeVisitorsToday: 0
+    officeVisitorsToday: 0,
+    totalWorkVisitors: 0,
+    totalWorkSessions: 0,
+    totalInductedVisitors: 0,
+    totalInductedSessions: 0
   });
 
   const [tab, setTab] = useState('active');
@@ -410,6 +541,32 @@ export default function SheInduction() {
     }
   };
 
+  const handleToggleInduction = async (visit, targetStatus) => {
+    try {
+      const res = await endpoints.sheUpdateInduction(visit.id, { status: targetStatus });
+      setRows((prev) =>
+        prev.map((r) => (r.id === visit.id ? { ...r, ...res.visit } : r))
+      );
+      if (selectedVisit && selectedVisit.id === visit.id) {
+        setSelectedVisit((prev) => ({ ...prev, ...res.visit }));
+      }
+      loadStats();
+      customAlert({
+        title: targetStatus === 'COMPLETED' ? 'Induction Selesai' : 'Status Diperbarui',
+        message: res.message || 'Status Safety Induction berhasil diperbarui.',
+        type: 'success'
+      });
+    } catch (err) {
+      customAlert({
+        title: 'Gagal Memperbarui Status',
+        message: errMsg(err, 'Gagal mengubah status induction K3'),
+        type: 'error'
+      });
+    }
+  };
+
+  const totalPeopleInRows = rows.reduce((acc, r) => acc + (r.numberOfVisitors || 1), 0);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -453,14 +610,20 @@ export default function SheInduction() {
         </div>
       </div>
 
-
-      {/* Kartu Statistik */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Kartu Statistik Lengkap */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <StatCard
+          icon={Users}
+          label="Total Tamu Pekerjaan"
+          value={`${stats.totalWorkVisitors || 0} Tamu`}
+          tone="brand"
+          subtext={`${stats.totalWorkSessions || 0} sesi kunjungan datang`}
+        />
         <StatCard
           icon={HardHat}
           label="Sedang Aktif di Pabrik"
           value={stats.activeInPlant}
-          tone="brand"
+          tone="emerald"
           subtext="Headcount tamu di lapangan"
         />
         <StatCard
@@ -568,7 +731,7 @@ export default function SheInduction() {
       {/* Tabel Data & Card List */}
       <div className="card overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-          <span>Daftar Tamu Pekerjaan Pabrik ({rows.length} sesi kunjungan)</span>
+          <span>Daftar Tamu Pekerjaan Pabrik ({rows.length} sesi kunjungan · Total {totalPeopleInRows} Tamu)</span>
           {loading && <Loader2 size={14} className="animate-spin text-brand-500" />}
         </div>
 
@@ -580,69 +743,101 @@ export default function SheInduction() {
             </div>
           )}
 
-          {rows.map((v) => (
-            <div
-              key={v.id}
-              className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5 shadow-xs"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
-                  {v.visitNumber}
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/80 flex items-center gap-1">
-                  <ShieldAlert size={11} /> Perlu Induction SHE
-                </span>
-              </div>
-
-              <div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                  <span>{v.visitorName}</span>
-                  {v.numberOfVisitors > 1 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-semibold">
-                      +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+          {rows.map((v) => {
+            const isInducted = v.inductionStatus === 'COMPLETED';
+            return (
+              <div
+                key={v.id}
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5 shadow-xs"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
+                    {v.visitNumber}
+                  </span>
+                  {isInducted ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/80 flex items-center gap-1">
+                      <CheckCircle2 size={11} className="text-emerald-600" /> Sudah di Induction
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/80 flex items-center gap-1">
+                      <ShieldAlert size={11} /> Butuh Induction SHE
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {v.company} · PIC: {v.picName} ({v.department})
-                </div>
-              </div>
 
-              {v.workDescription && (
-                <div className="text-xs p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-200">
-                  <span className="text-[10px] uppercase font-bold block opacity-75">Pekerjaan Lapangan:</span>
-                  <span className="italic">{v.workDescription}</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  Status: <StatusBadge status={v.status} />
+                  <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                    <span>{v.visitorName}</span>
+                    {v.numberOfVisitors > 1 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-semibold">
+                        +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {v.company} · PIC: {v.picName} ({v.department})
+                  </div>
                 </div>
-                {v.checkInAt && <div>Masuk: {fmtTime(v.checkInAt)} WIB</div>}
-              </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleResendWa(v)}
-                  className="btn-ghost text-xs py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-slate-600 dark:text-slate-300"
-                  title="Kirim ulang pesan WA ke Tim SHE"
-                >
-                  <Send size={12} />
-                  <span>Kirim WA</span>
-                </button>
+                {v.workDescription && (
+                  <div className="text-xs p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-200">
+                    <span className="text-[10px] uppercase font-bold block opacity-75">Pekerjaan Lapangan:</span>
+                    <span className="italic">{v.workDescription}</span>
+                  </div>
+                )}
 
-                <button
-                  onClick={() => setSelectedVisit(v)}
-                  className="btn-primary text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1"
-                >
-                  <Info size={13} />
-                  <span>Detail & Salin</span>
-                </button>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <div>
+                    Status: <StatusBadge status={v.status} />
+                  </div>
+                  {v.checkInAt && <div>Masuk: {fmtTime(v.checkInAt)} WIB</div>}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleResendWa(v)}
+                      className="btn-ghost text-xs py-1.5 px-2.5 rounded-lg flex items-center gap-1 text-slate-600 dark:text-slate-300"
+                      title="Kirim ulang pesan WA ke Tim SHE"
+                    >
+                      <Send size={12} />
+                      <span>Kirim WA</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedVisit(v)}
+                      className="btn-ghost text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-bold flex items-center gap-1"
+                    >
+                      <Info size={13} />
+                      <span>Detail</span>
+                    </button>
+                  </div>
+
+                  <div>
+                    {isInducted ? (
+                      <button
+                        onClick={() => handleToggleInduction(v, 'PENDING')}
+                        className="btn-ghost text-xs py-1.5 px-2 rounded-lg text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold flex items-center gap-1"
+                        title="Klik untuk membatalkan status induction"
+                      >
+                        <Check size={12} strokeWidth={2.5} />
+                        <span>Sudah Induction</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleInduction(v, 'COMPLETED')}
+                        className="btn-success text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 shadow-2xs"
+                        title="Tandai tamu ini sudah di-induction K3"
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>Induction Selesai</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* ================= DESKTOP VIEW (hidden md:block) ================= */}
@@ -671,6 +866,8 @@ export default function SheInduction() {
 
               {rows.map((v) => {
                 const guests = v.guestNames || [];
+                const isInducted = v.inductionStatus === 'COMPLETED';
+
                 return (
                   <tr key={v.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                     <td className="td font-mono text-xs font-bold text-brand-600 dark:text-brand-400">
@@ -726,12 +923,41 @@ export default function SheInduction() {
                       <StatusBadge status={v.status} />
                     </td>
                     <td className="td">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-200/80">
-                        <ShieldAlert size={12} /> Butuh Induction SHE
-                      </span>
+                      {isInducted ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80 shadow-2xs">
+                          <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
+                          Sudah di Induction
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-200/80 shadow-2xs">
+                          <ShieldAlert size={12} />
+                          Butuh Induction SHE
+                        </span>
+                      )}
                     </td>
                     <td className="td text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* Tombol aksi cepat Induction K3 */}
+                        {isInducted ? (
+                          <button
+                            onClick={() => handleToggleInduction(v, 'PENDING')}
+                            className="btn-ghost text-xs py-1 px-2.5 rounded-lg text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 font-semibold flex items-center gap-1"
+                            title="Sudah di-induction. Klik untuk membatalkan."
+                          >
+                            <Check size={12} strokeWidth={2.5} />
+                            <span>Ter-Induction</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleInduction(v, 'COMPLETED')}
+                            className="btn-success text-xs py-1 px-2.5 rounded-lg font-bold flex items-center gap-1 shadow-2xs hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            title="Tandai tamu ini sudah menyelesaikan Safety Induction K3"
+                          >
+                            <CheckCircle2 size={13} />
+                            <span>Induction Selesai</span>
+                          </button>
+                        )}
+
                         <button
                           onClick={() => handleResendWa(v)}
                           className="btn-ghost text-xs p-1.5 rounded-lg text-slate-500 hover:text-brand-600"
@@ -741,7 +967,7 @@ export default function SheInduction() {
                         </button>
                         <button
                           onClick={() => setSelectedVisit(v)}
-                          className="btn-ghost text-xs py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 hover:border-brand-500"
+                          className="btn-ghost text-xs py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600"
                         >
                           Detail & Salin
                         </button>
@@ -761,6 +987,7 @@ export default function SheInduction() {
           visit={selectedVisit}
           onClose={() => setSelectedVisit(null)}
           onResendWa={(v) => handleResendWa(v)}
+          onToggleInduction={handleToggleInduction}
         />
       )}
 
