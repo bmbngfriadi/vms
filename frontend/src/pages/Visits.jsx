@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw, Users, ShieldAlert, HardHat, Building2 } from 'lucide-react';
+import { Plus, Search, X, Loader2, CalendarPlus, Pencil, Trash2, FileSpreadsheet, QrCode, ShieldCheck, Eye, RefreshCw, Users, ShieldAlert, HardHat, Building2, CheckCircle2 } from 'lucide-react';
 import { api, endpoints, errMsg, fmtDateTime, fmtDate, fmtTime, todayISO } from '../lib/api.js';
 import StatusBadge, { TYPE_LABEL } from '../components/StatusBadge.jsx';
 import VisitEditModal from '../components/VisitEditModal.jsx';
@@ -600,9 +600,15 @@ function DetailModal({ visit, onClose, onChanged, canEdit, canDelete, onEdit, on
           <Row
             label="K3 / Tim SHE"
             value={
-              <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full text-[11px]">
-                <ShieldAlert size={12} /> Butuh Safety Induction (Sistem SHE)
-              </span>
+              visit.inductionStatus === 'COMPLETED' ? (
+                <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full text-[11px] border border-emerald-200 dark:border-emerald-800">
+                  <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" /> Sudah Melakukan Induction
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full text-[11px] border border-amber-200 dark:border-amber-800/80">
+                  <ShieldAlert size={12} /> Butuh Safety Induction (Sistem SHE)
+                </span>
+              )
             }
           />
         )}
