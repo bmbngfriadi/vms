@@ -480,14 +480,14 @@ export default function Scan() {
                         <CheckCircle2 className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" size={18} />
                         <div className="text-xs">
                           <div className="font-bold text-emerald-900 dark:text-emerald-100">
-                            Sudah Melakukan Safety Induction SHE
+                            {t('pass.k3_inducted_title', 'Sudah Melakukan Safety Induction SHE')}
                           </div>
                           <div className="mt-0.5 text-[11px] leading-relaxed text-emerald-800 dark:text-emerald-200">
-                            Tamu telah diverifikasi dan menyelesaikan Safety Induction K3 bersama Tim SHE.
+                            {t('pass.k3_inducted_desc', 'Tamu telah diverifikasi dan menyelesaikan Safety Induction K3 bersama Tim SHE.')}
                           </div>
                           {result.visit.workDescription && (
                             <div className="mt-1 pt-1 border-t border-emerald-200 dark:border-emerald-800/60 font-medium text-[11px] italic text-emerald-900 dark:text-emerald-200">
-                              Rencana Kerja: {result.visit.workDescription}
+                              {t('common.work_plan', 'Rencana Kerja')}: {result.visit.workDescription}
                             </div>
                           )}
                         </div>
@@ -497,14 +497,14 @@ export default function Scan() {
                         <ShieldAlert className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" size={18} />
                         <div className="text-xs">
                           <div className="font-bold text-amber-900 dark:text-amber-100">
-                            Tamu Pekerjaan Lapangan (Belum Induction)
+                            {t('pass.k3_notice_title', 'Perlu Safety Induction Tim SHE')}
                           </div>
                           <div className="mt-0.5 text-[11px] leading-relaxed text-amber-800 dark:text-amber-200">
-                            Tamu memiliki agenda pekerjaan di area operasional pabrik. Notifikasi otomatis dikirim ke Tim SHE saat check-in. Harap arahkan tamu untuk berkoordinasi dengan Tim SHE terkait Safety Induction.
+                            {t('pass.k3_notice_desc', 'Tamu memiliki agenda pekerjaan di area operasional pabrik. Silakan ikuti Safety Induction bersama Tim K3 / SHE sebelum memulai pekerjaan.')}
                           </div>
                           {result.visit.workDescription && (
                             <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium text-[11px] italic text-amber-900 dark:text-amber-200">
-                              Rencana Kerja: {result.visit.workDescription}
+                              {t('common.work_plan', 'Rencana Kerja')}: {result.visit.workDescription}
                             </div>
                           )}
                         </div>

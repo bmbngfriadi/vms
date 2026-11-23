@@ -84,31 +84,33 @@ export default function PublicScan() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-6">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 px-4 py-6 text-slate-800 dark:text-slate-100 transition-colors">
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0">
+              <img src="/logo.png" alt="Logo" className="h-9 w-auto" />
+            </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">Scan Visitor Pass</div>
-              <div className="text-xs text-slate-500">PT Cemindo Gemilang Tbk · Plant Batam</div>
+              <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Scan Visitor Pass</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">PT Cemindo Gemilang Tbk · Plant Batam</div>
             </div>
           </div>
-          <Link to="/login" className="btn-ghost text-xs shrink-0">
-            <LogIn size={14} /> Login
+          <Link to="/login" className="btn-ghost text-xs shrink-0 rounded-xl min-h-[38px]">
+            <LogIn size={15} /> Login
           </Link>
         </div>
 
         <div className="card p-5">
-          <h1 className="text-lg font-semibold text-slate-900">Scan Barcode Tamu</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-base font-bold text-slate-900 dark:text-white">Scan Barcode Tamu</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
             Tidak perlu login. Arahkan kamera ke barcode tamu dan halaman pass akan terbuka otomatis.
           </p>
 
           {/* html5-qrcode memiliki isi container ini sepenuhnya — jangan render
               anak React di dalam #public-qr-reader (penyebab error removeChild). */}
           <div
-            className={`relative mt-5 rounded-lg overflow-hidden bg-black ${
+            className={`relative mt-4 rounded-xl overflow-hidden bg-black ${
               scanning ? '' : 'h-72'
             }`}
           >
@@ -116,27 +118,27 @@ export default function PublicScan() {
             {!scanning && (
               <div className="absolute inset-0 flex items-center justify-center px-8 text-center text-white/60">
                 <div>
-                  <Camera size={34} className="mx-auto mb-3" />
-                  <p className="text-sm">Kamera belum aktif</p>
+                  <Camera size={34} className="mx-auto mb-3 opacity-70" />
+                  <p className="text-xs font-semibold">Kamera belum aktif</p>
                 </div>
               </div>
             )}
           </div>
 
           {error && (
-            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 flex gap-2 text-xs text-red-700">
-              <AlertTriangle size={15} className="shrink-0" /> {error}
+            <div className="mt-4 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-3 flex gap-2 text-xs text-red-700 dark:text-red-300">
+              <AlertTriangle size={15} className="shrink-0 mt-0.5" /> <span>{error}</span>
             </div>
           )}
 
-          <button className="btn-primary w-full mt-4 py-2.5" onClick={scanning ? stop : start}>
-            {scanning ? <CameraOff size={17} /> : <Camera size={17} />}
-            {scanning ? 'Hentikan Kamera' : 'Aktifkan Kamera'}
+          <button className="btn-primary w-full mt-4 py-3 min-h-[46px] rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs" onClick={scanning ? stop : start}>
+            {scanning ? <CameraOff size={18} /> : <Camera size={18} />}
+            <span>{scanning ? 'Hentikan Kamera' : 'Aktifkan Kamera'}</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-center text-slate-400 mt-4">
-          Untuk validasi check-in/check-out, gunakan menu Scan Barcode setelah login.
+        <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-4 leading-relaxed">
+          Untuk validasi check-in/check-out oleh Security, gunakan menu Scan Barcode setelah login ke sistem.
         </p>
       </div>
     </div>

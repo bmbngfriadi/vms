@@ -129,21 +129,21 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
-        <div className="card p-5 lg:col-span-2">
+        <div className="card p-4 sm:p-5 lg:col-span-2">
           <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            Kunjungan 7 Hari Terakhir
+            {t('dashboard.trend_7d', 'Kunjungan 7 Hari Terakhir')}
           </h2>
-          <div className="mt-5 flex items-end justify-between gap-2 h-44">
+          <div className="mt-5 flex items-end justify-between gap-1.5 sm:gap-2 h-44">
             {series.map((t) => (
               <div key={t.day} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
                 <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t.count}</div>
                 <div
-                  className={`w-7 sm:w-9 rounded-t transition-all duration-500 ease-out ${
+                  className={`w-5 sm:w-7 md:w-9 rounded-t transition-all duration-500 ease-out ${
                     t.count > 0 ? 'bg-brand-500 hover:bg-brand-600' : 'bg-slate-200 dark:bg-slate-800'
                   }`}
                   style={{ height: `${t.count > 0 ? Math.max(6, (t.count / maxTrend) * 110) : 4}px` }}
                 />
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   {t.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                 </div>
               </div>
@@ -151,14 +151,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            Tamu per Departemen
+            {t('dashboard.by_department', 'Tamu per Departemen')}
           </h2>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Hari ini</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{t('common.today', 'Hari ini')}</p>
           <div className="mt-4 space-y-3">
             {data.byDepartment.length === 0 && (
-              <div className="text-xs text-slate-400 dark:text-slate-500">Belum ada tamu hari ini.</div>
+              <div className="text-xs text-slate-400 dark:text-slate-500 py-4 text-center">{t('dashboard.empty_dept', 'Belum ada tamu hari ini.')}</div>
             )}
             {data.byDepartment.slice(0, 6).map((d) => (
               <div key={d.name}>
