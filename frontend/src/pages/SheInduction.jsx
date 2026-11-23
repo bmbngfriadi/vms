@@ -480,7 +480,9 @@ export default function SheInduction() {
     totalWorkVisitors: 0,
     totalWorkSessions: 0,
     totalInductedVisitors: 0,
-    totalInductedSessions: 0
+    totalInductedSessions: 0,
+    totalPendingVisitors: 0,
+    totalPendingSessions: 0
   });
 
   const [tab, setTab] = useState('active');
@@ -572,16 +574,16 @@ export default function SheInduction() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-amber-500 text-white shadow-xs">
-              <HardHat size={20} />
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-2xl bg-amber-500 text-white shadow-xs">
+              <HardHat size={22} />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                Informasi Tamu SHE (Pekerjaan Lapangan)
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                {t('she.title', 'Data Induction SHE')}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Papan informasi kedatangan tamu pekerjaan pabrik yang butuh Safety Induction oleh Tim SHE
+                {t('she.subtitle', 'Papan pemantauan dan verifikasi Safety Induction K3 bagi tamu pekerjaan pabrik')}
               </p>
             </div>
           </div>
@@ -593,11 +595,11 @@ export default function SheInduction() {
               loadStats();
               loadVisits();
             }}
-            className="btn-ghost text-xs py-2 px-3 rounded-xl min-h-[38px] font-semibold text-slate-700 dark:text-slate-300"
-            title="Segarkan Data"
+            className="btn-ghost text-xs py-2 px-3 rounded-xl min-h-[38px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
+            title={t('action.refresh', 'Segarkan Data')}
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden sm:inline">{t('action.refresh', 'Refresh')}</span>
           </button>
           <button
             onClick={() => setShowSettings(true)}
@@ -605,47 +607,54 @@ export default function SheInduction() {
             title="Pengaturan Nomor WhatsApp Tujuan Notifikasi SHE"
           >
             <Settings size={15} />
-            <span className="hidden sm:inline">Pengaturan WA SHE</span>
+            <span className="hidden sm:inline">{t('she.btn_settings', 'Pengaturan WA SHE')}</span>
           </button>
         </div>
       </div>
 
       {/* Kartu Statistik Lengkap */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <StatCard
           icon={Users}
-          label="Total Tamu Pekerjaan"
-          value={`${stats.totalWorkVisitors || 0} Tamu`}
+          label={t('she.total_work', 'Total Tamu Pekerjaan')}
+          value={`${stats.totalWorkVisitors || 0} ${t('common.visitors', 'Tamu')}`}
           tone="brand"
-          subtext={`${stats.totalWorkSessions || 0} sesi kunjungan datang`}
+          subtext={`${stats.totalWorkSessions || 0} ${t('common.sessions', 'sesi kedatangan')}`}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={t('she.inducted', 'Sudah di Induction')}
+          value={`${stats.totalInductedVisitors || 0} ${t('common.visitors', 'Tamu')}`}
+          tone="emerald"
+          subtext={`${stats.totalInductedSessions || 0} ${t('common.sessions_done', 'sesi selesai')}`}
+        />
+        <StatCard
+          icon={ShieldAlert}
+          label={t('she.pending_induction', 'Butuh di Induction')}
+          value={`${stats.totalPendingVisitors || 0} ${t('common.visitors', 'Tamu')}`}
+          tone="amber"
+          subtext={`${stats.totalPendingSessions || 0} ${t('common.sessions_pending', 'sesi belum induction')}`}
         />
         <StatCard
           icon={HardHat}
-          label="Sedang Aktif di Pabrik"
-          value={stats.activeInPlant}
-          tone="emerald"
-          subtext="Headcount tamu di lapangan"
-        />
-        <StatCard
-          icon={Calendar}
-          label="Tamu Pekerjaan Hari Ini"
-          value={stats.todayWork}
-          tone="amber"
-          subtext="Total sesi pekerjaan hari ini"
+          label={t('she.active_in_plant', 'Sedang Aktif di Pabrik')}
+          value={`${stats.activeInPlant || 0} ${t('common.visitors', 'Tamu')}`}
+          tone="blue"
+          subtext={t('she.headcount_active', 'Headcount di lapangan')}
         />
         <StatCard
           icon={Clock}
-          label="Menunggu Masuk"
-          value={stats.waitingCheckIn}
-          tone="blue"
-          subtext="Terjadwal / belum check-in"
+          label={t('she.waiting_entry', 'Menunggu Masuk')}
+          value={`${stats.waitingCheckIn || 0} ${t('common.visitors', 'Tamu')}`}
+          tone="slate"
+          subtext={t('she.waiting_desc', 'Terjadwal / belum check-in')}
         />
         <StatCard
           icon={Building2}
-          label="Tamu Office Hari Ini"
-          value={stats.officeVisitorsToday}
+          label={t('she.office_today', 'Tamu Office Hari Ini')}
+          value={`${stats.officeVisitorsToday || 0} ${t('common.visitors', 'Tamu')}`}
           tone="slate"
-          subtext="Tanpa pekerjaan fisik (no induction)"
+          subtext={t('she.office_desc', 'Tanpa pekerjaan fisik')}
         />
       </div>
 
@@ -657,29 +666,47 @@ export default function SheInduction() {
             <button
               onClick={() => setTab('active')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'active'
-                  ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-            >
-              Sedang di Pabrik ({stats.activeInPlant})
-            </button>
-            <button
-              onClick={() => setTab('today')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'today'
-                  ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                }`}
-            >
-              Hari Ini ({stats.todayWork})
-            </button>
-            <button
-              onClick={() => setTab('waiting')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'waiting'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
             >
-              Menunggu Masuk ({stats.waitingCheckIn})
+              {t('she.tab_active', 'Sedang di Pabrik')} ({stats.activeInPlant})
+            </button>
+            <button
+              onClick={() => setTab('pending')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'pending'
+                  ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+            >
+              {t('she.tab_pending', 'Butuh Induction')} ({stats.totalPendingSessions || 0})
+            </button>
+            <button
+              onClick={() => setTab('inducted')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'inducted'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+            >
+              {t('she.tab_inducted', 'Sudah Induction')} ({stats.totalInductedSessions || 0})
+            </button>
+            <button
+              onClick={() => setTab('today')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'today'
+                  ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+            >
+              {t('she.tab_today', 'Hari Ini')} ({stats.todayWork})
+            </button>
+            <button
+              onClick={() => setTab('waiting')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === 'waiting'
+                  ? 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+            >
+              {t('she.tab_waiting', 'Menunggu Masuk')} ({stats.waitingCheckIn})
             </button>
             <button
               onClick={() => setTab('all')}
@@ -688,7 +715,7 @@ export default function SheInduction() {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
             >
-              Semua Riwayat
+              {t('she.tab_all', 'Semua Riwayat')}
             </button>
           </div>
 
@@ -756,11 +783,11 @@ export default function SheInduction() {
                   </span>
                   {isInducted ? (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/80 flex items-center gap-1">
-                      <CheckCircle2 size={11} className="text-emerald-600" /> Sudah di Induction
+                      <CheckCircle2 size={11} className="text-emerald-600" /> {t('she.badge_inducted', 'Sudah di Induction')}
                     </span>
                   ) : (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/80 flex items-center gap-1">
-                      <ShieldAlert size={11} /> Butuh Induction SHE
+                      <ShieldAlert size={11} /> {t('she.badge_needs_induction', 'Butuh Induction SHE')}
                     </span>
                   )}
                 </div>
@@ -770,7 +797,7 @@ export default function SheInduction() {
                     <span>{v.visitorName}</span>
                     {v.numberOfVisitors > 1 && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-semibold">
-                        +{v.numberOfVisitors - 1} ({v.numberOfVisitors} orang)
+                        +{v.numberOfVisitors - 1} ({v.numberOfVisitors} {t('common.people', 'orang')})
                       </span>
                     )}
                   </div>
@@ -781,16 +808,16 @@ export default function SheInduction() {
 
                 {v.workDescription && (
                   <div className="text-xs p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-200">
-                    <span className="text-[10px] uppercase font-bold block opacity-75">Pekerjaan Lapangan:</span>
+                    <span className="text-[10px] uppercase font-bold block opacity-75">{t('she.col_work_desc', 'Pekerjaan Lapangan')}:</span>
                     <span className="italic">{v.workDescription}</span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
                   <div>
-                    Status: <StatusBadge status={v.status} />
+                    {t('common.status', 'Status')}: <StatusBadge status={v.status} />
                   </div>
-                  {v.checkInAt && <div>Masuk: {fmtTime(v.checkInAt)} WIB</div>}
+                  {v.checkInAt && <div>{t('common.in', 'Masuk')}: {fmtTime(v.checkInAt)} WIB</div>}
                 </div>
 
                 {/* Action Buttons */}
@@ -802,14 +829,14 @@ export default function SheInduction() {
                       title="Kirim ulang pesan WA ke Tim SHE"
                     >
                       <Send size={12} />
-                      <span>Kirim WA</span>
+                      <span>{t('she.btn_send_wa', 'Kirim WA')}</span>
                     </button>
                     <button
                       onClick={() => setSelectedVisit(v)}
                       className="btn-ghost text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-bold flex items-center gap-1"
                     >
                       <Info size={13} />
-                      <span>Detail</span>
+                      <span>{t('she.btn_detail', 'Detail')}</span>
                     </button>
                   </div>
 
@@ -821,7 +848,7 @@ export default function SheInduction() {
                         title="Klik untuk membatalkan status induction"
                       >
                         <Check size={12} strokeWidth={2.5} />
-                        <span>Sudah Induction</span>
+                        <span>{t('she.btn_inducted_done', 'Sudah Induction')}</span>
                       </button>
                     ) : (
                       <button
@@ -830,7 +857,7 @@ export default function SheInduction() {
                         title="Tandai tamu ini sudah di-induction K3"
                       >
                         <CheckCircle2 size={13} />
-                        <span>Induction Selesai</span>
+                        <span>{t('she.btn_finish_induction', 'Induction Selesai')}</span>
                       </button>
                     )}
                   </div>
@@ -845,14 +872,14 @@ export default function SheInduction() {
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-slate-800/80 sticky top-0 z-10">
               <tr>
-                <th className="th">No. Kunjungan</th>
-                <th className="th">Nama Tamu & Rombongan</th>
-                <th className="th">Instansi</th>
-                <th className="th">PIC & Departemen</th>
-                <th className="th">Pekerjaan Lapangan</th>
-                <th className="th">Status Tamu</th>
-                <th className="th">Induction K3</th>
-                <th className="th text-right">Aksi</th>
+                <th className="th">{t('she.col_visit_no', 'No. Kunjungan')}</th>
+                <th className="th">{t('she.col_guest_team', 'Nama Tamu & Rombongan')}</th>
+                <th className="th">{t('she.col_company', 'Instansi')}</th>
+                <th className="th">{t('she.col_pic_dept', 'PIC & Departemen')}</th>
+                <th className="th">{t('she.col_work_desc', 'Pekerjaan Lapangan')}</th>
+                <th className="th">{t('she.col_status', 'Status Tamu')}</th>
+                <th className="th">{t('she.col_induction', 'Induction K3')}</th>
+                <th className="th text-right">{t('she.col_action', 'Aksi')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -926,12 +953,12 @@ export default function SheInduction() {
                       {isInducted ? (
                         <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80 shadow-2xs">
                           <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
-                          Sudah di Induction
+                          {t('she.badge_inducted', 'Sudah di Induction')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-200/80 shadow-2xs">
                           <ShieldAlert size={12} />
-                          Butuh Induction SHE
+                          {t('she.badge_needs_induction', 'Butuh Induction SHE')}
                         </span>
                       )}
                     </td>
@@ -945,7 +972,7 @@ export default function SheInduction() {
                             title="Sudah di-induction. Klik untuk membatalkan."
                           >
                             <Check size={12} strokeWidth={2.5} />
-                            <span>Ter-Induction</span>
+                            <span>{t('she.btn_inducted_done', 'Ter-Induction')}</span>
                           </button>
                         ) : (
                           <button
@@ -954,7 +981,7 @@ export default function SheInduction() {
                             title="Tandai tamu ini sudah menyelesaikan Safety Induction K3"
                           >
                             <CheckCircle2 size={13} />
-                            <span>Induction Selesai</span>
+                            <span>{t('she.btn_finish_induction', 'Induction Selesai')}</span>
                           </button>
                         )}
 
@@ -969,7 +996,7 @@ export default function SheInduction() {
                           onClick={() => setSelectedVisit(v)}
                           className="btn-ghost text-xs py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600"
                         >
-                          Detail & Salin
+                          {t('she.btn_detail_copy', 'Detail & Salin')}
                         </button>
                       </div>
                     </td>

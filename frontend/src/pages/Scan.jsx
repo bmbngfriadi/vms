@@ -691,14 +691,14 @@ export default function Scan() {
                       ) : (
                         <UserCheck size={18} />
                       )}
-                      KONFIRMASI CHECK-IN (TAMU MASUK)
+                      {t('pass.checkin_btn', 'KONFIRMASI CHECK-IN (TAMU MASUK)')}
                     </button>
                     <button
                       className="btn-danger sm:w-auto py-3 sm:py-2.5 text-sm font-bold min-h-[46px] rounded-xl justify-center shadow-xs"
                       onClick={doReject}
                       disabled={actionLoading}
                     >
-                      <XCircle size={18} /> Tolak Kunjungan
+                      <XCircle size={18} /> {t('action.reject', 'Tolak Kunjungan')}
                     </button>
                   </div>
                 </div>
@@ -765,7 +765,7 @@ export default function Scan() {
                     disabled={actionLoading}
                   >
                     {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={18} />}
-                    KONFIRMASI CHECK-OUT (TAMU KELUAR)
+                    {t('pass.checkout_btn', 'KONFIRMASI CHECK-OUT (TAMU KELUAR)')}
                   </button>
                 </div>
               )}

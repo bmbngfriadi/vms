@@ -64,7 +64,7 @@ router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses d
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [activeAggr, todayAggr, waitingAggr, checkedOutAggr, officeAggr, totalWorkAggr, inductedAggr] = await Promise.all([
+    const [activeAggr, todayAggr, waitingAggr, checkedOutAggr, officeAggr, totalWorkAggr, inductedAggr, pendingAggr] = await Promise.all([
       // Tamu pekerjaan yang saat ini berada di pabrik (Live Headcount Pabrik)
       prisma.visit.aggregate({
         where: {
@@ -123,6 +123,15 @@ router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses d
         },
         _sum: { numberOfVisitors: true },
         _count: { id: true }
+      }),
+      // Total tamu pekerjaan yang butuh / belum di-induction K3
+      prisma.visit.aggregate({
+        where: {
+          requiresInduction: true,
+          inductionStatus: { not: 'COMPLETED' }
+        },
+        _sum: { numberOfVisitors: true },
+        _count: { id: true }
       })
     ]);
 
@@ -135,7 +144,9 @@ router.get('/stats', authenticate, requireFeature('page.she_induction', 'Akses d
       totalWorkVisitors: totalWorkAggr._sum?.numberOfVisitors || 0,
       totalWorkSessions: totalWorkAggr._count?.id || 0,
       totalInductedVisitors: inductedAggr._sum?.numberOfVisitors || 0,
-      totalInductedSessions: inductedAggr._count?.id || 0
+      totalInductedSessions: inductedAggr._count?.id || 0,
+      totalPendingVisitors: pendingAggr._sum?.numberOfVisitors || 0,
+      totalPendingSessions: pendingAggr._count?.id || 0
     });
   } catch (err) {
     console.error('[SHE Stats] error:', err.message);
@@ -158,6 +169,10 @@ router.get('/visits', authenticate, requireFeature('page.she_induction', 'Akses 
 
     if (tab === 'active') {
       where.status = 'CHECKED_IN';
+    } else if (tab === 'pending') {
+      where.inductionStatus = { not: 'COMPLETED' };
+    } else if (tab === 'inducted') {
+      where.inductionStatus = 'COMPLETED';
     } else if (tab === 'today') {
       where.createdAt = { gte: startOfDay };
     } else if (tab === 'waiting') {

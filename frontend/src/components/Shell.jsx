@@ -176,7 +176,7 @@ export default function Shell() {
     { to: '/', label: 'Dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, feature: 'page.dashboard' },
     { to: '/scan', label: 'Scan Barcode', labelKey: 'nav.scan', icon: ScanLine, feature: 'page.scan' },
     { to: '/visits', label: 'Data Kunjungan', labelKey: 'nav.visits', icon: Users, feature: 'page.visits' },
-    { to: '/she', label: 'Informasi Tamu SHE', labelKey: 'nav.she', icon: ShieldAlert, feature: 'page.she_induction' },
+    { to: '/she', label: 'Data Induction SHE', labelKey: 'nav.she', icon: ShieldAlert, feature: 'page.she_induction' },
     { to: '/reports', label: 'Laporan', labelKey: 'nav.reports', icon: FileText, feature: 'page.reports' },
     { to: '/master', label: 'Master Data', labelKey: 'nav.master', icon: Database, feature: 'page.master' },
     { to: '/whatsapp', label: 'WhatsApp', labelKey: 'nav.whatsapp', icon: MessageCircle, feature: 'page.whatsapp' },
@@ -194,7 +194,7 @@ export default function Shell() {
       desc: 'Informasi akun, nomor WhatsApp & ganti kata sandi',
       icon: UserCheck
     },
-    ...(can('page.she_induction') ? [{ to: '/she', label: t('nav.she', 'Informasi Tamu SHE'), desc: 'Monitoring kedatangan tamu pekerjaan pabrik yang butuh induction', icon: ShieldAlert }] : []),
+    ...(can('page.she_induction') ? [{ to: '/she', label: t('nav.she', 'Data Induction SHE'), desc: 'Monitoring & verifikasi safety induction tamu pekerjaan', icon: ShieldAlert }] : []),
     ...(can('page.master') ? [{ to: '/master', label: t('nav.master', 'Master Data'), desc: 'Kelola departemen, pengguna & PIC internal', icon: Database }] : []),
     ...(can('page.whatsapp') ? [{ to: '/whatsapp', label: t('nav.whatsapp', 'WhatsApp Gateway'), desc: 'Monitor sesi Baileys & riwayat pesan OTP', icon: MessageCircle }] : []),
     ...(can('page.features') ? [{ to: '/features', label: t('nav.features', 'Manajemen Fitur'), desc: 'Role permissions & kontrol modul sistem', icon: SlidersHorizontal }] : [])

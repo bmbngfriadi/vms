@@ -56,9 +56,9 @@ export const FEATURES = [
   },
   {
     key: 'page.she_induction',
-    label: 'Informasi Tamu SHE',
+    label: 'Data Induction SHE',
     group: 'Halaman',
-    description: 'Papan pemantauan dan informasi kedatangan tamu pekerjaan pabrik.',
+    description: 'Papan pemantauan dan verifikasi safety induction tamu pekerjaan pabrik.',
     defaultRoles: ['ADMIN', 'SECURITY', 'MANAGEMENT']
   },
   {

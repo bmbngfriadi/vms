@@ -840,8 +840,8 @@ function CreateModal({ user, onClose, onCreated }) {
   // Filter PIC agar hanya menampilkan staf di departemen yang dipilih
   const filteredPics = form.departmentId
     ? pics.filter(
-        (p) => p.departmentId === form.departmentId || p.department?.id === form.departmentId
-      )
+      (p) => p.departmentId === form.departmentId || p.department?.id === form.departmentId
+    )
     : pics;
 
   const handleDepartmentChange = (e) => {
@@ -1163,11 +1163,10 @@ function CreateModal({ user, onClose, onCreated }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div
                 onClick={() => setForm((c) => ({ ...c, destinationArea: 'OFFICE' }))}
-                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
-                  form.destinationArea === 'OFFICE'
+                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${form.destinationArea === 'OFFICE'
                     ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/30 ring-1 ring-brand-500'
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Building2 size={15} className={form.destinationArea === 'OFFICE' ? 'text-brand-600' : 'text-slate-400'} />
@@ -1177,11 +1176,10 @@ function CreateModal({ user, onClose, onCreated }) {
 
               <div
                 onClick={() => setForm((c) => ({ ...c, destinationArea: 'PLANT_WORK' }))}
-                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${
-                  form.destinationArea === 'PLANT_WORK'
+                className={`cursor-pointer p-3 rounded-xl border text-left transition-all ${form.destinationArea === 'PLANT_WORK'
                     ? 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-500'
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

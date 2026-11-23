@@ -718,7 +718,7 @@ export default function Pass() {
                   ) : (
                     <CheckCircle2 size={20} strokeWidth={2.5} />
                   )}
-                  <span>{actionBusy ? 'Memproses Validasi…' : 'KONFIRMASI CHECK-IN (TAMU MASUK)'}</span>
+                  <span>{actionBusy ? t('action.processing', 'Memproses Validasi…') : t('pass.checkin_btn', 'KONFIRMASI CHECK-IN (TAMU MASUK)')}</span>
                 </button>
               </form>
             )}
@@ -831,7 +831,7 @@ export default function Pass() {
                   ) : (
                     <LogOut size={20} strokeWidth={2.5} />
                   )}
-                  <span>{actionBusy ? 'Memproses Check-Out…' : 'KONFIRMASI CHECK-OUT (TAMU KELUAR)'}</span>
+                  <span>{actionBusy ? t('action.processing_checkout', 'Memproses Check-Out…') : t('pass.checkout_btn', 'KONFIRMASI CHECK-OUT (TAMU KELUAR)')}</span>
                 </button>
               </div>
             )}
