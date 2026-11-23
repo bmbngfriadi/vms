@@ -219,7 +219,10 @@ function formatVisit(visit, viewer) {
     destinationArea: visit.destinationArea || 'OFFICE',
     workDescription: visit.workDescription || null,
     requiresInduction: !!visit.requiresInduction,
-    inductionStatus: visit.inductionStatus || 'NOT_REQUIRED',
+    inductionStatus:
+      visit.inductionStatus && visit.inductionStatus !== 'NOT_REQUIRED'
+        ? visit.inductionStatus
+        : (visit.requiresInduction ? 'PENDING' : 'NOT_REQUIRED'),
     inductionAt: visit.inductionAt || null,
     inductionBy: visit.inductionBy ? { id: visit.inductionBy.id, name: visit.inductionBy.name } : null,
     inductionNotes: visit.inductionNotes || null,
@@ -892,7 +895,12 @@ publicRouter.get('/pass/:token', async (req, res) => {
       destinationArea: visit.destinationArea || 'OFFICE',
       workDescription: visit.workDescription || null,
       requiresInduction: !!visit.requiresInduction,
-      inductionStatus: visit.inductionStatus || 'NOT_REQUIRED',
+      inductionStatus:
+        visit.inductionStatus && visit.inductionStatus !== 'NOT_REQUIRED'
+          ? visit.inductionStatus
+          : (visit.requiresInduction ? 'PENDING' : 'NOT_REQUIRED'),
+      inductionAt: visit.inductionAt || null,
+      inductionByName: visit.inductionBy?.name || null,
       qrDataUrl: await qrDataUrl(passUrl(tokenRow.token, req)),
       checkInAt: visit.checkInAt,
       checkOutAt: visit.checkOutAt

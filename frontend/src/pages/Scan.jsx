@@ -475,25 +475,47 @@ export default function Scan() {
                   />
 
                   {result.visit.requiresInduction && (
-                    <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2.5 my-2.5">
-                      <ShieldAlert className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" size={18} />
-                      <div className="text-xs">
-                        <div className="font-bold flex items-center gap-1.5">
-                          <span>Tamu Pekerjaan Lapangan (Perlu Safety Induction)</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-100">
-                            Info K3
-                          </span>
-                        </div>
-                        <div className="mt-0.5 text-[11px] leading-relaxed">
-                          Tamu akan melakukan pekerjaan di area pabrik. Notifikasi otomatis dikirim ke Tim SHE saat check-in. Harap arahkan tamu untuk berkoordinasi dengan Tim SHE terkait Safety Induction.
-                        </div>
-                        {result.visit.workDescription && (
-                          <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium text-[11px] italic">
-                            Rencana Kerja: {result.visit.workDescription}
+                    result.visit.inductionStatus === 'COMPLETED' ? (
+                      <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100 flex items-start gap-2.5 my-2.5">
+                        <CheckCircle2 className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" size={18} />
+                        <div className="text-xs">
+                          <div className="font-bold flex items-center gap-1.5 text-emerald-900 dark:text-emerald-100">
+                            <span>Sudah Melakukan Safety Induction SHE</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-200/90 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100">
+                              Lolos K3
+                            </span>
                           </div>
-                        )}
+                          <div className="mt-0.5 text-[11px] leading-relaxed text-emerald-800 dark:text-emerald-200">
+                            Tamu telah diverifikasi dan menyelesaikan Safety Induction K3 bersama Tim SHE.
+                          </div>
+                          {result.visit.workDescription && (
+                            <div className="mt-1 pt-1 border-t border-emerald-200 dark:border-emerald-800/60 font-medium text-[11px] italic text-emerald-900 dark:text-emerald-200">
+                              Rencana Kerja: {result.visit.workDescription}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2.5 my-2.5">
+                        <ShieldAlert className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" size={18} />
+                        <div className="text-xs">
+                          <div className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-100">
+                            <span>Tamu Pekerjaan Lapangan (Belum Induction)</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-200/80 text-amber-900 dark:bg-amber-900 dark:text-amber-100">
+                              Perlu K3
+                            </span>
+                          </div>
+                          <div className="mt-0.5 text-[11px] leading-relaxed text-amber-800 dark:text-amber-200">
+                            Tamu memiliki agenda pekerjaan di area operasional pabrik. Notifikasi otomatis dikirim ke Tim SHE saat check-in. Harap arahkan tamu untuk berkoordinasi dengan Tim SHE terkait Safety Induction.
+                          </div>
+                          {result.visit.workDescription && (
+                            <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium text-[11px] italic text-amber-900 dark:text-amber-200">
+                              Rencana Kerja: {result.visit.workDescription}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
                   )}
 
                   <Row label="Tipe" value={TYPE_LABEL[result.visit.visitType]} />

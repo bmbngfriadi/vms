@@ -461,22 +461,47 @@ export default function Pass() {
                   </span>
                 </div>
                 {data.requiresInduction && (
-                  <div className="col-span-2 p-2.5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2">
-                    <ShieldAlert size={16} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                    <div className="text-[11px] leading-tight">
-                      <div className="font-bold">
-                        ⚠️ Perlu Safety Induction Tim SHE
-                      </div>
-                      <div className="mt-0.5 opacity-90">
-                        Tamu memiliki agenda pekerjaan di area operasional pabrik. Silakan ikuti Safety Induction bersama Tim K3 / SHE sebelum memulai pekerjaan.
-                      </div>
-                      {data.workDescription && (
-                        <div className="mt-1 pt-1 border-t border-amber-300/40 dark:border-amber-800/40 font-medium">
-                          Rencana Pekerjaan: {data.workDescription}
+                  data.inductionStatus === 'COMPLETED' ? (
+                    <div className="col-span-2 p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100 flex items-start gap-2.5">
+                      <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                      <div className="text-[11.5px] leading-tight">
+                        <div className="font-bold flex items-center gap-1.5 text-emerald-900 dark:text-emerald-100">
+                          <span>Sudah Melakukan Safety Induction SHE</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-200/90 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700">
+                            Lolos K3
+                          </span>
                         </div>
-                      )}
+                        <div className="mt-1 text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                          Tamu telah diverifikasi dan menyelesaikan Safety Induction K3 bersama Tim SHE.
+                        </div>
+                        {data.workDescription && (
+                          <div className="mt-1.5 pt-1.5 border-t border-emerald-200 dark:border-emerald-800/60 font-medium text-[11px] text-emerald-900 dark:text-emerald-200 italic">
+                            Rencana Pekerjaan: {data.workDescription}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="col-span-2 p-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+                      <ShieldAlert size={18} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                      <div className="text-[11.5px] leading-tight">
+                        <div className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-100">
+                          <span>Perlu Safety Induction Tim SHE</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-amber-200/90 text-amber-900 dark:bg-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
+                            Belum Induction
+                          </span>
+                        </div>
+                        <div className="mt-1 text-amber-800 dark:text-amber-200 leading-relaxed">
+                          Tamu memiliki agenda pekerjaan di area operasional pabrik. Silakan ikuti Safety Induction bersama Tim K3 / SHE sebelum memulai pekerjaan.
+                        </div>
+                        {data.workDescription && (
+                          <div className="mt-1.5 pt-1.5 border-t border-amber-300/40 dark:border-amber-800/40 font-medium text-[11px] text-amber-900 dark:text-amber-200 italic">
+                            Rencana Pekerjaan: {data.workDescription}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
                 )}
               </div>
 
