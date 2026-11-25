@@ -593,7 +593,9 @@ export default function Pass() {
                         value={securityPhoto}
                         onChange={(photo) => setSecurityPhoto(photo)}
                         onNikDetected={(detectedNik) => {
-                          if (!securityIdentityNumber) setSecurityIdentityNumber(detectedNik);
+                          if (!securityIdentityNumber) {
+                            setSecurityIdentityNumber((detectedNik || '').replace(/\D/g, ''));
+                          }
                         }}
                         label="Ambil Foto KTP/SIM/Paspor Tamu (Wajib) *"
                         required
@@ -613,8 +615,10 @@ export default function Pass() {
                         <input
                           className="input text-xs py-2 px-3 rounded-xl font-mono bg-white dark:bg-slate-900"
                           value={securityIdentityNumber}
-                          onChange={(e) => setSecurityIdentityNumber(e.target.value)}
-                          placeholder="Masukkan nomor identitas tamu..."
+                          onChange={(e) => setSecurityIdentityNumber(e.target.value.replace(/\D/g, ''))}
+                          placeholder="Masukkan nomor identitas tamu (angka saja)..."
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           required
                         />
                       </div>

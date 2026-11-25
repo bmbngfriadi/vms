@@ -692,7 +692,7 @@ publicRouter.post('/register', registerLimiter, async (req, res) => {
     );
 
     let finalPhoto = identityPhoto || null;
-    let finalNik = identityNumber ? String(identityNumber).trim() : null;
+    let finalNik = identityNumber ? String(identityNumber).replace(/\D/g, '') : null;
 
     if (matchedVisitor) {
       // Tamu berulang terverifikasi
@@ -956,7 +956,7 @@ publicRouter.post('/pass/:token/check-in', async (req, res) => {
     // Validasi identitas tamu: jika PIC belum melampirkan foto identitas, Security wajib melampirkannya saat check-in
     const existingPhoto = existing.identityPhoto || existing.visitor?.identityPhoto;
     const finalPhoto = identityPhoto || existingPhoto || null;
-    const finalNumber = identityNumber ? String(identityNumber).trim() : (existing.visitor?.identityNumber || null);
+    const finalNumber = identityNumber ? String(identityNumber).replace(/\D/g, '') : (existing.visitor?.identityNumber || null);
 
     if (!finalPhoto) {
       return res.status(400).json({
@@ -1147,7 +1147,7 @@ router.post('/', authenticate, requireFeature('visit.create', 'Anda tidak dapat 
     );
 
     let finalPhoto = identityPhoto || null;
-    let finalNik = identityNumber ? String(identityNumber).trim() : null;
+    let finalNik = identityNumber ? String(identityNumber).replace(/\D/g, '') : null;
 
     if (matchedVisitor) {
       if (!finalPhoto) {
@@ -1589,7 +1589,7 @@ router.patch(
       }
       if (has('company')) visitorData.company = b.company ? String(b.company).trim() : null;
       if (has('identityNumber'))
-        visitorData.identityNumber = b.identityNumber ? String(b.identityNumber).trim() : null;
+        visitorData.identityNumber = b.identityNumber ? String(b.identityNumber).replace(/\D/g, '') : null;
       if (has('identityPhoto')) {
         visitorData.identityPhoto = b.identityPhoto || null;
         visitData.identityPhoto = b.identityPhoto || null;

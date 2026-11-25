@@ -99,7 +99,10 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
   }, []);
 
   const set = (k) => (e) => setForm((f) => {
-    const val = e.target.value;
+    let val = e.target.value;
+    if (k === 'phone' || k === 'identityNumber') {
+      val = val.replace(/\D/g, '');
+    }
     const next = { ...f, [k]: val };
     if (k === 'fullName') {
       const names = [...(f.guestNames || [''])].map(extractGuestName);
@@ -199,7 +202,14 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
           </div>
           <div>
             <label className="label">No. WhatsApp</label>
-            <input className="input" value={form.phone} onChange={set('phone')} placeholder="0812xxxxxxx" />
+            <input
+              className="input font-mono"
+              value={form.phone}
+              onChange={set('phone')}
+              placeholder="0812xxxxxxx"
+              inputMode="tel"
+              pattern="[0-9]*"
+            />
           </div>
           <div>
             <label className="label">Perusahaan</label>
@@ -207,7 +217,14 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
           </div>
           <div>
             <label className="label">No. Identitas</label>
-            <input className="input" value={form.identityNumber} onChange={set('identityNumber')} />
+            <input
+              className="input font-mono"
+              value={form.identityNumber}
+              onChange={set('identityNumber')}
+              placeholder="Nomor identitas (angka saja)..."
+              inputMode="numeric"
+              pattern="[0-9]*"
+            />
           </div>
           {visit.identityPhoto && (
             <div className="sm:col-span-2 p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">

@@ -776,7 +776,10 @@ function CreateModal({ user, onClose, onCreated }) {
   }, [form.fullName, form.phone]);
 
   const set = (k) => (e) => {
-    const val = e.target.value;
+    let val = e.target.value;
+    if (k === 'phone' || k === 'identityNumber') {
+      val = val.replace(/\D/g, '');
+    }
     setForm((curr) => {
       const next = { ...curr, [k]: val };
       if (k === 'fullName') {
@@ -955,6 +958,7 @@ function CreateModal({ user, onClose, onCreated }) {
               onChange={set('phone')}
               placeholder="0812xxxxxxx"
               inputMode="tel"
+              pattern="[0-9]*"
               required
             />
           </div>
@@ -1062,7 +1066,7 @@ function CreateModal({ user, onClose, onCreated }) {
                   onNikDetected={(detectedNik) => {
                     setForm((c) => ({
                       ...c,
-                      identityNumber: detectedNik
+                      identityNumber: (detectedNik || '').replace(/\D/g, '')
                     }));
                   }}
                   label="Foto Identitas (KTP/SIM/Paspor) — Opsional"
@@ -1089,6 +1093,8 @@ function CreateModal({ user, onClose, onCreated }) {
               value={form.identityNumber}
               onChange={set('identityNumber')}
               placeholder="Nomor identitas (opsional)..."
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
           </div>
           <div className="w-full min-w-0">

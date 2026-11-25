@@ -121,7 +121,10 @@ export default function Register() {
   }, [form.fullName, form.phone]);
 
   const set = (k) => (e) => {
-    const val = e.target.value;
+    let val = e.target.value;
+    if (k === 'phone' || k === 'identityNumber') {
+      val = val.replace(/\D/g, '');
+    }
     setForm((curr) => {
       const next = { ...curr, [k]: val };
       if (k === 'fullName') {
@@ -436,6 +439,7 @@ export default function Register() {
                     onChange={set('phone')}
                     placeholder=""
                     inputMode="tel"
+                    pattern="[0-9]*"
                     required
                   />
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -542,7 +546,7 @@ export default function Register() {
                         onNikDetected={(detectedNik) => {
                           setForm((curr) => ({
                             ...curr,
-                            identityNumber: detectedNik
+                            identityNumber: (detectedNik || '').replace(/\D/g, '')
                           }));
                         }}
                         required
@@ -567,6 +571,8 @@ export default function Register() {
                     value={form.identityNumber}
                     onChange={set('identityNumber')}
                     placeholder=""
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                   />
                 </div>
 
