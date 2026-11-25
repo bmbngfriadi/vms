@@ -203,6 +203,7 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
           <div>
             <label className="label">No. WhatsApp</label>
             <input
+              type="tel"
               className="input font-mono"
               value={form.phone}
               onChange={set('phone')}
@@ -218,11 +219,12 @@ export default function VisitEditModal({ visit, onClose, onSaved, onDeleted }) {
           <div>
             <label className="label">No. Identitas</label>
             <input
+              type="tel"
               className="input font-mono"
               value={form.identityNumber}
               onChange={set('identityNumber')}
               placeholder="Nomor identitas (angka saja)..."
-              inputMode="numeric"
+              inputMode="tel"
               pattern="[0-9]*"
             />
           </div>

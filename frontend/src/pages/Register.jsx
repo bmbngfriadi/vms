@@ -434,6 +434,7 @@ export default function Register() {
                     )}
                   </div>
                   <input
+                    type="tel"
                     className="input text-sm py-2.5 px-3 rounded-xl font-mono"
                     value={form.phone}
                     onChange={set('phone')}
@@ -567,11 +568,12 @@ export default function Register() {
                     )}
                   </div>
                   <input
+                    type="tel"
                     className="input font-mono text-sm py-2.5 px-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/50"
                     value={form.identityNumber}
                     onChange={set('identityNumber')}
                     placeholder=""
-                    inputMode="numeric"
+                    inputMode="tel"
                     pattern="[0-9]*"
                   />
                 </div>

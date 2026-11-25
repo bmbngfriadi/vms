@@ -953,6 +953,7 @@ function CreateModal({ user, onClose, onCreated }) {
               )}
             </div>
             <input
+              type="tel"
               className="input font-mono"
               value={form.phone}
               onChange={set('phone')}
@@ -1089,11 +1090,12 @@ function CreateModal({ user, onClose, onCreated }) {
               )}
             </div>
             <input
+              type="tel"
               className="input font-mono"
               value={form.identityNumber}
               onChange={set('identityNumber')}
               placeholder="Nomor identitas (opsional)..."
-              inputMode="numeric"
+              inputMode="tel"
               pattern="[0-9]*"
             />
           </div>
