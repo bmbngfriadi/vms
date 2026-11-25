@@ -323,9 +323,13 @@ export function sheInductionAlert({
   purpose,
   workDescription,
   checkInAt,
-  badge
+  badge,
+  sheUrl
 }) {
   const guestField = formatGuestFieldWA(guestNames, guestName, badge);
+  const appBase = (process.env.PUBLIC_APP_URL || 'http://localhost').replace(/\/+$/, '');
+  const confirmUrl = sheUrl || `${appBase}/she?search=${encodeURIComponent(visitNumber)}`;
+
   return `🏭 *PT CEMINDO GEMILANG Tbk*
 📍 *Plant Batam — K3 / Safety Health & Environment (SHE)*
 ${DIVIDER}
@@ -348,7 +352,10 @@ ${guestField}
 • Status K3: 🟡 *Wajib Safety Induction (Sistem SHE)*
 
 📢 *Tindakan Tim SHE:*
-Mohon petugas SHE segera melakukan briefing / Safety Induction dan verifikasi kelengkapan APD tamu di Pos / Ruang Induction SHE.
+1. Petugas SHE segera melakukan briefing / Safety Induction dan verifikasi kelengkapan APD tamu di Pos / Ruang Induction SHE.
+2. Jika Safety Induction telah selesai, silakan buka tautan aplikasi di bawah ini untuk konfirmasi dan klik tombol *Induction Selesai*:
+🔗 *Konfirmasi Induction Selesai:*
+${confirmUrl}
 
 ${DIVIDER}
 ${FOOTER}`;

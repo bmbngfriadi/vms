@@ -7,6 +7,16 @@ import { notify } from '../wa/notify.js';
 
 const router = express.Router();
 
+function requestBaseUrl(req) {
+  const appUrl = (process.env.PUBLIC_APP_URL || 'http://localhost').replace(/\/+$/, '');
+  if (appUrl && !/localhost|127\.0\.0\.1/i.test(appUrl)) return appUrl;
+  if (req?.get('host')) return `${req.protocol}://${req.get('host')}`;
+  return appUrl;
+}
+
+const sheInductionUrl = (visitNumber, req = null) =>
+  `${requestBaseUrl(req)}/she?search=${encodeURIComponent(visitNumber)}`;
+
 const VISIT_INCLUDE = {
   visitor: true,
   department: { select: { id: true, name: true, code: true } },
@@ -282,7 +292,8 @@ router.post(
         purpose: visit.purpose,
         workDescription: visit.workDescription,
         checkInAt: visit.checkInAt || visit.createdAt,
-        badge: visit.badgeNumber
+        badge: visit.badgeNumber,
+        sheUrl: sheInductionUrl(visit.visitNumber, req)
       });
 
       let sentCount = 0;

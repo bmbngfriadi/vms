@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   LogIn,
   ShieldCheck,
@@ -28,6 +28,11 @@ export default function Login() {
   const { lang, toggleLang, t } = useI18n();
   const { alert: customAlert } = useDialog();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const targetUrl = location.state?.from
+    ? `${location.state.from.pathname || '/'}${location.state.from.search || ''}`
+    : '/';
 
   // Mode: 'login' | 'forgot_otp' | 'reset_password'
   const [view, setView] = useState('login');
@@ -47,7 +52,7 @@ export default function Login() {
   const [forgotMsg, setForgotMsg] = useState('');
   const [phoneHint, setPhoneHint] = useState('');
 
-  if (user) navigate('/', { replace: true });
+  if (user) navigate(targetUrl, { replace: true });
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -55,7 +60,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(identifier, password);
-      navigate('/', { replace: true });
+      navigate(targetUrl, { replace: true });
     } catch (err) {
       setError(errMsg(err, t('login.failed', 'Gagal masuk. Periksa akun dan kata sandi Anda.')));
     } finally {

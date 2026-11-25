@@ -30,6 +30,8 @@ function requestBaseUrl(req) {
 }
 
 const passUrl = (token, req = null) => `${requestBaseUrl(req)}/pass/${token}`;
+const sheInductionUrl = (visitNumber, req = null) =>
+  `${requestBaseUrl(req)}/she?search=${encodeURIComponent(visitNumber)}`;
 
 async function qrDataUrl(text) {
   return QRCode.toDataURL(text, { margin: 1, width: 480, errorCorrectionLevel: 'M' });
@@ -337,7 +339,8 @@ async function notifyCheckIn(visit, req) {
             purpose: visit.purpose,
             workDescription: visit.workDescription,
             checkInAt: visit.checkInAt,
-            badge: visit.badgeNumber
+            badge: visit.badgeNumber,
+            sheUrl: sheInductionUrl(visit.visitNumber, req)
           })
         });
       });

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   HardHat,
   Building2,
@@ -470,6 +471,10 @@ export default function SheInduction() {
   const { can } = useAuth();
   const { t } = useI18n();
   const { alert: customAlert } = useDialog();
+  const [searchParams] = useSearchParams();
+
+  const querySearch = searchParams.get('search') || searchParams.get('visit') || searchParams.get('v') || '';
+  const queryTab = searchParams.get('tab') || (querySearch ? 'all' : 'active');
 
   const [stats, setStats] = useState({
     activeInPlant: 0,
@@ -485,8 +490,8 @@ export default function SheInduction() {
     totalPendingSessions: 0
   });
 
-  const [tab, setTab] = useState('active');
-  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState(queryTab);
+  const [search, setSearch] = useState(querySearch);
   const [date, setDate] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -495,6 +500,7 @@ export default function SheInduction() {
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
   const loadStats = () => {
     setStatsLoading(true);
@@ -525,6 +531,21 @@ export default function SheInduction() {
     const timer = setTimeout(loadVisits, search ? 300 : 0);
     return () => clearTimeout(timer);
   }, [loadVisits, search]);
+
+  // Otomatis buka modal detail kunjungan jika dibuka via tautan notifikasi WA
+  useEffect(() => {
+    if (querySearch && !hasAutoOpened && rows.length > 0) {
+      const match = rows.find(
+        (r) =>
+          r.visitNumber?.toLowerCase() === querySearch.toLowerCase() ||
+          r.visitorName?.toLowerCase().includes(querySearch.toLowerCase())
+      );
+      if (match) {
+        setSelectedVisit(match);
+        setHasAutoOpened(true);
+      }
+    }
+  }, [querySearch, rows, hasAutoOpened]);
 
   const handleResendWa = async (v) => {
     try {
